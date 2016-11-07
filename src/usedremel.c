@@ -3,13 +3,12 @@
 // Author      : Hao Jiang
 // Version     :
 // Copyright   : 
-// Description : Hello World in C++, Ansi-style
 //============================================================================
 
-#include <iostream>
-using namespace std;
+#include <stdio.h>
+#include "dremel.h"
 
 int main() {
-	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
+
 	return 0;
 }
