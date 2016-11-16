@@ -8,6 +8,8 @@
 #ifndef CHT_H_
 #define CHT_H_
 
+#include<stdint.h>
+
 #define PAYLOAD_SIZE 32
 
 typedef struct _data {

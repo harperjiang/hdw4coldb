@@ -48,8 +48,8 @@ void build(cht* cht, data* datas, uint32_t size) {
 
 	// The first pass, fill in bitmap and payloads array
 	for (uint32_t i = 0; i < size; i++) {
-		uint32_t hash = hash(datas[i]->key) % bitmap_size;
-		bitmap_set(cht->bitmap, hash);
+		uint32_t hval = hash(datas[i].key) % bitmap_size;
+		bitmap_set(cht->bitmap, hval);
 	}
 	// The second pass, compute offset in bitmap
 
