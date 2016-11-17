@@ -1,5 +1,5 @@
 /*
- * Hash table using linear probing
+ * hash.h
  *
  *  Created on: Nov 17, 2016
  *      Author: harper
@@ -20,6 +20,11 @@ uint32_t hash(uint32_t v);
 /**
  * Data structure for hash table
  */
+typedef struct _hashnode {
+	uint32_t 	key;
+	uint8_t 	*payload;
+	struct _hashnode* 	next;
+} hashnode;
 
 typedef struct _hashtable {
 	uint32_t	size;
