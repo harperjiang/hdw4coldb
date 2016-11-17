@@ -8,7 +8,3 @@
 #include <stdio.h>
 #include "dremel.h"
 
-int main() {
-
-	return 0;
-}
