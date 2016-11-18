@@ -20,6 +20,8 @@ void hash_build(hashtable* ht, uint32_t bucket_size) {
 }
 
 uint8_t* hash_get(hashtable* ht, uint32_t key) {
+	// No zero key is allowed
+	key += 1;
 	uint32_t hval = hash(key) % ht->bucket_size;
 	hashnode* bucket = ht->buckets + hval;
 	while (bucket->key != 0 && bucket->key != key) {
@@ -33,6 +35,8 @@ uint8_t* hash_get(hashtable* ht, uint32_t key) {
 }
 
 void hash_put(hashtable* ht, uint32_t key, uint8_t *value) {
+	// No zero key
+	key += 1;
 	uint32_t hval = hash(key) % ht->bucket_size;
 	hashnode* bucket = ht->buckets + hval;
 	while (bucket->key != 0 && bucket->key != key) {
