@@ -1,13 +1,14 @@
 /*
- * hash_test.c
+ * UnitTest for Hash
  *
  *  Created on: Nov 17, 2016
  *      Author: harper
  */
 #include <gtest/gtest.h>
 #include "../src/hash.h"
+#include <stdlib.h>
 
-TEST(Hash, Build) {
+TEST( Hash, Build) {
 	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
 	hash_build(ht, 32);
 
@@ -20,7 +21,7 @@ TEST(Hash, Build) {
 	}
 }
 
-TEST(Hash, Get) {
+TEST( Hash, Get) {
 	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
 	hash_build(ht, 32);
 
@@ -33,15 +34,15 @@ TEST(Hash, Get) {
 	}
 
 	for (int i = 0; i < 32; i++) {
-		uint8_t* data = hash_get(ht, i + 1);
+		entry* entry = hash_get(ht, i + 1);
 
-		ASSERT_EQ(i, data[0]);
-		ASSERT_EQ(3, data[2]);
+		ASSERT_EQ(i, entry->payload[0]);
+		ASSERT_EQ(3, entry->payload[2]);
 	}
 
 }
 
-TEST(Hash, Put) {
+TEST( Hash, Put) {
 	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
 	hash_build(ht, 32);
 
@@ -51,6 +52,51 @@ TEST(Hash, Put) {
 		value[2] = 3;
 
 		hash_put(ht, i + 1, value);
+	}
+}
+
+TEST( Hash, PutDuplicate) {
+	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
+	hash_build(ht, 40);
+
+	for (int i = 0; i < 40; i++) {
+		uint8_t value[PAYLOAD_SIZE];
+		value[0] = i;
+		value[2] = 3;
+		// Only put 4 unique key, each key should have 10 items
+		hash_put(ht, i % 4 + 1, value);
+	}
+
+	for (int i = 0; i < 40; i++) {
+		entry* ent = hash_get(ht, i % 4 + 1);
+		while (ent != NULL && ent->payload[0] != i) {
+			ent = ent->next;
+		}
+		ASSERT_TRUE(ent != NULL);
+		ASSERT_EQ(i, ent->payload[0]);
+	}
+}
+
+TEST( Hash, Organize) {
+	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
+	hash_build(ht, 100);
+
+	for (int i = 0; i < 100; i++) {
+		uint8_t value[PAYLOAD_SIZE];
+		value[0] = i;
+		value[2] = 3;
+
+		hash_put(ht, i + 1, value);
+	}
+
+	ASSERT_EQ(100, ht->size);
+	ASSERT_TRUE(ht->bucket_size >= 100 * 1.5);
+
+	for (int i = 0; i < 100; i++) {
+		entry* entry = hash_get(ht, i + 1);
+
+		ASSERT_EQ(i, entry->payload[0]);
+		ASSERT_EQ(3, entry->payload[2]);
 	}
 }
 

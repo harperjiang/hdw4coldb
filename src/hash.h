@@ -11,26 +11,28 @@
 #include <stdint.h>
 
 #define PAYLOAD_SIZE 4
-
-
+#define RATIO 1.5
 
 /**
  * Data structure for hash table
  */
-typedef struct _hashnode {
-	uint32_t 	key;
-	uint8_t		payload[PAYLOAD_SIZE];
-} hashnode;
+typedef struct _entry {
+	uint32_t 		key;
+	uint8_t 		payload[PAYLOAD_SIZE];
+	// TODO This pointer can be replaced with an offset bit to save memory
+	struct _entry*	next;
+} entry;
 
 typedef struct _hashtable {
-	uint32_t	size;
-	uint32_t	bucket_size;
-	hashnode	*buckets;
+	uint32_t 	size;
+	uint32_t 	bucket_size;
+	entry 		*buckets;
 } hashtable;
 
 void 		hash_build(hashtable* ht, uint32_t bucket_size);
-uint8_t* 	hash_get(hashtable* ht, uint32_t key);
+entry* 		hash_get(hashtable* ht, uint32_t key);
 void 		hash_put(hashtable* ht, uint32_t key, uint8_t *value);
-uint32_t	hash_size(hashtable* ht);
-void		hash_organize(hashtable* ht);
+uint32_t 	hash_size(hashtable* ht);
+void 		hash_organize(hashtable* ht);
+void		hash_free(hashtable* ht);
 #endif /* SRC_HASH_H_ */
