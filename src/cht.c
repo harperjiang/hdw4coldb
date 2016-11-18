@@ -121,6 +121,7 @@ void cht_build(cht* cht, entry* datas, uint32_t size) {
 
 /**
  * Looking for key in CHT
+ * TODO Non-unique key
  */
 entry* cht_find(cht* cht, uint32_t key) {
 	uint32_t hval = hash(key) % (cht->bitmap_size * BITMAP_UNIT);
