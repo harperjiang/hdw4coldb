@@ -15,7 +15,7 @@
 
 void hash_build(hashtable* ht, uint32_t bucket_size) {
 	ht->size = 0;
-	ht->buckets = (hashnode*) malloc(sizeof(hashnode) * bucket_size);
+	ht->buckets = (hashnode*) calloc(bucket_size, sizeof(hashnode));
 	ht->bucket_size = bucket_size;
 }
 
@@ -23,7 +23,8 @@ uint8_t* hash_get(hashtable* ht, uint32_t key) {
 	uint32_t hval = hash(key) % ht->bucket_size;
 	hashnode* bucket = ht->buckets + hval;
 	while (bucket->key != 0 && bucket->key != key) {
-		hval++;
+		hval = (hval + 1) % ht->bucket_size;
+		bucket = ht->buckets + hval;
 	}
 	if (bucket->key == key) {
 		return bucket->payload;
@@ -35,7 +36,8 @@ void hash_put(hashtable* ht, uint32_t key, uint8_t *value) {
 	uint32_t hval = hash(key) % ht->bucket_size;
 	hashnode* bucket = ht->buckets + hval;
 	while (bucket->key != 0 && bucket->key != key) {
-		hval++;
+		hval = (hval + 1) % ht->bucket_size;
+		bucket = ht->buckets + hval;
 	}
 	if (bucket->key == 0) {
 		// Not found

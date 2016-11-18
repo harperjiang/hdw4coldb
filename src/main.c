@@ -2,14 +2,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <memory.h>
+#include "hash.h"
 
-typedef struct _a {
-	uint8_t used;
-	double x[3];
-	char y[5];
-} a;
+int main(int argc, char** argv) {
+	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
+	hash_build(ht, 32);
 
-//int main(int argc, char** argv) {
-//	a* array = (a*) calloc(10, sizeof(a));
-//	printf("0x%08x\n", array[2].used);
-//}
+	for (int i = 0; i < 32; i++) {
+		uint8_t value[PAYLOAD_SIZE];
+		value[0] = i;
+		value[2] = 3;
+
+		hash_put(ht, i + 1, value);
+	}
+}
