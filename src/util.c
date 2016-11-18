@@ -21,3 +21,6 @@ uint32_t popcount(uint32_t input) {
 	return result;
 }
 
+uint32_t hash(uint32_t v) {
+	return v * UINT32_C(2654435761);
+}

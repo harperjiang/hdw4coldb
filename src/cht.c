@@ -24,7 +24,7 @@
 /**
  * Test a bitmap location and set it to 1 if it is 0, return 1 if set
  */
-u_char bitmap_testset(uint64_t* bitmap, uint32_t offset) {
+uint8_t bitmap_testset(uint64_t* bitmap, uint32_t offset) {
 	uint32_t bitmap_index = offset / BITMAP_UNIT;
 	uint32_t bitmap_offset = offset % BITMAP_UNIT;
 
@@ -42,7 +42,7 @@ u_char bitmap_testset(uint64_t* bitmap, uint32_t offset) {
  */
 void bitmap_setpopcnt(uint64_t* bitmap, uint32_t offset, uint32_t value) {
 	bitmap[offset] &= BITMAP_EXTMASK;
-	bitmap[offset] |= value << BITMAP_UNIT;
+	bitmap[offset] |= ((uint64_t) value) << BITMAP_UNIT;
 }
 
 /**
@@ -51,7 +51,7 @@ void bitmap_setpopcnt(uint64_t* bitmap, uint32_t offset, uint32_t value) {
 uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t hval) {
 	uint32_t bitmap_index = hval / BITMAP_UNIT;
 	return (bitmap[bitmap_index] >> BITMAP_UNIT)
-			+ popcnt(bitmap[bitmap_index] & BITMAP_MASK);
+			+ popcount(bitmap[bitmap_index] & BITMAP_MASK);
 
 }
 
@@ -67,8 +67,8 @@ void cht_build(cht* cht, data* datas, uint32_t size) {
 	uint32_t bitsize = bitmap_size * BITMAP_UNIT;
 
 	cht->bitmap_size = bitmap_size;
-	cht->bitmap = (uint64_t*) malloc(sizeof(uint64_t) * bitmap_size);
-	cht->payloads = (data*) malloc(sizeof(data) * size);
+	cht->bitmap = (uint64_t*) calloc(bitmap_size, sizeof(uint64_t));
+
 	cht->overflow = (hashtable*) malloc(sizeof(hashtable));
 	hash_build(cht->overflow, size);
 
@@ -86,18 +86,18 @@ void cht_build(cht* cht, data* datas, uint32_t size) {
 	uint32_t sum = 0;
 	for (uint32_t i = 0; i < bitmap_size; i++) {
 		bitmap_setpopcnt(cht->bitmap, i, sum);
-		sum += popcnt(cht->bitmap[i] >> BITMAP_UNIT);
+		sum += popcount(cht->bitmap[i] >> BITMAP_UNIT);
 	}
 
 	// The second pass, allocate space and place items
-	cht->payloads = (data*) malloc(sizeof(data) * sum);
+	cht->payloads = (data*) calloc(sum, sizeof(data));
 	for (uint32_t i = 0; i < size; i++) {
 		uint32_t hval = hash(datas[i].key) % bitsize;
 		uint32_t item_offset = bitmap_popcnt(cht->bitmap, hval);
 		uint32_t counter = 0;
 
 		while (counter < THRESHOLD
-				&& cht->payloads[item_offset + counter] != NULL) {
+				&& cht->payloads + item_offset + counter != NULL) {
 			counter++;
 		}
 		if (counter == THRESHOLD) {
@@ -107,6 +107,9 @@ void cht_build(cht* cht, data* datas, uint32_t size) {
 			cht->payloads[item_offset + counter] = datas[i];
 		}
 	}
+
+	// Compress the overflow table if necessary
+	hash_organize(cht->overflow);
 }
 
 /**
