@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+//#define NODE_LINK
+
 #define PAYLOAD_SIZE 4
 #define RATIO 1.5
 
@@ -19,8 +21,10 @@
 typedef struct _entry {
 	uint32_t 		key;
 	uint8_t 		payload[PAYLOAD_SIZE];
+#ifdef NODE_LINK
 	// TODO This pointer can be replaced with an offset bit to save memory
 	struct _entry*	next;
+#endif
 } entry;
 
 typedef struct _hashtable {
@@ -30,7 +34,9 @@ typedef struct _hashtable {
 } hashtable;
 
 void 		hash_build(hashtable* ht, uint32_t bucket_size);
+// get first entry
 entry* 		hash_get(hashtable* ht, uint32_t key);
+void		hash_scan(hashtable* ht, uint32_t key, void (*scanfunc)(entry*));
 void 		hash_put(hashtable* ht, uint32_t key, uint8_t *value);
 uint32_t 	hash_size(hashtable* ht);
 void 		hash_organize(hashtable* ht);

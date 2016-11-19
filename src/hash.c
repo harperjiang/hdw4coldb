@@ -23,6 +23,7 @@ entry* hash_get(hashtable* ht, uint32_t key) {
 	assert(key != NULL);
 	uint32_t hval = hash(key) % ht->bucket_size;
 	entry* bucket = ht->buckets + hval;
+
 	while (bucket->key != 0 && bucket->key != key) {
 		hval = (hval + 1) % ht->bucket_size;
 		bucket = ht->buckets + hval;
@@ -30,25 +31,65 @@ entry* hash_get(hashtable* ht, uint32_t key) {
 	if (bucket->key == key) {
 		return bucket;
 	}
+
 	return NULL;
 }
 
+void hash_scan(hashtable* ht, uint32_t key, void (*scanfunc)(entry*)) {
+	assert(key != NULL);
+	uint32_t hval = hash(key) % ht->bucket_size;
+	entry* bucket = ht->buckets + hval;
+#ifndef NODE_LINK
+	while (bucket->key != 0) {
+		if (bucket->key == key) {
+			scanfunc(bucket);
+		}
+		hval = (hval + 1) % ht->bucket_size;
+		bucket = ht->buckets + hval;
+	}
+#else
+	while(bucket->key != 0 && bucket->key!=key) {
+		hval = (hval + 1) % ht->bucket_size;
+		bucket = ht->buckets + hval;
+	}
+	if(bucket->key == 0) {
+		return;
+	}
+	else {
+		while(bucket != null) {
+			scanfunc(bucket);
+			bucket = bucket->next;
+		}
+	}
+#endif
+}
+
 void hash_put(hashtable* ht, uint32_t key, uint8_t *value) {
+	// No zero key
 	assert(key != NULL);
 	if (ht->size * RATIO > ht->bucket_size) {
 		hash_organize(ht);
 	}
-	// No zero key
 
 	uint32_t hval = hash(key) % ht->bucket_size;
 	entry* bucket = ht->buckets + hval;
+
+#ifndef NODE_LINK
+	while (bucket->key != 0) {
+		hval = (hval + 1) % ht->bucket_size;
+		bucket = ht->buckets + hval;
+	}
+
+	ht->buckets[hval].key = key;
+	memcpy(ht->buckets[hval].payload, value, sizeof(uint8_t) * PAYLOAD_SIZE);
+#else
 	while (bucket->key != 0 && bucket->key != key) {
 		hval = (hval + 1) % ht->bucket_size;
 		bucket = ht->buckets + hval;
 	}
 
 	if (bucket->key == 0) {
-		// Not found
+		// Found an empty slot
 		ht->buckets[hval].key = key;
 		memcpy(ht->buckets[hval].payload, value,
 				sizeof(uint8_t) * PAYLOAD_SIZE);
@@ -71,6 +112,7 @@ void hash_put(hashtable* ht, uint32_t key, uint8_t *value) {
 		bucket->key = key;
 		memcpy(bucket->payload, value, sizeof(uint8_t) * PAYLOAD_SIZE);
 	}
+#endif
 	ht->size += 1;
 }
 

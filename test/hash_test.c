@@ -55,7 +55,13 @@ TEST( Hash, Put) {
 	}
 }
 
-TEST( Hash, PutDuplicate) {
+uint32_t scan_counter;
+
+void scan(entry* e) {
+	scan_counter++;
+}
+
+TEST( Hash, Scan) {
 	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
 	hash_build(ht, 40);
 
@@ -68,13 +74,11 @@ TEST( Hash, PutDuplicate) {
 	}
 
 	for (int i = 0; i < 40; i++) {
-		entry* ent = hash_get(ht, i % 4 + 1);
-		while (ent != NULL && ent->payload[0] != i) {
-			ent = ent->next;
-		}
-		ASSERT_TRUE(ent != NULL);
-		ASSERT_EQ(i, ent->payload[0]);
+		scan_counter = 0;
+		hash_scan(ht, i % 4 + 1, scan);
+		ASSERT_EQ(10, scan_counter);
 	}
+
 }
 
 TEST( Hash, Organize) {

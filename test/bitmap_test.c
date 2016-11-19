@@ -6,6 +6,7 @@
 extern bool bitmap_testset(uint64_t* bitmap, uint32_t offset);
 extern void bitmap_setpopcnt(uint64_t* bitmap, uint32_t offset, uint32_t value);
 extern uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t val);
+extern bool bitmap_test(uint64_t* bitmap, uint32_t offset);
 
 TEST( Bitmap, TestSet) {
 	uint64_t* bitmap = (uint64_t*) calloc(1024, sizeof(uint64_t));
@@ -29,6 +30,25 @@ TEST( Bitmap, TestSet) {
 	}
 
 	free(bitmap);
+}
+
+TEST(Bitmap, Test) {
+	uint64_t* bitmap = (uint64_t*) calloc(1024, sizeof(uint64_t));
+
+	for (uint64_t i = 0; i < 1024; i++) {
+		ASSERT_EQ(0, bitmap[i]);
+		bitmap[i] |= i;
+	}
+
+	for (uint32_t i = 0; i < 1024 * 32; i++) {
+		uint32_t num = i / 32;
+		uint32_t remainder = i % 32;
+		if (num & (1 << remainder)) {
+			ASSERT_TRUE(bitmap_test(bitmap, i));
+		} else {
+			ASSERT_FALSE(bitmap_test(bitmap, i));
+		}
+	}
 }
 
 TEST( Bitmap, SetPopcnt) {

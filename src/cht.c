@@ -38,6 +38,13 @@ bool bitmap_testset(uint64_t* bitmap, uint32_t offset) {
 	return !test;
 }
 
+bool bitmap_test(uint64_t* bitmap, uint32_t offset) {
+	uint32_t bitmap_index = offset / BITMAP_UNIT;
+	uint32_t bitmap_offset = offset % BITMAP_UNIT;
+	uint32_t mask = 1 << bitmap_offset;
+	return !BITMAP_MASK & bitmap[bitmap_index] & mask;
+}
+
 /**
  * Set the high 32 bit in bitmap at offset to the given value
  */
@@ -70,7 +77,7 @@ uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t hval) {
 /*
  * Build a CHT with given data, use two passing
  */
-void cht_build(cht* cht, entry* datas, uint32_t size) {
+void cht_build(cht* cht, cht_entry* datas, uint32_t size) {
 	uint32_t bitnumber = BITMAP_FACTOR * size;
 	uint32_t bitmap_size = bitnumber / BITMAP_UNIT;
 	bitmap_size += (bitnumber % BITMAP_UNIT) ? 1 : 0;
@@ -100,7 +107,7 @@ void cht_build(cht* cht, entry* datas, uint32_t size) {
 	}
 	cht->payload_size = sum;
 	// The second pass, allocate space and place items
-	cht->payloads = (entry*) calloc(sum, sizeof(entry));
+	cht->payloads = (cht_entry*) calloc(sum, sizeof(cht_entry));
 	for (uint32_t i = 0; i < size; i++) {
 		uint32_t hval = hash(datas[i].key) % bitsize;
 		uint32_t item_offset = bitmap_popcnt(cht->bitmap, hval);
@@ -121,9 +128,8 @@ void cht_build(cht* cht, entry* datas, uint32_t size) {
 
 /**
  * Looking for key in CHT
- * TODO Non-unique key
  */
-entry* cht_find(cht* cht, uint32_t key) {
+cht_entry* cht_find_uniq(cht* cht, uint32_t key) {
 	uint32_t hval = hash(key) % (cht->bitmap_size * BITMAP_UNIT);
 	uint32_t offset = bitmap_popcnt(cht->bitmap, hval);
 
@@ -132,9 +138,26 @@ entry* cht_find(cht* cht, uint32_t key) {
 		counter++;
 	}
 	if (counter == THRESHOLD) {
-		return hash_get(cht->overflow, key);
+		return (cht_entry*) hash_get(cht->overflow, key);
 	}
 	return cht->payloads + offset + counter;
+}
+
+void cht_scan(cht* cht, uint32_t key, void (*scanfunc)(cht_entry*)) {
+	uint32_t hval = hash(key) % (cht->bitmap_size * BITMAP_UNIT);
+	uint32_t offset = bitmap_popcnt(cht->bitmap, hval);
+
+	uint32_t counter = 0;
+	while (counter < THRESHOLD) {
+		if (cht->payloads[offset + counter].key == key) {
+			scanfunc(cht->payloads + offset + counter);
+		}
+		counter++;
+	}
+	hash_scan(cht->overflow, key, (void (*)(entry*))scanfunc);}
+
+bool cht_has(cht* cht, uint32_t key) {
+	return cht_find_uniq(cht, key) != NULL;
 }
 
 void cht_free(cht* cht) {
