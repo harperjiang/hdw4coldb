@@ -27,6 +27,8 @@ uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 	uint32_t *buffer = (uint32_t*) malloc(sizeof(uint32_t) * size);
 
 	while ((read = getline(&line, &len, f)) != -1) {
+		if (strlen(line) == 0)
+			continue;
 		uint32_t data = (uint32_t) strtoul(line, NULL, 10);
 		buffer[counter++] = data;
 

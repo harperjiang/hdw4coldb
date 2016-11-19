@@ -9,7 +9,7 @@
 #include <getopt.h>
 #include <ctype.h>
 #include <string.h>
-#include "perf.h"
+#include "../src/perf.h"
 
 void cht_scan_dummy(cht_entry *entry) {
 
