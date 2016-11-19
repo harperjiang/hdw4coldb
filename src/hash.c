@@ -20,7 +20,7 @@ void hash_build(hashtable* ht, uint32_t bucket_size) {
 
 entry* hash_get(hashtable* ht, uint32_t key) {
 	// No zero key is allowed
-	assert(key != NULL);
+	assert(key != 0);
 	uint32_t hval = hash(key) % ht->bucket_size;
 	entry* bucket = ht->buckets + hval;
 
@@ -36,7 +36,7 @@ entry* hash_get(hashtable* ht, uint32_t key) {
 }
 
 void hash_scan(hashtable* ht, uint32_t key, void (*scanfunc)(entry*)) {
-	assert(key != NULL);
+	assert(key != 0);
 	uint32_t hval = hash(key) % ht->bucket_size;
 	entry* bucket = ht->buckets + hval;
 #ifndef NODE_LINK
@@ -66,7 +66,7 @@ void hash_scan(hashtable* ht, uint32_t key, void (*scanfunc)(entry*)) {
 
 void hash_put(hashtable* ht, uint32_t key, uint8_t *value) {
 	// No zero key
-	assert(key != NULL);
+	assert(key != 0);
 	if (ht->size * RATIO > ht->bucket_size) {
 		hash_organize(ht);
 	}

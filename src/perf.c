@@ -8,9 +8,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <time.h>
 #include "perf.h"
 
-uint32_t* load_key(const char* filename, uint32_t* sizeholder) {
+uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 	FILE* f = fopen(filename, "r");
 
 	char * line = NULL;
@@ -44,9 +45,9 @@ uint32_t* load_key(const char* filename, uint32_t* sizeholder) {
 	return buffer;
 }
 
-void load_cht(cht* table, const char* filename) {
+void perf_buildcht(cht* table, const char* filename) {
 	uint32_t size;
-	uint32_t* keys = load_key(filename, &size);
+	uint32_t* keys = perf_loadkey(filename, &size);
 
 	cht_entry* entries = (cht_entry*) malloc(sizeof(cht_entry) * size);
 	for (uint32_t i = 0; i < size; i++) {
@@ -56,9 +57,9 @@ void load_cht(cht* table, const char* filename) {
 	cht_build(table, entries, size);
 }
 
-void load_hash(hashtable* table, const char* filename) {
+void perf_buildhash(hashtable* table, const char* filename) {
 	uint32_t size;
-	uint32_t* keys = load_key(filename, &size);
+	uint32_t* keys = perf_loadkey(filename, &size);
 
 	hash_build(table, size * RATIO + 1);
 
@@ -68,14 +69,28 @@ void load_hash(hashtable* table, const char* filename) {
 	}
 }
 
-void perf_warmupcht(cht* table, uint32_t size) {
+void perf_hash_access(hashtable* table, uint32_t size, uint32_t* keys) {
 	for (uint32_t i = 0; i < size; i++) {
-		cht_find_uniq(table, ((uint32_t) rand()));
+		hash_get(table, keys[i]);
 	}
 }
 
-void perf_warmuphash(hashtable* table, uint32_t size) {
+void perf_hash_scan(hashtable* table, uint32_t size, uint32_t* keys,
+		void (*scanfunc)(entry*)) {
 	for (uint32_t i = 0; i < size; i++) {
-		hash_get(table, ((uint32_t) rand()));
+		hash_scan(table, keys[i], scanfunc);
+	}
+}
+
+void perf_cht_access(cht* table, uint32_t size, uint32_t* keys) {
+	for (uint32_t i = 0; i < size; i++) {
+		cht_find_uniq(table, keys[i]);
+	}
+}
+
+void perf_cht_scan(cht* table, uint32_t size, uint32_t* keys,
+		void (*scanfunc)(cht_entry*)) {
+	for (uint32_t i = 0; i < size; i++) {
+		cht_scan(table, keys[i], scanfunc);
 	}
 }

@@ -12,8 +12,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 void gen_unique(uint32_t size, FILE* f) {
+	assert(size != 0);
 	srand(time(NULL));
 	uint32_t max = (uint32_t) 0xffffffffffffffff;
 	uint32_t fold = max / size;
@@ -34,6 +36,7 @@ void gen_unique(uint32_t size, FILE* f) {
 }
 
 void gen_near_unique(uint32_t size, FILE* f) {
+	assert(size != 0);
 	uint32_t copy_range = 5;
 	uint32_t unique_range = 10;
 	uint32_t unique_rate = 8;
@@ -64,20 +67,31 @@ void gen_near_unique(uint32_t size, FILE* f) {
 		pointer++;
 	}
 }
-/*
+
+void print_help() {
+	fprintf(stderr, "Usage: gentestdata [-u] -s <file_size> -o <file_name>\n");
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, "  -u \t\t\tGenerate unique keys\n");
+	fprintf(stderr, "  -s <size> \t\tNumber of keys to generate\n");
+	fprintf(stderr, "  -o <file_name \tOutput to file\n");
+}
+
 int main(int argc, char** argv) {
 	int c;
 	bool uniq = false;
-	int size;
-	char* outFile;
+	uint32_t size = 0;
+	char* outFile = NULL;
 
-	while ((c = getopt(argc, argv, "us:o:")) != -1)
+	while ((c = getopt(argc, argv, "us:o:h")) != -1)
 		switch (c) {
 		case 'u':
 			uniq = true;
 			break;
+		case 'h':
+			print_help();
+			abort();
 		case 's':
-			size = atoi(optarg);
+			size = strtoul(optarg, NULL, 10);
 			break;
 		case 'o':
 			outFile = optarg;
@@ -85,20 +99,28 @@ int main(int argc, char** argv) {
 		case '?':
 			if (optopt == 's' || optopt == 'o')
 				fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-			else if (isprint(optopt))
+			else if (isprint(optopt)) {
 				fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-			else
+			} else {
 				fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+			}
+			print_help();
 			return 1;
 		default:
 			abort();
 		}
+	// Check arguments
+	if (argc == 0 || size == 0) {
+		print_help();
+		exit(0);
+	}
 
-	FILE* file = fopen(outFile, "w");
+	FILE* file = (outFile == NULL) ? stdout : fopen(outFile, "w");
 	if (uniq)
 		gen_unique(size, file);
 	else
 		gen_near_unique(size, file);
-	fclose(file);
+	if (file != stdout)
+		fclose(file);
 }
-*/
+
