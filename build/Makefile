@@ -29,11 +29,11 @@ COMMON_OBJS = \
 ./src/util.o 
 
 EXE_OBJS = \
-./src/gentestdata.o \
+./src/gendata.o \
 ./src/main_xeon_single.o \
 
 EXES = \
-gentestdata \
+gendata \
 main_xeon_single \
 
 C_DEPS = \

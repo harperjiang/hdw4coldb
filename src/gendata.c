@@ -14,10 +14,15 @@
 #include <ctype.h>
 #include <assert.h>
 
+#define DEFAULT_RANGE 1000000
+
 void gen_unique(uint32_t size, FILE* f) {
 	assert(size != 0);
 	srand(time(NULL));
-	uint32_t max = (uint32_t) 0xffffffffffffffff;
+	uint32_t max = (uint32_t) 0xffffffff;
+	if (size * DEFAULT_RANGE < max) {
+		max = size * DEFAULT_RANGE;
+	}
 	uint32_t fold = max / size;
 
 	uint32_t counter = 0;
@@ -42,7 +47,11 @@ void gen_near_unique(uint32_t size, FILE* f) {
 	uint32_t unique_rate = 8;
 
 	srand(time(NULL));
-	uint32_t max = (uint32_t) 0xffffffffffffffff;
+	uint32_t max = (uint32_t) 0xffffffff;
+	if (size * DEFAULT_RANGE < max) {
+		max = size * DEFAULT_RANGE;
+	}
+
 	uint32_t fold = max / size;
 
 	uint32_t counter = 0;
@@ -69,7 +78,7 @@ void gen_near_unique(uint32_t size, FILE* f) {
 }
 
 void print_help() {
-	fprintf(stderr, "Usage: gentestdata [-u] -s <file_size> -o <file_name>\n");
+	fprintf(stderr, "Usage: gendata [-u] -s <file_size> -o <file_name>\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -u \t\t\tGenerate unique keys\n");
 	fprintf(stderr, "  -s <size> \t\tNumber of keys to generate\n");
