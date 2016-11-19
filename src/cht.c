@@ -42,7 +42,7 @@ bool bitmap_test(uint64_t* bitmap, uint32_t offset) {
 	uint32_t bitmap_index = offset / BITMAP_UNIT;
 	uint32_t bitmap_offset = offset % BITMAP_UNIT;
 	uint32_t mask = 1 << bitmap_offset;
-	return !BITMAP_MASK & bitmap[bitmap_index] & mask;
+	return BITMAP_MASK & bitmap[bitmap_index] & mask;
 }
 
 /**
