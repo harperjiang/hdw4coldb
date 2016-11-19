@@ -37,7 +37,12 @@ void gen_unique(uint32_t size, FILE* f) {
 			counter++;
 		}
 		pointer++;
+		if (pointer == max) {
+			fprintf(stderr, "Failed to generate enough numbers\n");
+			abort();
+		}
 	}
+
 }
 
 void gen_near_unique(uint32_t size, FILE* f) {
@@ -74,6 +79,10 @@ void gen_near_unique(uint32_t size, FILE* f) {
 			}
 		}
 		pointer++;
+		if (pointer == max) {
+			fprintf(stderr, "Failed to generate enough numbers\n");
+			abort();
+		}
 	}
 }
 
