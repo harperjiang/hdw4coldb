@@ -11,13 +11,10 @@
 #include <string.h>
 #include "../src/perf.h"
 
-void cht_scan_dummy(cht_entry *entry) {
+void scan_dummy(uint32_t key, uint8_t* payload) {
 
 }
 
-void hash_scan_dummy(entry* entry) {
-
-}
 //
 void hash_access(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
@@ -59,7 +56,7 @@ void hash_scan(const char* buildfile, const char* loadfile) {
 	// Run
 	printf("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
-	perf_hash_scan(table, loadsize, keys, hash_scan_dummy);
+	perf_hash_scan(table, loadsize, keys, scan_dummy);
 	clock_t end = clock();
 
 	double running_time = end - start / (CLOCKS_PER_SEC);
@@ -107,7 +104,7 @@ void cht_scan(const char* buildfile, const char* loadfile) {
 	// Run
 	printf("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
-	perf_cht_scan(table, loadsize, keys, cht_scan_dummy);
+	perf_cht_scan(table, loadsize, keys, scan_dummy);
 	clock_t end = clock();
 
 	double running_time = end - start / (CLOCKS_PER_SEC);

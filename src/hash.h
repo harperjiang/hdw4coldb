@@ -36,7 +36,7 @@ typedef struct _hashtable {
 void 		hash_build(hashtable* ht, uint32_t bucket_size);
 // get first entry
 entry* 		hash_get(hashtable* ht, uint32_t key);
-void		hash_scan(hashtable* ht, uint32_t key, void (*scanfunc)(entry*));
+void		hash_scan(hashtable* ht, uint32_t key, void (*scanfunc)(uint32_t,uint8_t*));
 void 		hash_put(hashtable* ht, uint32_t key, uint8_t *value);
 uint32_t 	hash_size(hashtable* ht);
 void 		hash_organize(hashtable* ht);

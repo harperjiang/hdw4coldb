@@ -57,7 +57,7 @@ TEST( Hash, Put) {
 
 uint32_t scan_counter;
 
-void scan(entry* e) {
+void scan(uint32_t key, uint8_t* payload) {
 	scan_counter++;
 }
 

@@ -30,6 +30,6 @@ typedef struct _cht {
 void 		cht_build(cht* cht, cht_entry* datas, uint32_t size);
 bool		cht_has(cht* cht, uint32_t key);
 cht_entry* 	cht_find_uniq(cht* cht, uint32_t key);
-void		cht_scan(cht* cht, uint32_t key, void (*scanfunc)(cht_entry*));
+void		cht_scan(cht* cht, uint32_t key, void (*scanfunc)(uint32_t, uint8_t*));
 void		cht_free(cht* cht);
 #endif /* CHT_H_ */

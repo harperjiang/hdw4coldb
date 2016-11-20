@@ -78,7 +78,7 @@ void perf_hash_access(hashtable* table, uint32_t size, uint32_t* keys) {
 }
 
 void perf_hash_scan(hashtable* table, uint32_t size, uint32_t* keys,
-		void (*scanfunc)(entry*)) {
+		void (*scanfunc)(uint32_t, uint8_t*)) {
 	for (uint32_t i = 0; i < size; i++) {
 		hash_scan(table, keys[i], scanfunc);
 	}
@@ -91,7 +91,7 @@ void perf_cht_access(cht* table, uint32_t size, uint32_t* keys) {
 }
 
 void perf_cht_scan(cht* table, uint32_t size, uint32_t* keys,
-		void (*scanfunc)(cht_entry*)) {
+		void (*scanfunc)(uint32_t, uint8_t*)) {
 	for (uint32_t i = 0; i < size; i++) {
 		cht_scan(table, keys[i], scanfunc);
 	}
