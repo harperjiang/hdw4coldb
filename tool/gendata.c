@@ -16,7 +16,7 @@
 
 #define DEFAULT_RANGE 1000000
 
-void gen_unique(uint32_t size, FILE* f, uint32_t ceiling) {
+void gen_unique(uint32_t size, FILE* f, int ceiling) {
 	assert(size != 0);
 	srand(time(NULL));
 	uint32_t max = (uint32_t) 0xffffffff;
@@ -47,7 +47,7 @@ void gen_unique(uint32_t size, FILE* f, uint32_t ceiling) {
 	}
 }
 
-void gen_near_unique(uint32_t size, FILE* f, uint32_t ceiling) {
+void gen_near_unique(uint32_t size, FILE* f, int ceiling) {
 	assert(size != 0);
 	uint32_t copy_range = 5;
 	uint32_t unique_range = 10;
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
 	bool uniq = false;
 	uint32_t size = 0;
 	char* outFile = NULL;
-	uint32_t ceiling = -1;
+	int ceiling = -1;
 
 	while ((c = getopt(argc, argv, "us:o:c:h")) != -1)
 		switch (c) {
@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
 			break;
 		case 'h':
 			print_help();
-			abort();
+			exit(1);
 		case 's':
 			size = strtoul(optarg, NULL, 10);
 			break;
