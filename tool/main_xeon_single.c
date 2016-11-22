@@ -125,10 +125,10 @@ int main(int argc, char** argv) {
 	int c;
 	bool uniq = false;
 	bool hash = false;
-	char* buildFile;
-	char* loadFile;
+	char* buildFile = NULL;
+	char* loadFile = NULL;
 
-	if (argc == 0) {
+	if (argc == 1) {
 		print_help();
 		exit(0);
 	}
@@ -160,6 +160,10 @@ int main(int argc, char** argv) {
 			print_help();
 			exit(1);
 		}
+	if (NULL == buildFile || NULL == loadFile) {
+		print_help();
+		exit(1);
+	}
 	switch ((hash & 1) << 1 | (uniq & 1)) {
 	case 0:
 		cht_scan(buildFile, loadFile);

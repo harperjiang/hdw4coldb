@@ -14,12 +14,13 @@
 uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 	FILE* f = fopen(filename, "r");
 
+	if (NULL == f) {
+		fprintf(stderr, "Cannot open file %s\n", filename);
+		exit(1);
+	}
 	char * line = NULL;
 	size_t len = 0;
 	ssize_t read;
-
-	if (f == NULL)
-		exit(EXIT_FAILURE);
 
 	uint32_t counter = 0;
 	uint32_t size = 1000;
@@ -31,7 +32,9 @@ uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 			continue;
 		uint32_t data = (uint32_t) strtoul(line, NULL, 10);
 		buffer[counter++] = data;
-
+		if(0 == data) {
+			abort();
+		}
 		if (counter == size) {
 			uint32_t newsize = size * 2;
 			uint32_t* new_buffer = (uint32_t*) malloc(
@@ -78,7 +81,7 @@ void perf_hash_access(hashtable* table, uint32_t size, uint32_t* keys) {
 }
 
 void perf_hash_scan(hashtable* table, uint32_t size, uint32_t* keys,
-		void (*scanfunc)(uint32_t, uint8_t*)) {
+		void (*scanfunc)( uint32_t, uint8_t*)) {
 	for (uint32_t i = 0; i < size; i++) {
 		hash_scan(table, keys[i], scanfunc);
 	}
@@ -91,7 +94,7 @@ void perf_cht_access(cht* table, uint32_t size, uint32_t* keys) {
 }
 
 void perf_cht_scan(cht* table, uint32_t size, uint32_t* keys,
-		void (*scanfunc)(uint32_t, uint8_t*)) {
+		void (*scanfunc)( uint32_t, uint8_t*)) {
 	for (uint32_t i = 0; i < size; i++) {
 		cht_scan(table, keys[i], scanfunc);
 	}
