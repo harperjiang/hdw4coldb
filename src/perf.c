@@ -57,7 +57,8 @@ void perf_buildcht(cht* table, const char* filename) {
 	cht_entry* entries = (cht_entry*) malloc(sizeof(cht_entry) * size);
 	for (uint32_t i = 0; i < size; i++) {
 		entries[i].key = keys[i];
-		memcpy(entries[i].payload, keys[i], sizeof(uint8_t) * PAYLOAD_SIZE);
+		memcpy(entries[i].payload, (uint8_t*) (keys + i),
+				sizeof(uint8_t) * PAYLOAD_SIZE);
 	}
 
 	cht_build(table, entries, size);

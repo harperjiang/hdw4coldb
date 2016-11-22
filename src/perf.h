@@ -11,9 +11,9 @@
 #include "hash.h"
 #include "cht.h"
 
-entry* 	perf_loadkey(const char* filename, uint32_t* sizeholder);
+uint32_t* 	perf_loadkey(const char* filename, uint32_t* sizeholder);
 
-void 	perf_buildcht(cht* table, const char* filename);
-void 	perf_buildhash(hashtable* table, const char* filename);
+void 		perf_buildcht(cht* table, const char* filename);
+void 		perf_buildhash(hashtable* table, const char* filename);
 
 #endif /* SRC_PERF_H_ */
