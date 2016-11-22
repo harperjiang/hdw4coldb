@@ -13,16 +13,16 @@
 
 int main(int argc, char** argv) {
 
-	cht* cht = (cht*) malloc(sizeof(cht));
+	cht* ct = (cht*) malloc(sizeof(cht));
 	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
 
-	perf_buildcht(cht, argv[1]);
+	perf_buildcht(ct, argv[1]);
 	perf_buildhash(ht, argv[1]);
 
-	printf("CHT: bitmap size %u\n", cht->bitmap_size);
-	printf("CHT: payload size %u\n", cht->payload_size);
-	printf("CHT: overflow bkt size %u\n", cht->overflow->bucket_size);
-	printf("CHT: overflow size %u\n", cht->overflow->size);
+	printf("CHT: bitmap size %u\n", ct->bitmap_size);
+	printf("CHT: payload size %u\n", ct->payload_size);
+	printf("CHT: overflow bkt size %u\n", ct->overflow->bucket_size);
+	printf("CHT: overflow size %u\n", ct->overflow->size);
 	printf("Hash: bucket size %u\n", ht->bucket_size);
 }
 
