@@ -37,7 +37,7 @@ uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 			uint32_t newsize = size * 2;
 			uint32_t* new_buffer = (uint32_t*) malloc(
 					sizeof(uint32_t) * newsize);
-			memcpy(new_buffer, buffer, size);
+			memcpy(new_buffer, buffer, size * sizeof(uint32_t));
 			uint32_t* oldbuffer = buffer;
 			buffer = new_buffer;
 			free(oldbuffer);
