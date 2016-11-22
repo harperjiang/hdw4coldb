@@ -7,9 +7,12 @@ import time
 
 max_rss = 0
 
+def print_quit:
+	print('Max RSS:'+str(max_rss))
+    sys.exit(0)
+    
 def signal_handler(signal, frame):
-        print('Max RSS:'+str(max_rss))
-        sys.exit(0)
+    print_quit()    
         
         
 if __name__ == "__main__":    
@@ -20,6 +23,8 @@ if __name__ == "__main__":
 			rss_out = subprocess.check_output(['ps','-C',sys.argv[1],'-o','rss']).splitlines()
 			if(len(rss_out)>1):
 				max_rss = max(max_rss,int(rss_out[1]))
+			else:
+				print_quit()
 		except Exception:
-			pass
+			print_quit()		
 		time.sleep(0.1)
