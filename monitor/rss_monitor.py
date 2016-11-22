@@ -7,12 +7,12 @@ import time
 
 max_rss = 0
 
-def print_quit:
+def print_quit():
 	print('Max RSS:'+str(max_rss))
-    sys.exit(0)
+	sys.exit(0)
     
 def signal_handler(signal, frame):
-    print_quit()    
+	print_quit()    
         
         
 if __name__ == "__main__":    
