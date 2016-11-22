@@ -62,6 +62,8 @@ void perf_buildcht(cht* table, const char* filename) {
 	}
 
 	cht_build(table, entries, size);
+	free(entries);
+	free(keys);
 }
 
 void perf_buildhash(hashtable* table, const char* filename) {
@@ -73,5 +75,6 @@ void perf_buildhash(hashtable* table, const char* filename) {
 	for (uint32_t i = 0; i < size; i++) {
 		hash_put(table, keys[i], (uint8_t*) (keys + i));
 	}
+	free(keys);
 }
 

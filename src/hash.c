@@ -12,10 +12,14 @@
 #include <memory.h>
 #include <assert.h>
 
-void hash_build(hashtable* ht, uint32_t bucket_size) {
+void hash_build(hashtable* ht, kv* entries, uint32_t size) {
 	ht->size = 0;
-	ht->buckets = (entry*) calloc(bucket_size, sizeof(entry));
-	ht->bucket_size = bucket_size;
+	ht->bucket_size = size * RATIO;
+	ht->buckets = (entry*) calloc(ht->bucket_size, sizeof(entry));
+
+	for (uint32_t i = 0; i < size; i++) {
+		hash_put(ht, entries[i].key, entries[i].payload);
+	}
 }
 
 entry* hash_get(hashtable* ht, uint32_t key) {
@@ -35,14 +39,15 @@ entry* hash_get(hashtable* ht, uint32_t key) {
 	return NULL;
 }
 
-void hash_scan(hashtable* ht, uint32_t key, void (*scanfunc)(uint32_t key, uint8_t* payload)) {
+void hash_scan(hashtable* ht, uint32_t key,
+		void (*scanfunc)(uint32_t key, uint8_t* payload)) {
 	assert(key != 0);
 	uint32_t hval = hash(key) % ht->bucket_size;
 	entry* bucket = ht->buckets + hval;
 #ifndef NODE_LINK
 	while (bucket->key != 0) {
 		if (bucket->key == key) {
-			scanfunc(bucket->key,bucket->payload);
+			scanfunc(bucket->key, bucket->payload);
 		}
 		hval = (hval + 1) % ht->bucket_size;
 		bucket = ht->buckets + hval;

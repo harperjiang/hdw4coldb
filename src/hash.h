@@ -16,6 +16,14 @@
 #define RATIO 1.5
 
 /**
+ * Data structure for key value pair
+ */
+typedef struct _kv {
+	uint32_t 	key;
+	uint8_t 	payload[PAYLOAD_SIZE];
+} kv;
+
+/**
  * Data structure for hash table
  */
 typedef struct _entry {
@@ -33,7 +41,7 @@ typedef struct _hashtable {
 	entry 		*buckets;
 } hashtable;
 
-void 		hash_build(hashtable* ht, uint32_t bucket_size);
+void 		hash_build(hashtable* ht, kv* datas, uint32_t bucket_size);
 // get first entry
 entry* 		hash_get(hashtable* ht, uint32_t key);
 void		hash_scan(hashtable* ht, uint32_t key, void (*scanfunc)(uint32_t,uint8_t*));

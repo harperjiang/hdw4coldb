@@ -78,7 +78,7 @@ uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t hval) {
 /*
  * Build a CHT with given data, use two passing
  */
-void cht_build(cht* cht, cht_entry* datas, uint32_t size) {
+void cht_build(cht* cht, kv* entries, uint32_t size) {
 	uint32_t bitnumber = BITMAP_FACTOR * size;
 	uint32_t bitmap_size = bitnumber / BITMAP_UNIT;
 	bitmap_size += (bitnumber % BITMAP_UNIT) ? 1 : 0;
@@ -88,11 +88,11 @@ void cht_build(cht* cht, cht_entry* datas, uint32_t size) {
 	cht->bitmap = (uint64_t*) calloc(bitmap_size, sizeof(uint64_t));
 
 	cht->overflow = (hashtable*) malloc(sizeof(hashtable));
-	hash_build(cht->overflow, size/OVERFLOW_INIT);
+	hash_build(cht->overflow, size / OVERFLOW_INIT);
 
 	// The first pass, fill in bitmap, use linear probing to resolve conflict
 	for (uint32_t i = 0; i < size; i++) {
-		uint32_t hval = hash(datas[i].key) % bitsize;
+		uint32_t hval = hash(entries[i].key) % bitsize;
 		uint32_t counter = 0;
 		while (counter < THRESHOLD
 				&& !bitmap_testset(cht->bitmap, hval + counter)) {
@@ -110,7 +110,7 @@ void cht_build(cht* cht, cht_entry* datas, uint32_t size) {
 	// The second pass, allocate space and place items
 	cht->payloads = (cht_entry*) calloc(sum, sizeof(cht_entry));
 	for (uint32_t i = 0; i < size; i++) {
-		uint32_t hval = hash(datas[i].key) % bitsize;
+		uint32_t hval = hash(entries[i].key) % bitsize;
 		uint32_t item_offset = bitmap_popcnt(cht->bitmap, hval);
 		uint32_t counter = 0;
 
@@ -118,11 +118,12 @@ void cht_build(cht* cht, cht_entry* datas, uint32_t size) {
 				&& cht->payloads[item_offset + counter].key != 0) {
 			counter++;
 		}
+		kv* entry = entries[i];
 		if (counter == THRESHOLD) {
 			// Goto overflow table
-			hash_put(cht->overflow, datas[i].key, datas[i].payload);
+			hash_put(cht->overflow, entry.key, entry.payload);
 		} else {
-			cht->payloads[item_offset + counter] = datas[i];
+			cht->payloads[item_offset + counter] = entry.payload;
 		}
 	}
 }
