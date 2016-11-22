@@ -69,7 +69,7 @@ void perf_buildhash(hashtable* table, const char* filename) {
 	uint8_t load[4];
 	for (uint32_t i = 0; i < size; i++) {
 		if (keys[i] == 0) {
-			fprintf("Found 0 key %d\n", i);
+			fprintf(stderr, "Found 0 key %d\n", i);
 			abort();
 		}
 		hash_put(table, keys[i], load);
