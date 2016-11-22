@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 #include "../src/perf.h"
 
 uint8_t* outer;
@@ -43,8 +44,9 @@ void hash_access(const char* buildfile, const char* loadfile) {
 	printf("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
 	for (uint32_t i = 0; i < loadsize; i++) {
-		uint8_t* innerRecord = hash_get(table, keys[i]);
-		process(keys[i], innerRecord, NULL);
+		entry* innerRecord = hash_get(table, keys[i]);
+		if(innerRecord != NULL) 
+			process(keys[i], innerRecord->payload, NULL);
 	}
 	clock_t end = clock();
 
