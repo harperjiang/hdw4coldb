@@ -11,8 +11,21 @@
 #include <string.h>
 #include "../src/perf.h"
 
-void scan_dummy(uint32_t key, uint8_t* payload) {
+uint8_t* outer;
 
+// Join and print
+void scan_dummy(uint32_t key, uint8_t* payload) {
+	for (int i = 0; i < PAYLOAD_SIZE; i++) {
+		assert(((uint8_t*) &key)[i] == payload[i]);
+	}
+	fprintf(stdout, "%u\n", key);
+}
+
+void process(uint32_t key, uint8_t* inner, uint8_t* outer) {
+	for (int i = 0; i < PAYLOAD_SIZE; i++) {
+		assert(inner[i] == outer[i]);
+	}
+	fprintf(stdout, "%u\n", key);
 }
 
 //
@@ -26,13 +39,13 @@ void hash_access(const char* buildfile, const char* loadfile) {
 	uint32_t loadsize;
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
-	// Warm up
-	printf("Warming up...\n");
-	perf_hash_access(table, loadsize, keys);
 	// Run
 	printf("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
-	perf_hash_access(table, loadsize, keys);
+	for (uint32_t i = 0; i < loadsize; i++) {
+		uint8_t* innerRecord = hash_get(table, keys[i]);
+		process(keys[i], innerRecord, NULL);
+	}
 	clock_t end = clock();
 
 	double running_time = end - start / (CLOCKS_PER_SEC);
@@ -50,13 +63,12 @@ void hash_scan(const char* buildfile, const char* loadfile) {
 	uint32_t loadsize;
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
-	// Warm up
-	printf("Warming up...\n");
-	perf_hash_access(table, loadsize, keys);
 	// Run
 	printf("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
-	perf_hash_scan(table, loadsize, keys, scan_dummy);
+	for (uint32_t i = 0; i < loadsize; i++) {
+		hash_scan(table, keys[i], scan_dummy);
+	}
 	clock_t end = clock();
 
 	double running_time = end - start / (CLOCKS_PER_SEC);
@@ -74,13 +86,12 @@ void cht_access(const char* buildfile, const char* loadfile) {
 	uint32_t loadsize;
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
-	// Warm up
-	printf("Warming up...\n");
-	perf_cht_access(table, loadsize, keys);
 	// Run
 	printf("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
-	perf_cht_access(table, loadsize, keys);
+	for (uint32_t i = 0; i < loadsize; i++) {
+		cht_find_uniq(table, keys[i]);
+	}
 	clock_t end = clock();
 
 	double running_time = end - start / (CLOCKS_PER_SEC);
@@ -98,13 +109,12 @@ void cht_scan(const char* buildfile, const char* loadfile) {
 	uint32_t loadsize;
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
-	// Warm up
-	printf("Warming up...\n");
-	perf_cht_access(table, loadsize, keys);
 	// Run
 	printf("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
-	perf_cht_scan(table, loadsize, keys, scan_dummy);
+	for (uint32_t i = 0; i < loadsize; i++) {
+		cht_scan(table, keys[i], scan_dummy);
+	}
 	clock_t end = clock();
 
 	double running_time = end - start / (CLOCKS_PER_SEC);

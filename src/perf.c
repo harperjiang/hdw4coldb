@@ -57,6 +57,7 @@ void perf_buildcht(cht* table, const char* filename) {
 	cht_entry* entries = (cht_entry*) malloc(sizeof(cht_entry) * size);
 	for (uint32_t i = 0; i < size; i++) {
 		entries[i].key = keys[i];
+		memcpy(entries[i].payload, keys[i], sizeof(uint8_t) * PAYLOAD_SIZE);
 	}
 
 	cht_build(table, entries, size);
@@ -68,38 +69,8 @@ void perf_buildhash(hashtable* table, const char* filename) {
 
 	hash_build(table, size * RATIO + 1);
 
-	uint8_t load[4];
 	for (uint32_t i = 0; i < size; i++) {
-		if (keys[i] == 0) {
-			fprintf(stderr, "Found 0 key %d\n", i);
-			abort();
-		}
-		hash_put(table, keys[i], load);
+		hash_put(table, keys[i], (uint8_t*) (keys + i));
 	}
 }
 
-void perf_hash_access(hashtable* table, uint32_t size, uint32_t* keys) {
-	for (uint32_t i = 0; i < size; i++) {
-		hash_get(table, keys[i]);
-	}
-}
-
-void perf_hash_scan(hashtable* table, uint32_t size, uint32_t* keys,
-		void (*scanfunc)( uint32_t, uint8_t*)) {
-	for (uint32_t i = 0; i < size; i++) {
-		hash_scan(table, keys[i], scanfunc);
-	}
-}
-
-void perf_cht_access(cht* table, uint32_t size, uint32_t* keys) {
-	for (uint32_t i = 0; i < size; i++) {
-		cht_find_uniq(table, keys[i]);
-	}
-}
-
-void perf_cht_scan(cht* table, uint32_t size, uint32_t* keys,
-		void (*scanfunc)( uint32_t, uint8_t*)) {
-	for (uint32_t i = 0; i < size; i++) {
-		cht_scan(table, keys[i], scanfunc);
-	}
-}
