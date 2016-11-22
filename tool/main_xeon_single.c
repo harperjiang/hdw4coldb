@@ -46,7 +46,7 @@ void hash_access(const char* buildfile, const char* loadfile) {
 	for (uint32_t i = 0; i < loadsize; i++) {
 		entry* innerRecord = hash_get(table, keys[i]);
 		if (innerRecord != NULL)
-			process(keys[i], innerRecord->payload, NULL);
+			process(keys[i], innerRecord->payload, (uint8_t*) (keys + i));
 	}
 	clock_t end = clock();
 
