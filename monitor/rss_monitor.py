@@ -15,7 +15,11 @@ def signal_handler(signal, frame):
 if __name__ == "__main__":    
 	signal.signal(signal.SIGINT, signal_handler)
 
-	while true:
-		rss_out = subprocess.check_output(['ps','-C',sys.argv[1],'-o','rss'])
-		max_rss = max(max_rss,int(rss_out.split('\n')[1]))
+	while True:
+		try:
+			rss_out = subprocess.check_output(['ps','-C',sys.argv[1],'-o','rss']).splitlines()
+			if(len(rss_out)>1):
+				max_rss = max(max_rss,int(rss_out[1]))
+		except Exception:
+			pass
 		time.sleep(0.1)
