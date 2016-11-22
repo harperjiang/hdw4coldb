@@ -16,7 +16,7 @@ TEST( CHT, Build) {
 
 	cht* table = (cht*) malloc(sizeof(cht));
 
-	cht_entry* entries = (cht_entry*) malloc(sizeof(cht_entry) * 125000);
+	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
 
 	for (int i = 0; i < 125000; i++) {
 		entries[i].key = (uint32_t) rand();
@@ -39,7 +39,7 @@ TEST( CHT, FindUnique) {
 
 	cht* table = (cht*) malloc(sizeof(cht));
 
-	cht_entry* entries = (cht_entry*) malloc(sizeof(cht_entry) * 125000);
+	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
 
 	uint32_t key_counter = 1;
 
@@ -70,7 +70,7 @@ TEST(CHT, Has) {
 	srand(time(NULL));
 
 	cht* table = (cht*) malloc(sizeof(cht));
-	cht_entry* entries = (cht_entry*) malloc(sizeof(cht_entry) * 125000);
+	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
 	uint32_t key_counter = 1;
 	for (int i = 0; i < 125000; i++) {
 		entries[i].key = key_counter++;
