@@ -18,6 +18,7 @@
 #define BITMAP_EXTMASK 	0xffffffff00000000
 #define BITMAP_MASK		0xffffffff
 
+#define OVERFLOW_INIT   1000
 /**===========================================================================
  * Bitmap operations
  =============================================================================*/
@@ -87,7 +88,7 @@ void cht_build(cht* cht, cht_entry* datas, uint32_t size) {
 	cht->bitmap = (uint64_t*) calloc(bitmap_size, sizeof(uint64_t));
 
 	cht->overflow = (hashtable*) malloc(sizeof(hashtable));
-	hash_build(cht->overflow, size);
+	hash_build(cht->overflow, size/OVERFLOW_INIT);
 
 	// The first pass, fill in bitmap, use linear probing to resolve conflict
 	for (uint32_t i = 0; i < size; i++) {
