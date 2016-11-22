@@ -32,9 +32,7 @@ uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 			continue;
 		uint32_t data = (uint32_t) strtoul(line, NULL, 10);
 		buffer[counter++] = data;
-		if(0 == data) {
-			abort();
-		}
+
 		if (counter == size) {
 			uint32_t newsize = size * 2;
 			uint32_t* new_buffer = (uint32_t*) malloc(
@@ -70,6 +68,10 @@ void perf_buildhash(hashtable* table, const char* filename) {
 
 	uint8_t load[4];
 	for (uint32_t i = 0; i < size; i++) {
+		if (keys[i] == 0) {
+			fprintf("Found 0 key %d\n", i);
+			abort();
+		}
 		hash_put(table, keys[i], load);
 	}
 }
