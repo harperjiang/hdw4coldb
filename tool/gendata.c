@@ -16,7 +16,7 @@
 
 #define DEFAULT_RANGE 1000000
 
-void gen_unique(uint32_t size, FILE* f) {
+void gen_unique(uint32_t size, FILE* f, uint32_t ceiling) {
 	assert(size != 0);
 	srand(time(NULL));
 	uint32_t max = (uint32_t) 0xffffffff;
@@ -33,7 +33,10 @@ void gen_unique(uint32_t size, FILE* f) {
 		if (((uint32_t) rand()) % rn < rm) {
 			// choose counter
 			uint32_t infold = ((uint32_t) rand()) % fold;
-			fprintf(f, "%u\n", infold * size + pointer);
+			uint32_t result = infold * size + pointer;
+			if (ceiling != -1)
+				result %= ceiling;
+			fprintf(f, "%u\n", result);
 			counter++;
 		}
 		pointer++;
@@ -42,10 +45,9 @@ void gen_unique(uint32_t size, FILE* f) {
 			abort();
 		}
 	}
-
 }
 
-void gen_near_unique(uint32_t size, FILE* f) {
+void gen_near_unique(uint32_t size, FILE* f, uint32_t ceiling) {
 	assert(size != 0);
 	uint32_t copy_range = 5;
 	uint32_t unique_range = 10;
@@ -70,8 +72,12 @@ void gen_near_unique(uint32_t size, FILE* f) {
 
 			if ((rand() % unique_range) > unique_rate) {
 				uint32_t copy = (((uint32_t) rand()) % copy_range) + 1;
+
+				uint32_t result = infold * size + pointer;
+				if (ceiling != -1)
+					result %= ceiling;
 				for (uint32_t i = 0; i < copy; i++)
-					fprintf(f, "%u\n", infold * size + pointer);
+					fprintf(f, "%u\n", result);
 				counter += copy;
 			} else {
 				fprintf(f, "%u\n", infold * size + pointer);
@@ -87,11 +93,12 @@ void gen_near_unique(uint32_t size, FILE* f) {
 }
 
 void print_help() {
-	fprintf(stderr, "Usage: gendata [-u] -s <file_size> -o <file_name>\n");
+	fprintf(stderr, "Usage: gendata [-u] -s <file_size> [-o <file_name>] [-c <ceil_num>]\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -u \t\t\tGenerate unique keys\n");
-	fprintf(stderr, "  -s <size> \t\tNumber of keys to generate\n");
-	fprintf(stderr, "  -o <file_name \tOutput to file\n");
+	fprintf(stderr, "  -s size \t\tNumber of keys to generate\n");
+	fprintf(stderr, "  -o file_name \tOutput to file\n");
+	fprintf(stderr, "  -c ceil_num \tThe largest number to generate\n");
 }
 
 int main(int argc, char** argv) {
@@ -99,8 +106,9 @@ int main(int argc, char** argv) {
 	bool uniq = false;
 	uint32_t size = 0;
 	char* outFile = NULL;
+	uint32_t ceiling = -1;
 
-	while ((c = getopt(argc, argv, "us:o:h")) != -1)
+	while ((c = getopt(argc, argv, "us:o:c:h")) != -1)
 		switch (c) {
 		case 'u':
 			uniq = true;
@@ -113,6 +121,9 @@ int main(int argc, char** argv) {
 			break;
 		case 'o':
 			outFile = optarg;
+			break;
+		case 'c':
+			ceiling = strtoul(optarg, NULL, 10);
 			break;
 		case '?':
 			if (optopt == 's' || optopt == 'o')
@@ -133,11 +144,11 @@ int main(int argc, char** argv) {
 		exit(0);
 	}
 
-	FILE* file = (outFile == NULL) ? stdout : fopen(outFile, "w");
+	FILE* file = (outFile == NULL ) ? stdout : fopen(outFile, "w");
 	if (uniq)
-		gen_unique(size, file);
+		gen_unique(size, file, ceiling);
 	else
-		gen_near_unique(size, file);
+		gen_near_unique(size, file, ceiling);
 	if (file != stdout)
 		fclose(file);
 }

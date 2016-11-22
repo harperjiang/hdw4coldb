@@ -40,24 +40,28 @@ int main(int argc, char** argv) {
 	uint32_t totalRatio = key1ratio + key2ratio;
 
 	uint32_t counter = 0;
+	bool leftDrained = false;
+	bool rightDrained = false;
+
 	while (counter < size) {
-		if (totalRatio == 0) {
+		if (leftDrained && rightDrained) {
 			fprintf(stderr, "no line in either file\n");
 			abort();
 		}
-		if ((rand() % totalRatio) <= key1ratio) {
+		uint32_t r = rand() % totalRatio;
+		if (rightDrained || (!leftDrained && r <= key1ratio)) {
 			read = getline(&line, &len, key1f);
 			if (read == -1) {
-				totalRatio -= key1ratio;
+				leftDrained = true;
 				continue;
 			} else {
 				fprintf(stdout, "%s", line);
 				counter++;
 			}
-		} else {
+		} else if (leftDrained || (!rightDrained && r > key1ratio)) {
 			read = getline(&line, &len, key2f);
 			if (read == -1) {
-				totalRatio -= key2ratio;
+				rightDrained = true;
 				continue;
 			} else {
 				fprintf(stdout, "%s", line);

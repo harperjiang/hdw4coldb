@@ -112,12 +112,26 @@ void cht_scan(const char* buildfile, const char* loadfile) {
 	printf("cht scan running time: %f\n", running_time);
 }
 
+void print_help() {
+	fprintf(stdout,
+			"Usage: main_xeon_single [-h] [-u] -b <key_file> -l <workload>\n");
+	fprintf(stdout, " -h \tUse hash\n");
+	fprintf(stdout, " -u \tUnique key\n");
+	fprintf(stdout, " -b file Key file for building table\n");
+	fprintf(stdout, " -l file Workload file\n");
+}
+
 int main(int argc, char** argv) {
 	int c;
 	bool uniq = false;
 	bool hash = false;
 	char* buildFile;
 	char* loadFile;
+
+	if (argc == 0) {
+		print_help();
+		exit(0);
+	}
 
 	while ((c = getopt(argc, argv, "hub:l:")) != -1)
 		switch (c) {
@@ -140,9 +154,11 @@ int main(int argc, char** argv) {
 				fprintf(stderr, "Unknown option `-%c'.\n", optopt);
 			else
 				fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+			print_help();
 			return 1;
 		default:
-			abort();
+			print_help();
+			exit(1);
 		}
 	switch ((hash & 1) << 1 | (uniq & 1)) {
 	case 0:
