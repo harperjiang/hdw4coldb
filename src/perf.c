@@ -30,7 +30,7 @@ uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 	while ((read = getline(&line, &len, f)) != -1) {
 		if (strlen(line) == 0)
 			continue;
-		uint32_t data = (uint32_t) strtoul(line, NULL, 10);
+		uint32_t data = (uint32_t) strtou(line, NULL, 10);
 		buffer[counter++] = data;
 
 		if (counter == size) {
@@ -44,7 +44,7 @@ uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 	}
 
 	fclose(f);
-	*sizeholder = size;
+	*sizeholder = counter;
 	return buffer;
 }
 
