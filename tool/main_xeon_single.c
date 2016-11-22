@@ -44,7 +44,7 @@ void hash_access(const char* buildfile, const char* loadfile) {
 	clock_t start = clock();
 	for (uint32_t i = 0; i < loadsize; i++) {
 		uint8_t* innerRecord = hash_get(table, keys[i]);
-		process(keys[i], innerRecord, NULL);
+		process(keys[i], innerRecord, (uint8_t*) (keys + i));
 	}
 	clock_t end = clock();
 
@@ -90,7 +90,8 @@ void cht_access(const char* buildfile, const char* loadfile) {
 	printf("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
 	for (uint32_t i = 0; i < loadsize; i++) {
-		cht_find_uniq(table, keys[i]);
+		cht_entry* entry = cht_find_uniq(table, keys[i]);
+		process(keys[i], (uint8_t*) (keys + i), entry->payload);
 	}
 	clock_t end = clock();
 
