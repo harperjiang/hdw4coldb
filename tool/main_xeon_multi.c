@@ -14,104 +14,157 @@
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "../src/perf.h"
 
-uint8_t* outer;
+typedef struct _thread_arg {
+	void* table;
+	uint32_t* key;
+	uint32_t start;
+	uint32_t stop;
+	uint32_t result;
+	sem_t* sema;
+} thread_arg;
 
-// Join and print
-void scan_dummy(uint32_t key, uint8_t* payload) {
-	for (int i = 0; i < PAYLOAD_SIZE; i++) {
-		assert(((uint8_t* ) &key)[i] == payload[i]);
-	}
-	fprintf(stdout, "%u\n", key);
+// Join and print num matched
+
+void scan_func(uint32_t key, uint8_t* outer, uint8_t* inner, void*params) {
+	((thread_arg*) params)->result++;
 }
 
-void process(uint32_t key, uint8_t* outer, uint8_t* inner) {
-	for (int i = 0; i < PAYLOAD_SIZE; i++) {
-		assert(inner[i] == outer[i]);
-	}
-	fprintf(stdout, "%u\n", key);
+void process(uint32_t key, uint8_t* outer, uint8_t* inner, uint32_t* result) {
+	(*result)++;
 }
 
-//
-void hash_access(const char* buildfile, const char* loadfile,
-		uint32_t numthread) {
-	srand(time(NULL));
-	printf("Running hash...\n");
-	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
+void partition(uint32_t* key, uint32_t keysize, uint32_t pnum,
+		thread_arg* partitions) {
 
-	perf_buildhash(table, buildfile);
-
-	uint32_t loadsize;
-	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
-
-	// Run
-	printf("Running, load size %u...\n", loadsize);
-	clock_t start = clock();
-	for (uint32_t i = 0; i < loadsize; i++) {
-		entry* outerRecord = hash_get(table, keys[i]);
-		if (outerRecord != NULL)
-			process(keys[i], outerRecord->payload, (uint8_t*) (keys + i));
-	}
-	clock_t end = clock();
-
-	double running_time = (end - start) / (CLOCKS_PER_SEC);
-
-	printf("hash running time: %f\n", running_time);
 }
 
-void hash_scan(const char* buildfile, const char* loadfile, uint32_t numthread) {
-	srand(time(NULL));
-	printf("Running hash scan...\n");
-	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
+void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
+		void* table, uint32_t* keys, uint32_t keysize,
+		void (*thread_func)(void*)) {
+	sem_t semaphore;
+	sem_init(&semaphore, 0, 0);
 
-	perf_buildhash(table, buildfile);
+	partition(keys, keysize, numthread, args);
 
-	uint32_t loadsize;
-	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
-
-	// Run
-	printf("Running, load size %u...\n", loadsize);
-	clock_t start = clock();
-	for (uint32_t i = 0; i < loadsize; i++) {
-		hash_scan(table, keys[i], scan_dummy);
+	for (uint32_t i = 0; i < numthread; i++) {
+		args[i].table = table;
+		args[i].sema = &semaphore;
+		pthread_create(threads + i, NULL, thread_func, (void*) (args + i));
 	}
-	clock_t end = clock();
 
-	double running_time = (end - start) / (CLOCKS_PER_SEC);
-
-	printf("hash scan running time: %f\n", running_time);
+	// Wait for end
+	for (uint32_t i = 0; i < numthread; i++) {
+		sem_wait(&semaphore);
+	}
+	sem_destroy(&semaphore);
 }
 
-void cht_access(const char* buildfile, const char* loadfile, uint32_t numthread) {
-	srand(time(NULL));
-	printf("Running cht...\n");
-	cht* table = (cht*) malloc(sizeof(cht));
-
-	perf_buildcht(table, buildfile);
-
-	uint32_t loadsize;
-	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
-
-	// Run
-	printf("Running, load size %u...\n", loadsize);
-	clock_t start = clock();
-	for (uint32_t i = 0; i < loadsize; i++) {
-		cht_entry* entry = cht_find_uniq(table, keys[i]);
+void xm_hash_thread_access(void* arg) {
+	thread_arg *context = (thread_arg*) arg;
+	context->result = 0;
+	for (uint32_t i = context->start; i < context->stop; i++) {
+		entry* entry = hash_get(context->table, context->key[i]);
 		if (NULL != entry) {
-			process(keys[i], entry->payload, (uint8_t*) (keys + i));
+			process(context->key[i], NULL/*should be outer payload here*/,
+					entry->payload, &context->result);
 		}
 	}
-	clock_t end = clock();
-
-	double running_time = (end - start) / (CLOCKS_PER_SEC);
-
-	printf("cht running time: %f\n", running_time);
+	sem_post(context->sema);
+	pthread_exit(NULL);
 }
 
-void cht_scan(const char* buildfile, const char* loadfile, uint32_t numthread) {
+void xm_hash_thread_scan(void *arg) {
+	thread_arg *context = (thread_arg*) arg;
+	context->result = 0;
+
+	scan_context sc;
+	sc.func = scan_func;
+	sc.params = context;
+	for (uint32_t i = context->start; i < context->stop; i++) {
+		sc.inner = NULL;
+		hash_scan(context->table, context->key[i], &sc);
+	}
+	sem_post(context->sema);
+	pthread_exit(NULL);
+}
+
+void xm_hash(const char* buildfile, const char* loadfile, uint32_t numthread,
+bool scan) {
 	srand(time(NULL));
-	printf("Running cht scan...\n");
+	log_info("Running hash...\n");
+	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
+
+	perf_buildhash(table, buildfile);
+
+	uint32_t loadsize;
+	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
+
+	// Run
+	log_info("Running, load size %u...\n", loadsize);
+
+	timer_token token;
+	timer_start(&token);
+
+	pthread_t threads[numthread];
+	thread_arg args[numthread];
+
+	if (scan)
+		run_thread(threads, args, numthread, table, keys, loadsize,
+				xm_hash_thread_scan);
+	else
+		run_thread(threads, args, numthread, table, keys, loadsize,
+				xm_hash_thread_access);
+
+	// Collect result
+	uint32_t match_counter = 0;
+	for (uint32_t i = 0; i < numthread; i++) {
+		match_counter += args[i].result;
+	}
+
+	timer_stop(&token);
+
+	log_info("hash running time: %u, matched row %u\n", token.wallclockms,
+			match_counter);
+
+	free(keys);
+}
+
+void xm_cht_thread_access(void* arg) {
+	thread_arg *context = (thread_arg*) arg;
+	context->result = 0;
+	for (uint32_t i = context->start; i < context->stop; i++) {
+		cht_entry* entry = cht_find_uniq(context->table, context->key[i]);
+		if (NULL != entry) {
+			process(context->key[i], NULL/*should be outer payload here*/,
+					entry->payload, &context->result);
+		}
+	}
+	sem_post(context->sema);
+	pthread_exit(NULL);
+}
+
+void xm_cht_thread_scan(void *arg) {
+	thread_arg *context = (thread_arg*) arg;
+	context->result = 0;
+
+	scan_context sc;
+	sc.func = scan_func;
+	sc.params = context;
+	for (uint32_t i = context->start; i < context->stop; i++) {
+		sc.inner = NULL;
+		cht_scan(context->table, context->key[i], &sc);
+	}
+	sem_post(context->sema);
+	pthread_exit(NULL);
+}
+
+void xm_cht(const char* buildfile, const char* loadfile, uint32_t numthread,
+bool scan) {
+	srand(time(NULL));
+	log_info("Running cht...\n");
 	cht* table = (cht*) malloc(sizeof(cht));
 
 	perf_buildcht(table, buildfile);
@@ -120,16 +173,33 @@ void cht_scan(const char* buildfile, const char* loadfile, uint32_t numthread) {
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
 	// Run
-	printf("Running, load size %u...\n", loadsize);
-	clock_t start = clock();
-	for (uint32_t i = 0; i < loadsize; i++) {
-		cht_scan(table, keys[i], scan_dummy);
+	log_info("Running, load size %u...\n", loadsize);
+
+	timer_token token;
+	timer_start(&token);
+
+	pthread_t threads[numthread];
+	thread_arg args[numthread];
+
+	if (scan)
+		run_thread(threads, args, numthread, table, keys, loadsize,
+				xm_cht_thread_scan);
+	else
+		run_thread(threads, args, numthread, table, keys, loadsize,
+				xm_cht_thread_access);
+
+	// Collect result
+	uint32_t match_counter = 0;
+	for (uint32_t i = 0; i < numthread; i++) {
+		match_counter += args[i].result;
 	}
-	clock_t end = clock();
 
-	double running_time = (end - start) / (CLOCKS_PER_SEC);
+	timer_stop(&token);
 
-	printf("cht scan running time: %f\n", running_time);
+	log_info("cht running time: %u, threads: %u, matched row %u\n",
+			token.wallclockms, numthread, match_counter);
+
+	free(keys);
 }
 
 void print_help() {
@@ -173,7 +243,8 @@ int main(int argc, char** argv) {
 			numthread = strtoul(optarg, NULL, 10);
 			break;
 		case '?':
-			if (optopt == 's' || optopt == 'b' || optopt == 'l' || optopt = 't')
+			if (optopt == 's' || optopt == 'b' || optopt == 'l'
+					|| optopt == 't')
 				fprintf(stderr, "Option -%c requires an argument.\n", optopt);
 			else if (isprint(optopt))
 				fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -191,16 +262,16 @@ int main(int argc, char** argv) {
 	}
 	switch ((hash & 1) << 1 | (uniq & 1)) {
 	case 0:
-		cht_scan(buildFile, loadFile, numthread);
+		xm_cht(buildFile, loadFile, numthread, true);
 		break;
 	case 1:
-		cht_access(buildFile, loadFile, numthread);
+		xm_cht(buildFile, loadFile, numthread, false);
 		break;
 	case 2:
-		hash_scan(buildFile, loadFile, numthread);
+		xm_hash_scan(buildFile, loadFile, numthread);
 		break;
 	case 3:
-		hash_access(buildFile, loadFile, numthread);
+		xm_hash_access(buildFile, loadFile, numthread);
 		break;
 	default:
 		abort();

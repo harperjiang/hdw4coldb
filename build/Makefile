@@ -24,6 +24,7 @@ C_SRCS = \
 ../tool/gentestdata.c \
 ../tool/mergedata.c \
 ../tool/main_xeon_single.c \
+../tool/main_xeon_multi.c \
 ../tool/space_analysis.c \
 
 COMMON_OBJS = \
@@ -40,12 +41,14 @@ EXE_OBJS = \
 ./tool/gendata.o \
 ./tool/mergedata.o \
 ./tool/main_xeon_single.o \
+./tool/main_xeon_multi.o \
 ./tool/space_analysis.o \
 
 EXES = \
 gendata \
 mergedata \
 main_xeon_single \
+main_xeon_multi \
 space_analysis \
 
 C_DEPS = \
@@ -60,6 +63,7 @@ C_DEPS = \
 ./tool/gentestdata.d \
 ./tool/mergedata.d \
 ./tool/main_xeon_single.d \
+./tool/main_xeon_multi.d \
 ./tool/space_analysis.d \ 
 
 default: $(EXES)

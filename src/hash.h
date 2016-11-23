@@ -23,11 +23,12 @@ typedef struct _kv {
 	uint8_t payload[PAYLOAD_SIZE];
 } kv;
 
-typedef void (*scanfunc)(uint32_t, uint8_t*, uint8_t*);
+typedef void (*scanfunc)(uint32_t, uint8_t*, uint8_t*, void*params);
 
 typedef struct _scan_context {
 	uint8_t* inner;
 	scanfunc func;
+	void* params;
 } scan_context;
 
 /**

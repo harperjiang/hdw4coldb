@@ -17,7 +17,7 @@
 // Join and print num matched
 uint32_t match_counter;
 
-void scan_dummy(uint32_t key, uint8_t* outer, uint8_t* inner) {
+void scan_dummy(uint32_t key, uint8_t* outer, uint8_t* inner, void*params) {
 	match_counter++;
 }
 

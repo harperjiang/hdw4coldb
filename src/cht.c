@@ -163,7 +163,8 @@ void cht_scan(cht* cht, uint32_t key, scan_context *context) {
 	while (counter < THRESHOLD) {
 		if (cht->payloads[offset + counter].key == key) {
 			cht_entry entry = cht->payloads[offset + counter];
-			context->func(entry.key, entry.payload, context->inner);
+			context->func(entry.key, entry.payload, context->inner,
+					context->params);
 		}
 		counter++;
 	}

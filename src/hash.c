@@ -56,7 +56,8 @@ void hash_scan(hashtable* ht, uint32_t key, scan_context* context) {
 #ifndef NODE_LINK
 	while (bucket->key != 0) {
 		if (bucket->key == key) {
-			context->func(bucket->key, bucket->payload, context->inner);
+			context->func(bucket->key, bucket->payload, context->inner,
+					context->params);
 		}
 		hval = (hval + 1) % ht->bucket_size;
 		bucket = ht->buckets + hval;
