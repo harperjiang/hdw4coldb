@@ -8,7 +8,7 @@
 #include "timer.h"
 
 void timer_start(timer_token* token) {
-	gettimeofday(&token->start, NULL);
+	gettimeofday(&(token->start), NULL);
 }
 
 void timer_stop(timer_token* token) {

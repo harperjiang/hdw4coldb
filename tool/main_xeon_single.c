@@ -28,6 +28,7 @@ void process(uint32_t key, uint8_t* outer, uint8_t* inner) {
 //
 void xs_hash_access(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
+	match_counter = 0;
 	log_info("Running hash...\n");
 	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
 
@@ -57,6 +58,7 @@ void xs_hash_access(const char* buildfile, const char* loadfile) {
 
 void xs_hash_scan(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
+	match_counter = 0;
 	log_info("Running hash scan...\n");
 	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
 
@@ -88,6 +90,7 @@ void xs_hash_scan(const char* buildfile, const char* loadfile) {
 
 void xs_cht_access(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
+	match_counter = 0;
 	log_info("Running cht...\n");
 	cht* table = (cht*) malloc(sizeof(cht));
 
@@ -118,6 +121,7 @@ void xs_cht_access(const char* buildfile, const char* loadfile) {
 
 void xs_cht_scan(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
+	match_counter = 0;
 	log_info("Running cht scan...\n");
 	cht* table = (cht*) malloc(sizeof(cht));
 

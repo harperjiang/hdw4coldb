@@ -12,13 +12,13 @@
 #include "hash.h"
 #include "util.h"
 
-#define BITMAP_FACTOR 	8
+#define BITMAP_FACTOR 	4
 #define BITMAP_EXT 		32
 #define BITMAP_UNIT 	32
 #define BITMAP_EXTMASK 	0xffffffff00000000
 #define BITMAP_MASK		0xffffffff
 
-#define OVERFLOW_INIT   1000
+#define OVERFLOW_INIT   10000
 /**===========================================================================
  * Bitmap operations
  =============================================================================*/
