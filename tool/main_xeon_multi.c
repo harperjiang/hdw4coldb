@@ -64,7 +64,7 @@ void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
 	sem_destroy(&semaphore);
 }
 
-void xm_hash_thread_access(void* arg) {
+void* xm_hash_thread_access(void* arg) {
 	thread_arg *context = (thread_arg*) arg;
 	context->result = 0;
 	for (uint32_t i = context->start; i < context->stop; i++) {
@@ -78,7 +78,7 @@ void xm_hash_thread_access(void* arg) {
 	pthread_exit(NULL);
 }
 
-void xm_hash_thread_scan(void *arg) {
+void* xm_hash_thread_scan(void *arg) {
 	thread_arg *context = (thread_arg*) arg;
 	context->result = 0;
 
@@ -134,7 +134,7 @@ bool scan) {
 	free(keys);
 }
 
-void xm_cht_thread_access(void* arg) {
+void* xm_cht_thread_access(void* arg) {
 	thread_arg *context = (thread_arg*) arg;
 	context->result = 0;
 	for (uint32_t i = context->start; i < context->stop; i++) {
@@ -148,7 +148,7 @@ void xm_cht_thread_access(void* arg) {
 	pthread_exit(NULL);
 }
 
-void xm_cht_thread_scan(void *arg) {
+void* xm_cht_thread_scan(void *arg) {
 	thread_arg *context = (thread_arg*) arg;
 	context->result = 0;
 
