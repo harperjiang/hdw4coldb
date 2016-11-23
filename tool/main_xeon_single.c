@@ -12,6 +12,7 @@
 #include <assert.h>
 #include "../src/perf.h"
 #include "../src/log.h"
+#include "../src/timer.h"
 
 // Join and print num matched
 uint32_t match_counter;
@@ -37,18 +38,18 @@ void xs_hash_access(const char* buildfile, const char* loadfile) {
 
 	// Run
 	log_info("Running, load size %u...\n", loadsize);
-	clock_t start = clock();
+
+	timer_token token;
+	timer_start(&token);
 
 	for (uint32_t i = 0; i < loadsize; i++) {
 		entry* innerRecord = hash_get(table, keys[i]);
 		if (innerRecord != NULL)
 			process(keys[i], (uint8_t*) (keys + i), innerRecord->payload);
 	}
-	clock_t end = clock();
+	uint64_t runtimems = timer_stop(&token);
 
-	double running_time = end - start / (CLOCKS_PER_SEC);
-
-	log_info("hash running time: %f, matched row %u\n", running_time,
+	log_info("hash running time: %f, matched row %u\n", runtimems,
 			match_counter);
 
 	free(keys);
@@ -66,19 +67,20 @@ void xs_hash_scan(const char* buildfile, const char* loadfile) {
 
 	// Run
 	log_info("Running, load size %u...\n", loadsize);
-	clock_t start = clock();
 
 	scan_context context;
 	context.func = scan_dummy;
 
+	timer_token token;
+	timer_start(&token);
+
 	for (uint32_t i = 0; i < loadsize; i++) {
 		hash_scan(table, keys[i], &context);
 	}
-	clock_t end = clock();
 
-	double running_time = end - start / (CLOCKS_PER_SEC);
+	uint64_t runtimems = timer_stop(&token);
 
-	log_info("hash scan running time: %f, matched row %u\n", running_time,
+	log_info("hash scan running time: %f, matched row %u\n", runtimems,
 			match_counter);
 
 	free(keys);
@@ -96,18 +98,19 @@ void xs_cht_access(const char* buildfile, const char* loadfile) {
 
 	// Run
 	log_info("Running, load size %u...\n", loadsize);
-	clock_t start = clock();
+
+	timer_token token;
+	timer_start(&token);
+
 	for (uint32_t i = 0; i < loadsize; i++) {
 		cht_entry* entry = cht_find_uniq(table, keys[i]);
 		if (NULL != entry) {
 			process(keys[i], (uint8_t*) (keys + i), entry->payload);
 		}
 	}
-	clock_t end = clock();
+	uint64_t runtimems = timer_stop(&token);
 
-	double running_time = end - start / (CLOCKS_PER_SEC);
-
-	log_info("cht running time: %f, matched row %u\n", running_time,
+	log_info("cht running time: %f, matched row %u\n", runtimems,
 			match_counter);
 
 	free(keys);
@@ -129,15 +132,16 @@ void xs_cht_scan(const char* buildfile, const char* loadfile) {
 	scan_context context;
 	context.func = scan_dummy;
 
-	clock_t start = clock();
+	timer_token token;
+	timer_start(&token);
+
 	for (uint32_t i = 0; i < loadsize; i++) {
 		cht_scan(table, keys[i], &context);
 	}
-	clock_t end = clock();
 
-	double running_time = end - start / (CLOCKS_PER_SEC);
+	uint64_t runtimems = timer_stop(&token);
 
-	log_info("cht scan running time: %f, matched row %u\n", running_time,
+	log_info("cht scan running time: %f, matched row %u\n", runtimems,
 			match_counter);
 
 	free(keys);

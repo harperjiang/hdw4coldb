@@ -20,6 +20,7 @@ C_SRCS = \
 ../src/util.c \
 ../src/cat.c \
 ../src/log.c \
+../src/timer.c \
 ../tool/gentestdata.c \
 ../tool/mergedata.c \
 ../tool/main_xeon_single.c \
@@ -32,7 +33,8 @@ COMMON_OBJS = \
 ./src/hash.o \
 ./src/perf.o \
 ./src/log.o \
-./src/util.o 
+./src/util.o \
+./src/timer.o \
 
 EXE_OBJS = \
 ./tool/gendata.o \
@@ -54,6 +56,7 @@ C_DEPS = \
 ./src/perf.d \
 ./src/util.d \
 ./src/log.d \
+./src/timer.d \
 ./tool/gentestdata.d \
 ./tool/mergedata.d \
 ./tool/main_xeon_single.d \
