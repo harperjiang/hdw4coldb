@@ -8,7 +8,9 @@
 #ifndef SRC_TIMER_H_
 #define SRC_TIMER_H_
 
-#include <time.h>
+#include <sys/time.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 typedef struct _timer_token {
 	struct timeval 	start;
