@@ -47,9 +47,9 @@ void xs_hash_access(const char* buildfile, const char* loadfile) {
 		if (innerRecord != NULL)
 			process(keys[i], (uint8_t*) (keys + i), innerRecord->payload);
 	}
-	uint64_t runtimems = timer_stop(&token);
+	timer_stop(&token);
 
-	log_info("hash running time: %f, matched row %u\n", runtimems,
+	log_info("hash running time: %f, matched row %u\n", token.wallclockms,
 			match_counter);
 
 	free(keys);
@@ -78,9 +78,9 @@ void xs_hash_scan(const char* buildfile, const char* loadfile) {
 		hash_scan(table, keys[i], &context);
 	}
 
-	uint64_t runtimems = timer_stop(&token);
+	timer_stop(&token);
 
-	log_info("hash scan running time: %f, matched row %u\n", runtimems,
+	log_info("hash scan running time: %f, matched row %u\n", token.wallclockms,
 			match_counter);
 
 	free(keys);
@@ -108,9 +108,9 @@ void xs_cht_access(const char* buildfile, const char* loadfile) {
 			process(keys[i], (uint8_t*) (keys + i), entry->payload);
 		}
 	}
-	uint64_t runtimems = timer_stop(&token);
+	timer_stop(&token);
 
-	log_info("cht running time: %f, matched row %u\n", runtimems,
+	log_info("cht running time: %f, matched row %u\n", token.wallclockms,
 			match_counter);
 
 	free(keys);
@@ -139,9 +139,9 @@ void xs_cht_scan(const char* buildfile, const char* loadfile) {
 		cht_scan(table, keys[i], &context);
 	}
 
-	uint64_t runtimems = timer_stop(&token);
+	timer_stop(&token);
 
-	log_info("cht scan running time: %f, matched row %u\n", runtimems,
+	log_info("cht scan running time: %f, matched row %u\n", token.wallclockms,
 			match_counter);
 
 	free(keys);
