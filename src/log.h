@@ -8,6 +8,6 @@
 #ifndef SRC_LOG_H_
 #define SRC_LOG_H_
 
-void log_info(char* format, ...);
+void log_info(const char* format, ...);
 
 #endif /* SRC_LOG_H_ */
