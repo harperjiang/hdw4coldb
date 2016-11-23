@@ -10,7 +10,7 @@ else
 endif
 
 BIN = ../bin
-LIBS = 
+LIBS = -pthread
 
 C_SRCS = \
 ../src/chash.c \

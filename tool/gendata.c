@@ -40,7 +40,7 @@ void gen_unique(uint32_t size, FILE* f, int ceiling) {
 			counter++;
 		}
 		pointer++;
-		if (pointer == max) {
+		if (pointer == max && counter < size) {
 			fprintf(stderr, "Failed to generate enough numbers\n");
 			abort();
 		}
@@ -93,7 +93,8 @@ void gen_near_unique(uint32_t size, FILE* f, int ceiling) {
 }
 
 void print_help() {
-	fprintf(stderr, "Usage: gendata [-u] -s <file_size> [-o <file_name>] [-c <ceil_num>]\n");
+	fprintf(stderr,
+			"Usage: gendata [-u] -s <file_size> [-o <file_name>] [-c <ceil_num>]\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -u \t\t\tGenerate unique keys\n");
 	fprintf(stderr, "  -s size \t\tNumber of keys to generate\n");
