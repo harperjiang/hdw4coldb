@@ -160,14 +160,18 @@ void cht_scan(cht* cht, uint32_t key, scan_context *context) {
 	uint32_t offset = bitmap_popcnt(cht->bitmap, hval);
 
 	uint32_t counter = 0;
+	uint32_t rescounter = 0;
 	while (counter < THRESHOLD) {
 		if (cht->payloads[offset + counter].key == key) {
 			cht_entry entry = cht->payloads[offset + counter];
 			context->func(entry.key, entry.payload, context->inner,
 					context->params);
+			rescounter++;
 		}
 		counter++;
 	}
+	if (rescounter > 1)
+		printf("More than one key discovered %u\n", key);
 	hash_scan(cht->overflow, key, context);
 }
 
