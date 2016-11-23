@@ -136,7 +136,9 @@ void cht_build(cht* cht, kv* entries, uint32_t size) {
 /**
  * Looking for key in CHT
  */
-cht_entry* cht_find_uniq(cht* cht, uint32_t key) {
+cht_entry* cht_find_uniq(cht* cht, uint32_t key) { // Bitmap check
+	if (!cht_has(cht, key))
+		return NULL;
 	uint32_t hval = hash(key) % (cht->bitmap_size * BITMAP_UNIT);
 	uint32_t offset = bitmap_popcnt(cht->bitmap, hval);
 
