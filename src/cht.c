@@ -147,8 +147,10 @@ cht_entry* cht_find_uniq(cht* cht, uint32_t key) {
 	return cht->payloads + offset + counter;
 }
 
-void cht_scan(cht* cht, uint32_t key,
-		void (*scanfunc)(uint32_t key, uint8_t* payload)) {
+void cht_scan(cht* cht, uint32_t key, scan_context *context) {
+	// Bitmap check
+	if (!cht_has(cht, key))
+		return;
 	uint32_t hval = hash(key) % (cht->bitmap_size * BITMAP_UNIT);
 	uint32_t offset = bitmap_popcnt(cht->bitmap, hval);
 
@@ -156,15 +158,16 @@ void cht_scan(cht* cht, uint32_t key,
 	while (counter < THRESHOLD) {
 		if (cht->payloads[offset + counter].key == key) {
 			cht_entry entry = cht->payloads[offset + counter];
-			scanfunc(entry.key, entry.payload);
+			context->func(entry.key, entry.payload, context->inner);
 		}
 		counter++;
 	}
-	hash_scan(cht->overflow, key, scanfunc);
+	hash_scan(cht->overflow, key, context);
 }
 
 bool cht_has(cht* cht, uint32_t key) {
-	return cht_find_uniq(cht, key) != NULL;
+	uint32_t hval = hash(key) % (cht->bitmap_size * BITMAP_UNIT);
+	return bitmap_test(cht->bitmap, hval);
 }
 
 void cht_free(cht* cht) {

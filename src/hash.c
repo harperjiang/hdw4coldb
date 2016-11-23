@@ -31,6 +31,8 @@ void hash_init(hashtable* ht, uint32_t size) {
 entry* hash_get(hashtable* ht, uint32_t key) {
 	// No zero key is allowed
 	assert(key != 0);
+	if (ht->size == 0)
+		return NULL;
 	uint32_t hval = hash(key) % ht->bucket_size;
 	entry* bucket = ht->buckets + hval;
 
@@ -45,15 +47,16 @@ entry* hash_get(hashtable* ht, uint32_t key) {
 	return NULL;
 }
 
-void hash_scan(hashtable* ht, uint32_t key,
-		void (*scanfunc)(uint32_t key, uint8_t* payload)) {
+void hash_scan(hashtable* ht, uint32_t key, scan_context* context) {
 	assert(key != 0);
+	if (ht->size == 0)
+		return;
 	uint32_t hval = hash(key) % ht->bucket_size;
 	entry* bucket = ht->buckets + hval;
 #ifndef NODE_LINK
 	while (bucket->key != 0) {
 		if (bucket->key == key) {
-			scanfunc(bucket->key, bucket->payload);
+			context->func(bucket->key, bucket->payload, context->inner);
 		}
 		hval = (hval + 1) % ht->bucket_size;
 		bucket = ht->buckets + hval;

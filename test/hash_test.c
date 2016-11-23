@@ -28,6 +28,13 @@ TEST( Hash, Build) {
 	hash_free(ht);
 }
 
+TEST( Hash, Empty) {
+	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
+	hash_init(ht, 10);
+	ASSERT_EQ(NULL, hash_get(ht, 65));
+
+}
+
 TEST( Hash, Get) {
 	kv* entries = (kv*) malloc(sizeof(kv) * 32);
 
@@ -82,7 +89,7 @@ TEST( Hash, Put) {
 
 uint32_t scan_counter;
 
-void scan(uint32_t key, uint8_t* payload) {
+void scan(uint32_t key, uint8_t* outer, uint8_t* inner) {
 	scan_counter++;
 }
 
@@ -99,9 +106,12 @@ TEST( Hash, Scan) {
 	hash_build(ht, entries, 40);
 	free(entries);
 
+	scan_context context;
+	context.func = scan;
+
 	for (int i = 0; i < 40; i++) {
 		scan_counter = 0;
-		hash_scan(ht, i % 4 + 1, scan);
+		hash_scan(ht, i % 4 + 1, &context);
 		ASSERT_EQ(10, scan_counter);
 	}
 	hash_free(ht);
