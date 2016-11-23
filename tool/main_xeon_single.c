@@ -53,7 +53,7 @@ void hash_access(const char* buildfile, const char* loadfile) {
 	double running_time = end - start / (CLOCKS_PER_SEC);
 
 	log_info("hash running time: %f\n, matched row %u\n", running_time,
-			matched_counter);
+			match_counter);
 
 	free(keys);
 }
@@ -79,7 +79,7 @@ void hash_scan(const char* buildfile, const char* loadfile) {
 	double running_time = end - start / (CLOCKS_PER_SEC);
 
 	log_info("hash scan running time: %f\n, matched row %u\n", running_time,
-			matched_counter);
+			match_counter);
 
 	free(keys);
 }
@@ -108,7 +108,7 @@ void cht_access(const char* buildfile, const char* loadfile) {
 	double running_time = end - start / (CLOCKS_PER_SEC);
 
 	log_info("cht running time: %f\n, matched row %u\n", running_time,
-			matched_counter);
+			match_counter);
 
 	free(keys);
 }
@@ -134,7 +134,7 @@ void cht_scan(const char* buildfile, const char* loadfile) {
 	double running_time = end - start / (CLOCKS_PER_SEC);
 
 	log_info("cht scan running time: %f\n, matched row %u\n", running_time,
-			matched_counter);
+			match_counter);
 
 	free(keys);
 }
