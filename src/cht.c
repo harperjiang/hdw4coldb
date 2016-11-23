@@ -88,7 +88,7 @@ void cht_build(cht* cht, kv* entries, uint32_t size) {
 	cht->bitmap = (uint64_t*) calloc(bitmap_size, sizeof(uint64_t));
 
 	cht->overflow = (hashtable*) malloc(sizeof(hashtable));
-	hash_build(cht->overflow, size / OVERFLOW_INIT);
+	hash_init(cht->overflow, size / OVERFLOW_INIT);
 
 	// The first pass, fill in bitmap, use linear probing to resolve conflict
 	for (uint32_t i = 0; i < size; i++) {
@@ -118,12 +118,13 @@ void cht_build(cht* cht, kv* entries, uint32_t size) {
 				&& cht->payloads[item_offset + counter].key != 0) {
 			counter++;
 		}
-		kv* entry = entries[i];
+		kv entry = entries[i];
 		if (counter == THRESHOLD) {
 			// Goto overflow table
 			hash_put(cht->overflow, entry.key, entry.payload);
 		} else {
-			cht->payloads[item_offset + counter] = entry.payload;
+			memcpy(cht->payloads + item_offset + counter, entry.payload,
+					PAYLOAD_SIZE * sizeof(uint8_t));
 		}
 	}
 }
@@ -162,7 +163,7 @@ void cht_scan(cht* cht, uint32_t key,
 }
 
 bool cht_has(cht* cht, uint32_t key) {
-	return cht_find_uniq(cht, key) != NULL;
+	return cht_find_uniq(cht, key) != NULL ;
 }
 
 void cht_free(cht* cht) {

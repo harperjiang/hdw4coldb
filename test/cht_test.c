@@ -21,12 +21,13 @@ TEST( CHT, Build) {
 	for (int i = 0; i < 125000; i++) {
 		entries[i].key = (uint32_t) rand();
 		for (int j = 0; j < 4; j++) {
-			entries[i].payload[j] = (uint8_t) (rand() % 0xff);
+			entries[i].payload[j] = (uint8_t)(rand() % 0xff);
 		}
 	}
 
 	// Fill in random data
 	cht_build(table, entries, 125000);
+	free(entries);
 
 	ASSERT_TRUE(125000 >= table->payload_size);
 	ASSERT_EQ(125000 * 8 / 32, table->bitmap_size);
@@ -41,14 +42,13 @@ TEST( CHT, FindUnique) {
 
 	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
 
-	uint32_t key_counter = 1;
-
 	for (int i = 0; i < 125000; i++) {
-		entries[i].key = key_counter++;
+		entries[i].key = i + 1;
 		for (int j = 0; j < 4; j++) {
-			entries[i].payload[j] = (uint8_t) (rand() % 0xff);
+			entries[i].payload[j] = (uint8_t)(rand() % 0xff);
 		}
 	}
+	free(entries);
 
 	// Fill in random data
 	cht_build(table, entries, 125000);
@@ -62,11 +62,11 @@ TEST( CHT, FindUnique) {
 	cht_free(table);
 }
 
-TEST(CHT, FindAll) {
+TEST( CHT, FindAll) {
 
 }
 
-TEST(CHT, Has) {
+TEST( CHT, Has) {
 	srand(time(NULL));
 
 	cht* table = (cht*) malloc(sizeof(cht));
@@ -77,6 +77,7 @@ TEST(CHT, Has) {
 	}
 
 	cht_build(table, entries, 125000);
+	free(entries);
 	for (int i = 0; i < 125000; i++) {
 		ASSERT_TRUE(cht_has(table, entries[i].key));
 	}

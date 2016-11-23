@@ -54,7 +54,7 @@ void perf_buildcht(cht* table, const char* filename) {
 	uint32_t size;
 	uint32_t* keys = perf_loadkey(filename, &size);
 
-	cht_entry* entries = (cht_entry*) malloc(sizeof(cht_entry) * size);
+	kv* entries = (kv*) malloc(sizeof(kv) * size);
 	for (uint32_t i = 0; i < size; i++) {
 		entries[i].key = keys[i];
 		memcpy(entries[i].payload, (uint8_t*) (keys + i),
@@ -69,12 +69,15 @@ void perf_buildcht(cht* table, const char* filename) {
 void perf_buildhash(hashtable* table, const char* filename) {
 	uint32_t size;
 	uint32_t* keys = perf_loadkey(filename, &size);
-
-	hash_build(table, size * RATIO + 1);
-
+	kv* entries = (kv*) malloc(sizeof(kv) * size);
 	for (uint32_t i = 0; i < size; i++) {
-		hash_put(table, keys[i], (uint8_t*) (keys + i));
+		entries[i].key = keys[i];
+		memcpy(entries[i].payload, (uint8_t*) (keys + i),
+				sizeof(uint8_t) * PAYLOAD_SIZE);
 	}
+
+	hash_build(table, entries, size);
+	free(entries);
 	free(keys);
 }
 

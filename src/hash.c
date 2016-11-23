@@ -22,6 +22,12 @@ void hash_build(hashtable* ht, kv* entries, uint32_t size) {
 	}
 }
 
+void hash_init(hashtable* ht, uint32_t size) {
+	ht->size = 0;
+	ht->bucket_size = size;
+	ht->buckets = (entry*) calloc(ht->bucket_size, sizeof(entry));
+}
+
 entry* hash_get(hashtable* ht, uint32_t key) {
 	// No zero key is allowed
 	assert(key != 0);
