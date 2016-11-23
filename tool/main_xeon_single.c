@@ -11,28 +11,25 @@
 #include <string.h>
 #include <assert.h>
 #include "../src/perf.h"
+#include "../src/log.h"
 
-uint8_t* outer;
+uint8_t* scan_dummy_outer;
 
-// Join and print
+// Join and print num matched
+uint32_t match_counter;
+
 void scan_dummy(uint32_t key, uint8_t* payload) {
-	for (int i = 0; i < PAYLOAD_SIZE; i++) {
-		assert(((uint8_t* ) &key)[i] == payload[i]);
-	}
-	fprintf(stdout, "%u\n", key);
+	match_counter++;
 }
 
 void process(uint32_t key, uint8_t* inner, uint8_t* outer) {
-	for (int i = 0; i < PAYLOAD_SIZE; i++) {
-		assert(inner[i] == outer[i]);
-	}
-	fprintf(stdout, "%u\n", key);
+	match_counter++;
 }
 
 //
 void hash_access(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
-	printf("Running hash...\n");
+	log_info("Running hash...\n");
 	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
 
 	perf_buildhash(table, buildfile);
@@ -41,8 +38,11 @@ void hash_access(const char* buildfile, const char* loadfile) {
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
 	// Run
-	printf("Running, load size %u...\n", loadsize);
+	log_info("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
+
+	match_counter = 0;
+
 	for (uint32_t i = 0; i < loadsize; i++) {
 		entry* innerRecord = hash_get(table, keys[i]);
 		if (innerRecord != NULL)
@@ -52,12 +52,15 @@ void hash_access(const char* buildfile, const char* loadfile) {
 
 	double running_time = end - start / (CLOCKS_PER_SEC);
 
-	printf("hash running time: %f\n", running_time);
+	log_info("hash running time: %f\n, matched row %u\n", running_time,
+			matched_counter);
+
+	free(keys);
 }
 
 void hash_scan(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
-	printf("Running hash scan...\n");
+	log_info("Running hash scan...\n");
 	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
 
 	perf_buildhash(table, buildfile);
@@ -66,7 +69,7 @@ void hash_scan(const char* buildfile, const char* loadfile) {
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
 	// Run
-	printf("Running, load size %u...\n", loadsize);
+	log_info("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
 	for (uint32_t i = 0; i < loadsize; i++) {
 		hash_scan(table, keys[i], scan_dummy);
@@ -75,12 +78,15 @@ void hash_scan(const char* buildfile, const char* loadfile) {
 
 	double running_time = end - start / (CLOCKS_PER_SEC);
 
-	printf("hash scan running time: %f\n", running_time);
+	log_info("hash scan running time: %f\n, matched row %u\n", running_time,
+			matched_counter);
+
+	free(keys);
 }
 
 void cht_access(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
-	printf("Running cht...\n");
+	log_info("Running cht...\n");
 	cht* table = (cht*) malloc(sizeof(cht));
 
 	perf_buildcht(table, buildfile);
@@ -89,7 +95,7 @@ void cht_access(const char* buildfile, const char* loadfile) {
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
 	// Run
-	printf("Running, load size %u...\n", loadsize);
+	log_info("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
 	for (uint32_t i = 0; i < loadsize; i++) {
 		cht_entry* entry = cht_find_uniq(table, keys[i]);
@@ -101,12 +107,15 @@ void cht_access(const char* buildfile, const char* loadfile) {
 
 	double running_time = end - start / (CLOCKS_PER_SEC);
 
-	printf("cht running time: %f\n", running_time);
+	log_info("cht running time: %f\n, matched row %u\n", running_time,
+			matched_counter);
+
+	free(keys);
 }
 
 void cht_scan(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
-	printf("Running cht scan...\n");
+	log_info("Running cht scan...\n");
 	cht* table = (cht*) malloc(sizeof(cht));
 
 	perf_buildcht(table, buildfile);
@@ -115,7 +124,7 @@ void cht_scan(const char* buildfile, const char* loadfile) {
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
 	// Run
-	printf("Running, load size %u...\n", loadsize);
+	log_info("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
 	for (uint32_t i = 0; i < loadsize; i++) {
 		cht_scan(table, keys[i], scan_dummy);
@@ -124,7 +133,10 @@ void cht_scan(const char* buildfile, const char* loadfile) {
 
 	double running_time = end - start / (CLOCKS_PER_SEC);
 
-	printf("cht scan running time: %f\n", running_time);
+	log_info("cht scan running time: %f\n, matched row %u\n", running_time,
+			matched_counter);
+
+	free(keys);
 }
 
 void print_help() {
