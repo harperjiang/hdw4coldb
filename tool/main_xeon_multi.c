@@ -45,7 +45,7 @@ void partition(uint32_t* key, uint32_t keysize, uint32_t pnum,
 
 void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
 		void* table, uint32_t* keys, uint32_t keysize,
-		void (*thread_func)(void*)) {
+		void* (*thread_func)(void*)) {
 	sem_t semaphore;
 	sem_init(&semaphore, 0, 0);
 
