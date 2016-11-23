@@ -123,8 +123,9 @@ void cht_build(cht* cht, kv* entries, uint32_t size) {
 			// Goto overflow table
 			hash_put(cht->overflow, entry.key, entry.payload);
 		} else {
-			memcpy(cht->payloads + item_offset + counter, entry.payload,
-					PAYLOAD_SIZE * sizeof(uint8_t));
+			cht->payloads[item_offset + counter].key = entry.key;
+			memcpy(cht->payloads[item_offset + counter].payload, entry.payload,
+			PAYLOAD_SIZE * sizeof(uint8_t));
 		}
 	}
 }
@@ -163,7 +164,7 @@ void cht_scan(cht* cht, uint32_t key,
 }
 
 bool cht_has(cht* cht, uint32_t key) {
-	return cht_find_uniq(cht, key) != NULL ;
+	return cht_find_uniq(cht, key) != NULL;
 }
 
 void cht_free(cht* cht) {

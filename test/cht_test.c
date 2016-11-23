@@ -21,7 +21,7 @@ TEST( CHT, Build) {
 	for (int i = 0; i < 125000; i++) {
 		entries[i].key = (uint32_t) rand();
 		for (int j = 0; j < 4; j++) {
-			entries[i].payload[j] = (uint8_t)(rand() % 0xff);
+			entries[i].payload[j] = (uint8_t) (rand() % 0xff);
 		}
 	}
 
@@ -45,21 +45,21 @@ TEST( CHT, FindUnique) {
 	for (int i = 0; i < 125000; i++) {
 		entries[i].key = i + 1;
 		for (int j = 0; j < 4; j++) {
-			entries[i].payload[j] = (uint8_t)(rand() % 0xff);
+			entries[i].payload[j] = (uint8_t) (rand() % 0xff);
 		}
 	}
 
 	// Fill in random data
 	cht_build(table, entries, 125000);
-	free(entries);
 
 	for (int i = 0; i < 125000; i++) {
 		cht_entry* entry = cht_find_uniq(table, entries[i].key);
+		ASSERT_TRUE(entry != NULL);
 		for (int j = 0; j < 4; j++) {
 			ASSERT_EQ(entries[i].payload[j], entry->payload[j]);
 		}
 	}
-
+	free(entries);
 	cht_free(table);
 }
 
@@ -78,10 +78,10 @@ TEST( CHT, Has) {
 	}
 
 	cht_build(table, entries, 125000);
-	free(entries);
 	for (int i = 0; i < 125000; i++) {
 		ASSERT_TRUE(cht_has(table, entries[i].key));
 	}
 
+	free(entries);
 	cht_free(table);
 }
