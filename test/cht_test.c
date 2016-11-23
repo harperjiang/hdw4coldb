@@ -66,7 +66,7 @@ TEST( CHT, FindUnique) {
 }
 
 uint32_t counter;
-void myscanfunc(uint32_t key, uint8_t* outer, uint8_t* inner) {
+void myscanfunc(uint32_t key, uint8_t* outer, uint8_t* inner, void*param) {
 	counter++;
 }
 

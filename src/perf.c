@@ -83,7 +83,7 @@ void perf_buildhash(hashtable* table, const char* filename) {
 }
 
 void perf_scancht(cht* table, kv* workload, uint32_t size,
-		void (*scanfunc)(uint32_t, uint8_t*, uint8_t*)) {
+		void (*scanfunc)(uint32_t, uint8_t*, uint8_t*, void*)) {
 
 	scan_context context;
 	context.func = scanfunc;
@@ -94,7 +94,7 @@ void perf_scancht(cht* table, kv* workload, uint32_t size,
 }
 
 void perf_scanhash(hashtable* table, kv* workload, uint32_t size,
-		void (*scanfunc)(uint32_t, uint8_t*, uint8_t*)) {
+		void (*scanfunc)(uint32_t, uint8_t*, uint8_t*, void*)) {
 	scan_context context;
 	context.func = scanfunc;
 	for (uint32_t i = 0; i < size; i++) {

@@ -89,7 +89,7 @@ TEST( Hash, Put) {
 
 uint32_t scan_counter;
 
-void scan(uint32_t key, uint8_t* outer, uint8_t* inner) {
+void scan(uint32_t key, uint8_t* outer, uint8_t* inner, void* params) {
 	scan_counter++;
 }
 
