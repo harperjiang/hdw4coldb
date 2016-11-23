@@ -48,10 +48,11 @@ TEST( CHT, FindUnique) {
 			entries[i].payload[j] = (uint8_t)(rand() % 0xff);
 		}
 	}
-	free(entries);
 
 	// Fill in random data
 	cht_build(table, entries, 125000);
+	free(entries);
+
 	for (int i = 0; i < 125000; i++) {
 		cht_entry* entry = cht_find_uniq(table, entries[i].key);
 		for (int j = 0; j < 4; j++) {
