@@ -16,6 +16,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include "../src/perf.h"
+#include "../src/log.h"
+#include "../src/timer.h"
 
 typedef struct _thread_arg {
 	void* table;
@@ -268,10 +270,10 @@ int main(int argc, char** argv) {
 		xm_cht(buildFile, loadFile, numthread, false);
 		break;
 	case 2:
-		xm_hash_scan(buildFile, loadFile, numthread);
+		xm_hash(buildFile, loadFile, numthread, true);
 		break;
 	case 3:
-		xm_hash_access(buildFile, loadFile, numthread);
+		xm_hash(buildFile, loadFile, numthread, false);
 		break;
 	default:
 		abort();

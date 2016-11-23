@@ -1,7 +1,7 @@
 # Makefile for generating programs for performance test
 
 CC=g++
-CC_FLAG= -O3 -Wall -c -fmessage-length=0
+CC_FLAG= -O3 -Wall -c -fmessage-length=0 -pthread
 RM=rm
 ifeq ($(OS),Windows_NT)
 	EXE_SUFFIX=.exe
