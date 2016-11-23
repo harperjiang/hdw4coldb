@@ -201,7 +201,7 @@ bool scan) {
 	uint32_t match_counter = 0;
 	for (uint32_t i = 0; i < numthread; i++) {
 		match_counter += args[i].result;
-		fprintf(stdout, "For partition %d, there are %d", i, args[i].result);
+		fprintf(stdout, "For partition %d, there are %d\n", i, args[i].result);
 	}
 
 	timer_stop(&token);
