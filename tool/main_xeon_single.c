@@ -13,21 +13,19 @@
 #include "../src/perf.h"
 #include "../src/log.h"
 
-uint8_t* scan_dummy_outer;
-
 // Join and print num matched
 uint32_t match_counter;
 
-void scan_dummy(uint32_t key, uint8_t* payload) {
+void scan_dummy(uint32_t key, uint8_t* outer, uint8_t* inner) {
 	match_counter++;
 }
 
-void process(uint32_t key, uint8_t* inner, uint8_t* outer) {
+void process(uint32_t key, uint8_t* outer, uint8_t* inner) {
 	match_counter++;
 }
 
 //
-void hash_access(const char* buildfile, const char* loadfile) {
+void xs_hash_access(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
 	log_info("Running hash...\n");
 	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
@@ -41,12 +39,10 @@ void hash_access(const char* buildfile, const char* loadfile) {
 	log_info("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
 
-	match_counter = 0;
-
 	for (uint32_t i = 0; i < loadsize; i++) {
 		entry* innerRecord = hash_get(table, keys[i]);
 		if (innerRecord != NULL)
-			process(keys[i], innerRecord->payload, (uint8_t*) (keys + i));
+			process(keys[i], (uint8_t*) (keys + i), innerRecord->payload);
 	}
 	clock_t end = clock();
 
@@ -58,7 +54,7 @@ void hash_access(const char* buildfile, const char* loadfile) {
 	free(keys);
 }
 
-void hash_scan(const char* buildfile, const char* loadfile) {
+void xs_hash_scan(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
 	log_info("Running hash scan...\n");
 	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
@@ -71,8 +67,12 @@ void hash_scan(const char* buildfile, const char* loadfile) {
 	// Run
 	log_info("Running, load size %u...\n", loadsize);
 	clock_t start = clock();
+
+	scan_context context;
+	context.func = scan_dummy;
+
 	for (uint32_t i = 0; i < loadsize; i++) {
-		hash_scan(table, keys[i], scan_dummy);
+		hash_scan(table, keys[i], &context);
 	}
 	clock_t end = clock();
 
@@ -84,7 +84,7 @@ void hash_scan(const char* buildfile, const char* loadfile) {
 	free(keys);
 }
 
-void cht_access(const char* buildfile, const char* loadfile) {
+void xs_cht_access(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
 	log_info("Running cht...\n");
 	cht* table = (cht*) malloc(sizeof(cht));
@@ -100,7 +100,7 @@ void cht_access(const char* buildfile, const char* loadfile) {
 	for (uint32_t i = 0; i < loadsize; i++) {
 		cht_entry* entry = cht_find_uniq(table, keys[i]);
 		if (NULL != entry) {
-			process(keys[i], entry->payload, (uint8_t*) (keys + i));
+			process(keys[i], (uint8_t*) (keys + i), entry->payload);
 		}
 	}
 	clock_t end = clock();
@@ -113,7 +113,7 @@ void cht_access(const char* buildfile, const char* loadfile) {
 	free(keys);
 }
 
-void cht_scan(const char* buildfile, const char* loadfile) {
+void xs_cht_scan(const char* buildfile, const char* loadfile) {
 	srand(time(NULL));
 	log_info("Running cht scan...\n");
 	cht* table = (cht*) malloc(sizeof(cht));
@@ -123,11 +123,15 @@ void cht_scan(const char* buildfile, const char* loadfile) {
 	uint32_t loadsize;
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
-	// Run
+// Run
 	log_info("Running, load size %u...\n", loadsize);
+
+	scan_context context;
+	context.func = scan_dummy;
+
 	clock_t start = clock();
 	for (uint32_t i = 0; i < loadsize; i++) {
-		cht_scan(table, keys[i], scan_dummy);
+		cht_scan(table, keys[i], &context);
 	}
 	clock_t end = clock();
 
@@ -193,16 +197,16 @@ int main(int argc, char** argv) {
 	}
 	switch ((hash & 1) << 1 | (uniq & 1)) {
 	case 0:
-		cht_scan(buildFile, loadFile);
+		xs_cht_scan(buildFile, loadFile);
 		break;
 	case 1:
-		cht_access(buildFile, loadFile);
+		xs_cht_access(buildFile, loadFile);
 		break;
 	case 2:
-		hash_scan(buildFile, loadFile);
+		xs_hash_scan(buildFile, loadFile);
 		break;
 	case 3:
-		hash_access(buildFile, loadFile);
+		xs_hash_access(buildFile, loadFile);
 		break;
 	default:
 		abort();
