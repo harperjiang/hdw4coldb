@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <time.h>
+#include <pthread.h>
 #include "perf.h"
 
 uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
@@ -81,3 +82,27 @@ void perf_buildhash(hashtable* table, const char* filename) {
 	free(keys);
 }
 
+pthread_key_t current_workload;
+pthread_key_t scan_func;
+
+void perf_scan_wrapper(uint32_t key, uint8_t* outer) {
+	kv* workload = (kv*) pthread_getspecific(current_workload);
+	void (*func)( uint32_t, uint8_t*, uint8_t*);
+	func = (void (*)(uint32_t, uint8_t*, uint8_t*)) pthread_getspecific(
+			scan_func);
+	func(key, outer, workload->payload);
+}
+
+void perf_scancht(cht* table, kv* workload, uint32_t size,
+		void (*scanfunc)( uint32_t, uint8_t*, uint8_t*)) {
+	pthread_setspecific(scan_func, (void*) scanfunc);
+	for (uint32_t i = 0; i < size; i++) {
+		pthread_setspecific(current_workload, (void*) (workload + i));
+		cht_scan(table, workload[i].key, perf_scan_wrapper);
+	}
+}
+
+void perf_scanhash(hashtable* table, kv* workload, uint32_t size,
+		void (*scanfunc)( uint32_t, uint8_t*, uint8_t*)) {
+
+}
