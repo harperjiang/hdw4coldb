@@ -96,14 +96,10 @@ void cht_build(cht* cht, kv* entries, uint32_t size) {
 					(size / OVERFLOW_INIT) : MIN_SIZE;
 	hash_init(cht->overflow, initsize);
 
-	// The first pass, fill in bitmap, use linear probing to resolve conflict
+	// The first pass, fill in bitmap,
 	for (uint32_t i = 0; i < size; i++) {
 		uint32_t hval = hash(entries[i].key) % bitsize;
-		uint32_t counter = 0;
-		while (counter < THRESHOLD
-				&& !bitmap_testset(cht->bitmap, hval + counter)) {
-			counter++;
-		}
+		bitmap_testset(cht->bitmap, hval);
 	}
 
 	// update population in bitmap
@@ -113,9 +109,13 @@ void cht_build(cht* cht, kv* entries, uint32_t size) {
 		sum += popcount(cht->bitmap[i] & BITMAP_MASK);
 	}
 	cht->payload_size = sum;
+
 	// The second pass, allocate space and place items
 	cht->payloads = (cht_entry*) calloc(sum, sizeof(cht_entry));
 	for (uint32_t i = 0; i < size; i++) {
+		if(entries[i].key == 1750053189) {
+			printf("Encounter suspect\n");
+		}
 		uint32_t hval = hash(entries[i].key) % bitsize;
 		uint32_t item_offset = bitmap_popcnt(cht->bitmap, hval);
 		uint32_t counter = 0;
@@ -172,8 +172,8 @@ void cht_scan(cht* cht, uint32_t key, scan_context *context) {
 		counter++;
 	}
 	// TODO Debug message, remove when done
-	if (rescounter > 1)
-		printf("More than one key discovered %u,%u\n", key, rescounter);
+//	if (rescounter > 1)
+//		printf("More than one key discovered %u,%u\n", key, rescounter);
 	hash_scan(cht->overflow, key, context);
 }
 
