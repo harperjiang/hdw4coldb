@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include "../src/cht.h"
 
+#define BITMAP_FACTOR 4
+
 TEST( CHT, Build) {
 
 	srand(time(NULL));
@@ -30,7 +32,7 @@ TEST( CHT, Build) {
 	free(entries);
 
 	ASSERT_TRUE(125000 >= table->payload_size);
-	ASSERT_EQ(125000 * 8 / 32, table->bitmap_size);
+	ASSERT_EQ(125000 * BITMAP_FACTOR / 32, table->bitmap_size);
 
 	cht_free(table);
 }

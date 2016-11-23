@@ -50,7 +50,7 @@ void xs_hash_access(const char* buildfile, const char* loadfile) {
 	}
 	timer_stop(&token);
 
-	log_info("hash running time: %f, matched row %u\n", token.wallclockms,
+	log_info("hash running time: %u, matched row %u\n", token.wallclockms,
 			match_counter);
 
 	free(keys);
@@ -82,7 +82,7 @@ void xs_hash_scan(const char* buildfile, const char* loadfile) {
 
 	timer_stop(&token);
 
-	log_info("hash scan running time: %f, matched row %u\n", token.wallclockms,
+	log_info("hash scan running time: %u, matched row %u\n", token.wallclockms,
 			match_counter);
 
 	free(keys);
@@ -113,7 +113,7 @@ void xs_cht_access(const char* buildfile, const char* loadfile) {
 	}
 	timer_stop(&token);
 
-	log_info("cht running time: %f, matched row %u\n", token.wallclockms,
+	log_info("cht running time: %u, matched row %u\n", token.wallclockms,
 			match_counter);
 
 	free(keys);
@@ -145,7 +145,7 @@ void xs_cht_scan(const char* buildfile, const char* loadfile) {
 
 	timer_stop(&token);
 
-	log_info("cht scan running time: %f, matched row %u\n", token.wallclockms,
+	log_info("cht scan running time: %u, matched row %u\n", token.wallclockms,
 			match_counter);
 
 	free(keys);
