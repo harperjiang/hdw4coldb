@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <memory.h>
 #include <stdbool.h>
 #include "cht.h"
@@ -170,6 +171,7 @@ void cht_scan(cht* cht, uint32_t key, scan_context *context) {
 		}
 		counter++;
 	}
+	// TODO Debug message, remove when done
 	if (rescounter > 1)
 		printf("More than one key discovered %u\n", key);
 	hash_scan(cht->overflow, key, context);
