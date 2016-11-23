@@ -30,7 +30,7 @@ typedef struct _thread_arg {
 
 // Join and print num matched
 
-void scan_func(uint32_t key, uint8_t* outer, uint8_t* inner, void*params) {
+void scan_func(uint32_t key, uint8_t* outer, uint8_t* inner, void* params) {
 	((thread_arg*) params)->result++;
 }
 
@@ -40,7 +40,13 @@ void process(uint32_t key, uint8_t* outer, uint8_t* inner, uint32_t* result) {
 
 void partition(uint32_t* key, uint32_t keysize, uint32_t pnum,
 		thread_arg* partitions) {
-
+	// Direct split to pnum pieces
+	for (uint32_t i = 0; i < pnum; i++) {
+		partitions[i].key = key;
+		partitions[i].start = (keysize / pnum) * i;
+		partitions[i].stop = (keysize / pnum) * (i + 1);
+	}
+	partitions[pnum - 1].stop = keysize - 1;
 }
 
 void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
@@ -57,7 +63,7 @@ void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
 		pthread_create(threads + i, NULL, thread_func, (void*) (args + i));
 	}
 
-	// Wait for end
+// Wait for end
 	for (uint32_t i = 0; i < numthread; i++) {
 		sem_wait(&semaphore);
 	}
@@ -104,7 +110,7 @@ bool scan) {
 	uint32_t loadsize;
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
-	// Run
+// Run
 	log_info("Running, load size %u...\n", loadsize);
 
 	timer_token token;
@@ -120,7 +126,7 @@ bool scan) {
 		run_thread(threads, args, numthread, table, keys, loadsize,
 				xm_hash_thread_access);
 
-	// Collect result
+// Collect result
 	uint32_t match_counter = 0;
 	for (uint32_t i = 0; i < numthread; i++) {
 		match_counter += args[i].result;
@@ -175,7 +181,7 @@ bool scan) {
 	uint32_t loadsize;
 	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
 
-	// Run
+// Run
 	log_info("Running, load size %u...\n", loadsize);
 
 	timer_token token;
@@ -191,7 +197,7 @@ bool scan) {
 		run_thread(threads, args, numthread, table, keys, loadsize,
 				xm_cht_thread_access);
 
-	// Collect result
+// Collect result
 	uint32_t match_counter = 0;
 	for (uint32_t i = 0; i < numthread; i++) {
 		match_counter += args[i].result;
