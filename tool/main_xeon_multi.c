@@ -68,7 +68,7 @@ void* xm_hash_thread_access(void* arg) {
 	thread_arg *context = (thread_arg*) arg;
 	context->result = 0;
 	for (uint32_t i = context->start; i < context->stop; i++) {
-		entry* entry = hash_get(context->table, context->key[i]);
+		entry* entry = hash_get((hashtable*) context->table, context->key[i]);
 		if (NULL != entry) {
 			process(context->key[i], NULL/*should be outer payload here*/,
 					entry->payload, &context->result);
@@ -87,7 +87,7 @@ void* xm_hash_thread_scan(void *arg) {
 	sc.params = context;
 	for (uint32_t i = context->start; i < context->stop; i++) {
 		sc.inner = NULL;
-		hash_scan(context->table, context->key[i], &sc);
+		hash_scan((hashtable*) context->table, context->key[i], &sc);
 	}
 	sem_post(context->sema);
 	pthread_exit(NULL);
@@ -138,7 +138,8 @@ void* xm_cht_thread_access(void* arg) {
 	thread_arg *context = (thread_arg*) arg;
 	context->result = 0;
 	for (uint32_t i = context->start; i < context->stop; i++) {
-		cht_entry* entry = cht_find_uniq(context->table, context->key[i]);
+		cht_entry* entry = cht_find_uniq((cht*) context->table,
+				context->key[i]);
 		if (NULL != entry) {
 			process(context->key[i], NULL/*should be outer payload here*/,
 					entry->payload, &context->result);
@@ -157,7 +158,7 @@ void* xm_cht_thread_scan(void *arg) {
 	sc.params = context;
 	for (uint32_t i = context->start; i < context->stop; i++) {
 		sc.inner = NULL;
-		cht_scan(context->table, context->key[i], &sc);
+		cht_scan((cht*) context->table, context->key[i], &sc);
 	}
 	sem_post(context->sema);
 	pthread_exit(NULL);
