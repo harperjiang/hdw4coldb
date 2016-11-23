@@ -29,7 +29,7 @@ void gen_unique(uint32_t size, FILE* f, int ceiling) {
 	uint32_t pointer = 0;
 	while (counter < size) {
 		uint32_t rm = (size - counter);
-		uint32_t rn = (max - pointer);
+		uint32_t rn = (size - pointer);
 		if (((uint32_t) rand()) % rn < rm) {
 			// choose counter
 			uint32_t infold = ((uint32_t) rand()) % fold;
@@ -65,7 +65,7 @@ void gen_near_unique(uint32_t size, FILE* f, int ceiling) {
 	uint32_t pointer = 0;
 	while (counter < size) {
 		uint32_t rm = (size - counter);
-		uint32_t rn = (max - pointer);
+		uint32_t rn = (size - pointer);
 		if (((uint32_t) rand()) % rn < rm) {
 			// choose counter
 			uint32_t infold = ((uint32_t) rand()) % fold;

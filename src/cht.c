@@ -113,9 +113,6 @@ void cht_build(cht* cht, kv* entries, uint32_t size) {
 	// The second pass, allocate space and place items
 	cht->payloads = (cht_entry*) calloc(sum, sizeof(cht_entry));
 	for (uint32_t i = 0; i < size; i++) {
-		if(entries[i].key == 1750053189) {
-			printf("Encounter suspect\n");
-		}
 		uint32_t hval = hash(entries[i].key) % bitsize;
 		uint32_t item_offset = bitmap_popcnt(cht->bitmap, hval);
 		uint32_t counter = 0;
@@ -171,9 +168,6 @@ void cht_scan(cht* cht, uint32_t key, scan_context *context) {
 		}
 		counter++;
 	}
-	// TODO Debug message, remove when done
-//	if (rescounter > 1)
-//		printf("More than one key discovered %u,%u\n", key, rescounter);
 	hash_scan(cht->overflow, key, context);
 }
 
