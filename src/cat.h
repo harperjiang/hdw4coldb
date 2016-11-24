@@ -9,6 +9,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "algo.h"
 #include "hash.h"
 
 typedef struct _cat {
@@ -20,9 +22,9 @@ typedef struct _cat {
 	uint32_t 	payload_size;
 } cat;
 
-void 		cat_build(cat* cat, entry* datas, uint32_t size);
-bool		cat_has(cat* cat, uint32_t key);
+void 	cat_build(cat* cat, kv* datas, uint32_t size);
+bool	cat_has(cat* cat, uint32_t key);
 uint8_t* 	cat_find_uniq(cat* cat, uint32_t key);
-void		cat_free(cat* cat);
+void	cat_free(cat* cat);
 
 #endif /* SRC_CAT_H_ */

@@ -21,7 +21,7 @@ extern bool bitmap_test(uint64_t* bitmap, uint32_t offset);
 extern void bitmap_setpopcnt(uint64_t* bitmap, uint32_t offset, uint32_t value);
 extern uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t hval);
 
-void cat_build(cat* cat, entry* datas, uint32_t size) {
+void cat_build(cat* cat, kv* datas, uint32_t size) {
 	// In a CAT, the bitmap size is determined by key ranges.
 	cat->max = 0;
 	cat->min = 0xffffffff;

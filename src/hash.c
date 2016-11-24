@@ -6,16 +6,18 @@
  */
 
 #include "hash.h"
-#include "util.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <assert.h>
 
+#include "util.h"
+
 void hash_build(hashtable* ht, kv* entries, uint32_t size) {
 	ht->size = 0;
 	ht->bucket_size = size * RATIO;
-	ht->buckets = (entry*) calloc(ht->bucket_size, sizeof(entry));
+	ht->buckets = (kv*) calloc(ht->bucket_size, sizeof(kv));
 
 	for (uint32_t i = 0; i < size; i++) {
 		hash_put(ht, entries[i].key, entries[i].payload);
@@ -25,16 +27,16 @@ void hash_build(hashtable* ht, kv* entries, uint32_t size) {
 void hash_init(hashtable* ht, uint32_t size) {
 	ht->size = 0;
 	ht->bucket_size = size;
-	ht->buckets = (entry*) calloc(ht->bucket_size, sizeof(entry));
+	ht->buckets = (kv*) calloc(ht->bucket_size, sizeof(kv));
 }
 
-entry* hash_get(hashtable* ht, uint32_t key) {
+kv* hash_get(hashtable* ht, uint32_t key) {
 	// No zero key is allowed
 	assert(key != 0);
 	if (ht->size == 0)
-		return NULL;
+		return NULL ;
 	uint32_t hval = hash(key) % ht->bucket_size;
-	entry* bucket = ht->buckets + hval;
+	kv* bucket = ht->buckets + hval;
 
 	while (bucket->key != 0 && bucket->key != key) {
 		hval = (hval + 1) % ht->bucket_size;
@@ -44,7 +46,7 @@ entry* hash_get(hashtable* ht, uint32_t key) {
 		return bucket;
 	}
 
-	return NULL;
+	return NULL ;
 }
 
 void hash_scan(hashtable* ht, uint32_t key, scan_context* context) {
@@ -52,8 +54,8 @@ void hash_scan(hashtable* ht, uint32_t key, scan_context* context) {
 	if (ht->size == 0)
 		return;
 	uint32_t hval = hash(key) % ht->bucket_size;
-	entry* bucket = ht->buckets + hval;
-#ifndef NODE_LINK
+	kv* bucket = ht->buckets + hval;
+
 	while (bucket->key != 0) {
 		if (bucket->key == key) {
 			context->func(bucket->key, bucket->payload, context->inner,
@@ -62,21 +64,6 @@ void hash_scan(hashtable* ht, uint32_t key, scan_context* context) {
 		hval = (hval + 1) % ht->bucket_size;
 		bucket = ht->buckets + hval;
 	}
-#else
-	while(bucket->key != 0 && bucket->key!=key) {
-		hval = (hval + 1) % ht->bucket_size;
-		bucket = ht->buckets + hval;
-	}
-	if(bucket->key == 0) {
-		return;
-	}
-	else {
-		while(bucket != null) {
-			scanfunc(bucket);
-			bucket = bucket->next;
-		}
-	}
-#endif
 }
 
 void hash_put(hashtable* ht, uint32_t key, uint8_t *value) {
@@ -87,9 +74,8 @@ void hash_put(hashtable* ht, uint32_t key, uint8_t *value) {
 	}
 
 	uint32_t hval = hash(key) % ht->bucket_size;
-	entry* bucket = ht->buckets + hval;
+	kv* bucket = ht->buckets + hval;
 
-#ifndef NODE_LINK
 	while (bucket->key != 0) {
 		hval = (hval + 1) % ht->bucket_size;
 		bucket = ht->buckets + hval;
@@ -97,37 +83,7 @@ void hash_put(hashtable* ht, uint32_t key, uint8_t *value) {
 
 	ht->buckets[hval].key = key;
 	memcpy(ht->buckets[hval].payload, value, sizeof(uint8_t) * PAYLOAD_SIZE);
-#else
-	while (bucket->key != 0 && bucket->key != key) {
-		hval = (hval + 1) % ht->bucket_size;
-		bucket = ht->buckets + hval;
-	}
 
-	if (bucket->key == 0) {
-		// Found an empty slot
-		ht->buckets[hval].key = key;
-		memcpy(ht->buckets[hval].payload, value,
-				sizeof(uint8_t) * PAYLOAD_SIZE);
-	} else {
-		entry* head = bucket;
-		// Go with the cursor
-		while (bucket->next != NULL) {
-			bucket = bucket->next;
-			assert(bucket != head);
-		}
-		entry* last = bucket;
-		hval = (bucket - ht->buckets + 1) % ht->bucket_size;
-		bucket = ht->buckets + hval;
-		// Look for next slot
-		while (bucket->key != 0) {
-			hval = (hval + 1) % ht->bucket_size;
-			bucket = ht->buckets + hval;
-		}
-		last->next = bucket;
-		bucket->key = key;
-		memcpy(bucket->payload, value, sizeof(uint8_t) * PAYLOAD_SIZE);
-	}
-#endif
 	ht->size += 1;
 }
 
@@ -138,9 +94,9 @@ uint32_t hash_size(hashtable* ht) {
 void hash_organize(hashtable* ht) {
 	uint32_t newbktsize = ht->bucket_size * RATIO;
 
-	entry* newbkts = (entry*) calloc(newbktsize, sizeof(entry));
+	kv* newbkts = (kv*) calloc(newbktsize, sizeof(kv));
 
-	entry* oldbkts = ht->buckets;
+	kv* oldbkts = ht->buckets;
 	uint32_t oldbktsize = ht->bucket_size;
 
 	ht->bucket_size = newbktsize;
@@ -156,4 +112,39 @@ void hash_organize(hashtable* ht) {
 void hash_free(hashtable* ht) {
 	free(ht->buckets);
 	free(ht);
+}
+/**===================================================================
+ * Create class information for Hash
+ ======================================================================*/
+
+void hash_algo_build(const algo* self, kv* datas, uint32_t size) {
+	hash_build((hashtable*) self, datas, size);
+}
+
+uint8_t* hash_algo_access(const algo* self, uint32_t key) {
+	return hash_get((hashtable*) self, key)->payload;
+}
+
+void hash_algo_scan(const algo* self, uint32_t key, scan_context* context) {
+	hash_scan((hashtable*) self, key, context);
+}
+
+void hash_algo_free(const algo* self) {
+	hash_free((hashtable*) self);
+}
+
+algo_class hash_class;
+
+void hash_init_class() {
+	hash_class.name = "hash";
+	hash_class.build = hash_algo_build;
+	hash_class.access = hash_algo_access;
+	hash_class.scan = hash_algo_scan;
+	hash_class.free = hash_algo_free;
+}
+
+algo* hash_algo_new() {
+	hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
+	ht->prototype = &hash_class;
+	return (algo*) ht;
 }

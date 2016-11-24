@@ -20,10 +20,11 @@
 #include "../src/timer.h"
 
 typedef struct _thread_arg {
-	void* table;
-	uint32_t* key;
+	algo* algo_obj;
+	kvlist* inner;
 	uint32_t start;
 	uint32_t stop;
+	bool uniq;
 	uint32_t result;
 	sem_t* sema;
 } thread_arg;
@@ -38,11 +39,11 @@ void process(uint32_t key, uint8_t* outer, uint8_t* inner, uint32_t* result) {
 	(*result)++;
 }
 
-void partition(uint32_t* key, uint32_t keysize, uint32_t pnum,
+void partition(kvlist* key, uint32_t keysize, uint32_t pnum,
 		thread_arg* partitions) {
 	// Direct split to pnum pieces
 	for (uint32_t i = 0; i < pnum; i++) {
-		partitions[i].key = key;
+		partitions[i].inner = key;
 		partitions[i].start = (keysize / pnum) * i;
 		partitions[i].stop = (keysize / pnum) * (i + 1);
 	}
@@ -50,8 +51,7 @@ void partition(uint32_t* key, uint32_t keysize, uint32_t pnum,
 }
 
 void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
-		void* table, uint32_t* keys, uint32_t keysize,
-		void* (*thread_func)(void*)) {
+		algo_obj* table, kvlist* inner, bool uniq, void* (*thread_func)(void*)) {
 	sem_t semaphore;
 	sem_init(&semaphore, 0, 0);
 
@@ -59,7 +59,9 @@ void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
 
 	for (uint32_t i = 0; i < numthread; i++) {
 		args[i].table = table;
+		args[i].uniq = uniq;
 		args[i].sema = &semaphore;
+		args[i].result = 0;
 		pthread_create(threads + i, NULL, thread_func, (void*) (args + i));
 	}
 
@@ -70,48 +72,46 @@ void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
 	sem_destroy(&semaphore);
 }
 
-void* xm_hash_thread_access(void* arg) {
+void* xm_thread_access(void* arg) {
 	thread_arg *context = (thread_arg*) arg;
 	context->result = 0;
-	for (uint32_t i = context->start; i < context->stop; i++) {
-		entry* entry = hash_get((hashtable*) context->table, context->key[i]);
-		if (NULL != entry) {
-			process(context->key[i], NULL/*should be outer payload here*/,
-					entry->payload, &context->result);
+
+	algo* alg = context->algo_obj;
+
+	if (context->uniq) {
+		for (uint32_t i = context->start; i < context->stop; i++) {
+			kv* entry = alg->prototype->access(alg,
+					context->inner->entries[i].key);
+			if (NULL != entry) {
+				process(context->key[i], entry->payload,
+						context->inner->entries[i].payload, &context->result);
+			}
+		}
+	} else {
+		scan_context sc;
+		sc.func = scan_func;
+		sc.params = context;
+		for (uint32_t i = context->start; i < context->stop; i++) {
+			sc.inner = context->inner->entries[i].payload;
+			alg->prototype->scan(alg, context->inner->entries[i].key, &sc);
 		}
 	}
 	sem_post(context->sema);
 	pthread_exit(NULL);
+	return NULL ;
 }
 
-void* xm_hash_thread_scan(void *arg) {
-	thread_arg *context = (thread_arg*) arg;
-	context->result = 0;
-
-	scan_context sc;
-	sc.func = scan_func;
-	sc.params = context;
-	for (uint32_t i = context->start; i < context->stop; i++) {
-		sc.inner = NULL;
-		hash_scan((hashtable*) context->table, context->key[i], &sc);
-	}
-	sem_post(context->sema);
-	pthread_exit(NULL);
-}
-
-void xm_hash(const char* buildfile, const char* loadfile, uint32_t numthread,
+void xm_access(algo* algo_obj, kvlist* outer, kvlist* inner, uint32_t numthread,
 bool scan) {
 	srand(time(NULL));
-	log_info("Running hash...\n");
-	hashtable* table = (hashtable*) malloc(sizeof(hashtable));
+	log_info("Running %s join with %d threads\n", algo_obj->prototype->name,
+			numthread);
 
-	perf_buildhash(table, buildfile);
-
-	uint32_t loadsize;
-	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
+	log_info("Building outer table\n");
+	algo_obj->prototype->build(algo_obj, outerfile->entries, outerfile->size);
+	log_info("Building outer table done\n");
 
 // Run
-	log_info("Running, load size %u...\n", loadsize);
 
 	timer_token token;
 	timer_start(&token);
@@ -119,12 +119,8 @@ bool scan) {
 	pthread_t threads[numthread];
 	thread_arg args[numthread];
 
-	if (scan)
-		run_thread(threads, args, numthread, table, keys, loadsize,
-				xm_hash_thread_scan);
-	else
-		run_thread(threads, args, numthread, table, keys, loadsize,
-				xm_hash_thread_access);
+	run_thread(threads, args, numthread, algo_obj, inner, uniq,
+			xm_thread_access);
 
 // Collect result
 	uint32_t match_counter = 0;
@@ -134,100 +130,30 @@ bool scan) {
 
 	timer_stop(&token);
 
-	log_info("hash running time: %u, matched row %u\n", token.wallclockms,
+	log_info("Running time: %u, matched row %u\n", token.wallclockms,
 			match_counter);
 
 	free(keys);
 }
 
-void* xm_cht_thread_access(void* arg) {
-	thread_arg *context = (thread_arg*) arg;
-	context->result = 0;
-	for (uint32_t i = context->start; i < context->stop; i++) {
-		cht_entry* entry = cht_find_uniq((cht*) context->table,
-				context->key[i]);
-		if (NULL != entry) {
-			process(context->key[i], NULL/*should be outer payload here*/,
-					entry->payload, &context->result);
-		}
-	}
-	sem_post(context->sema);
-	pthread_exit(NULL);
-}
-
-void* xm_cht_thread_scan(void *arg) {
-	thread_arg *context = (thread_arg*) arg;
-	context->result = 0;
-
-	scan_context sc;
-	sc.func = scan_func;
-	sc.params = context;
-	for (uint32_t i = context->start; i < context->stop; i++) {
-		sc.inner = NULL;
-		cht_scan((cht*) context->table, context->key[i], &sc);
-	}
-	sem_post(context->sema);
-	pthread_exit(NULL);
-}
-
-void xm_cht(const char* buildfile, const char* loadfile, uint32_t numthread,
-bool scan) {
-	srand(time(NULL));
-	log_info("Running cht...\n");
-	cht* table = (cht*) malloc(sizeof(cht));
-
-	perf_buildcht(table, buildfile);
-
-	uint32_t loadsize;
-	uint32_t* keys = perf_loadkey(loadfile, &loadsize);
-
-// Run
-	log_info("Running, load size %u...\n", loadsize);
-
-	timer_token token;
-	timer_start(&token);
-
-	pthread_t threads[numthread];
-	thread_arg args[numthread];
-
-	if (scan)
-		run_thread(threads, args, numthread, table, keys, loadsize,
-				xm_cht_thread_scan);
-	else
-		run_thread(threads, args, numthread, table, keys, loadsize,
-				xm_cht_thread_access);
-
-// Collect result
-	uint32_t match_counter = 0;
-	for (uint32_t i = 0; i < numthread; i++) {
-		match_counter += args[i].result;
-		fprintf(stdout, "For partition %d, there are %d\n", i, args[i].result);
-	}
-
-	timer_stop(&token);
-
-	log_info("cht running time: %u, threads: %u, matched row %u\n",
-			token.wallclockms, numthread, match_counter);
-
-	free(keys);
-}
-
 void print_help() {
-	fprintf(stdout,
-			"Usage: main_xeon_multi [-h] [-u] -t <num_thread> -b <key_file> -l <workload>\n");
-	fprintf(stdout, " -h \tUse hash\n");
-	fprintf(stdout, " -u \tUnique key\n");
-	fprintf(stdout, " -t num  Number of threads\n");
-	fprintf(stdout, " -b file Key file for building table\n");
-	fprintf(stdout, " -l file Workload file\n");
+	fprintf(stdout, "Usage: main_xeon_multi [options]");
+	fprintf(stdout, "Available options:\n");
+	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
+	fprintf(stdout, " -t --thread=NUM\tnumber of threads\n");
+	fprintf(stdout, " -u --unique	\touter is unique\n");
+	fprintf(stdout, " -o --outer=FILE \tfile for outer table\n");
+	fprintf(stdout, " -i --inner=File \tfile for inner table\n");
+	fprintf(stdout, " -h --help \tdisplay this information\n");
+	exit(0);
 }
 
 int main(int argc, char** argv) {
-	int c;
+
 	bool uniq = false;
-	bool hash = false;
-	char* buildFile = NULL;
-	char* loadFile = NULL;
+	char* alg = NULL;
+	char* outerfile = NULL;
+	char* innerfile = NULL;
 	uint32_t numthread = 1;
 
 	if (argc == 1) {
@@ -235,55 +161,61 @@ int main(int argc, char** argv) {
 		exit(0);
 	}
 
-	while ((c = getopt(argc, argv, "hub:l:t:")) != -1)
+	int option_index = 0;
+	static struct option long_options[] = {
+			{ "alg", required_argument, 0, 'a' }, { "unique", no_argument, 0,
+					'u' }, { "outer", required_argument, 0, 'o' }, { "inner",
+			required_argument, 0, 'i' }, { "help", no_argument, 0, 'h' }, {
+					"thread", required_argument, 0, 't' } };
+
+	int c;
+	while ((c = getopt_long(argc, argv, "a:uo:i:ht:", long_options,
+			&option_index)) != -1) {
 		switch (c) {
+		case 'a':
+			alg = optarg;
+			break;
 		case 'u':
 			uniq = true;
 			break;
-		case 'h':
-			hash = true;
-			break;
-		case 'b':
-			buildFile = optarg;
-			break;
-		case 'l':
-			loadFile = optarg;
+		case 'o':
+			outerfile = optarg;
 			break;
 		case 't':
-			numthread = strtoul(optarg, NULL, 10);
+			numthread = strtoul(optarg, NULL, 0);
 			break;
-		case '?':
-			if (optopt == 's' || optopt == 'b' || optopt == 'l'
-					|| optopt == 't')
-				fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-			else if (isprint(optopt))
-				fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-			else
-				fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+		case 'i':
+			innerfile = optarg;
+			break;
+		case 'h':
 			print_help();
-			return 1;
+			break;
 		default:
+			fprintf(stderr, "unrecognized option or missing argument\n");
 			print_help();
-			exit(1);
+			break;
 		}
-	if (NULL == buildFile || NULL == loadFile) {
-		print_help();
-		exit(1);
 	}
-	switch ((hash & 1) << 1 | (uniq & 1)) {
-	case 0:
-		xm_cht(buildFile, loadFile, numthread, true);
-		break;
-	case 1:
-		xm_cht(buildFile, loadFile, numthread, false);
-		break;
-	case 2:
-		xm_hash(buildFile, loadFile, numthread, true);
-		break;
-	case 3:
-		xm_hash(buildFile, loadFile, numthread, false);
-		break;
-	default:
-		abort();
+
+	kvlist outerkeys;
+	kvlist innerkeys;
+	log_info("Loading files");
+	perf_loadkey(outerfile, &outerkey);
+	perf_loadkey(innerfile, &innerkey);
+	log_info("Outer file size: %u\n", outerkey.size);
+	log_info("Inner file size: %u\n", innerkey.size);
+
+	algo* algo;
+	if (!strcmp("hash", alg)) {
+		algo = hash_algo_new();
+	} else if (!strcmp("cht", alg)) {
+		algo = cht_algo_new();
+	} else {
+		algo = cht_algo_new();
 	}
+
+	xm_access(algo, outerkey, innerkey, numthread, uniq);
+
+	free(outerkeys.entries);
+	free(innerkeys.entries);
 }

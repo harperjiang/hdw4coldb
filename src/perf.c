@@ -51,54 +51,6 @@ uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 	return buffer;
 }
 
-void perf_buildcht(cht* table, const char* filename) {
-	uint32_t size;
-	uint32_t* keys = perf_loadkey(filename, &size);
+void perf_dummykv(keylist* result, kv* entry) {
 
-	kv* entries = (kv*) malloc(sizeof(kv) * size);
-	for (uint32_t i = 0; i < size; i++) {
-		entries[i].key = keys[i];
-		memcpy(entries[i].payload, (uint8_t*) (keys + i),
-				sizeof(uint8_t) * PAYLOAD_SIZE);
-	}
-
-	cht_build(table, entries, size);
-	free(entries);
-	free(keys);
-}
-
-void perf_buildhash(hashtable* table, const char* filename) {
-	uint32_t size;
-	uint32_t* keys = perf_loadkey(filename, &size);
-	kv* entries = (kv*) malloc(sizeof(kv) * size);
-	for (uint32_t i = 0; i < size; i++) {
-		entries[i].key = keys[i];
-		memcpy(entries[i].payload, (uint8_t*) (keys + i),
-				sizeof(uint8_t) * PAYLOAD_SIZE);
-	}
-
-	hash_build(table, entries, size);
-	free(entries);
-	free(keys);
-}
-
-void perf_scancht(cht* table, kv* workload, uint32_t size,
-		void (*scanfunc)(uint32_t, uint8_t*, uint8_t*, void*)) {
-
-	scan_context context;
-	context.func = scanfunc;
-	for (uint32_t i = 0; i < size; i++) {
-		context.inner = workload->payload;
-		cht_scan(table, workload[i].key, &context);
-	}
-}
-
-void perf_scanhash(hashtable* table, kv* workload, uint32_t size,
-		void (*scanfunc)(uint32_t, uint8_t*, uint8_t*, void*)) {
-	scan_context context;
-	context.func = scanfunc;
-	for (uint32_t i = 0; i < size; i++) {
-		context.inner = workload->payload;
-		hash_scan(table, workload[i].key, &context);
-	}
 }

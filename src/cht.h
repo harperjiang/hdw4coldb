@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "hash.h"
 
 #define THRESHOLD 5
@@ -20,6 +21,7 @@ typedef struct _cht_entry {
 } cht_entry;
 
 typedef struct _cht {
+	algo_class* prototype;
 	uint64_t* 	bitmap;
 	uint32_t	bitmap_size;
 	cht_entry* 	payloads;
@@ -32,4 +34,6 @@ bool		cht_has(cht* cht, uint32_t key);
 cht_entry* 	cht_find_uniq(cht* cht, uint32_t key);
 void		cht_scan(cht* cht, uint32_t key, scan_context* context);
 void		cht_free(cht* cht);
+
+algo*		cht_algo_new();
 #endif /* CHT_H_ */

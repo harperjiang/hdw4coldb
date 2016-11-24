@@ -10,7 +10,9 @@
 #include <memory.h>
 #include <stdbool.h>
 #include "cht.h"
+
 #include "hash.h"
+#include "algo.h"
 #include "util.h"
 
 #define BITMAP_FACTOR 	4
@@ -138,7 +140,7 @@ void cht_build(cht* cht, kv* entries, uint32_t size) {
  */
 cht_entry* cht_find_uniq(cht* cht, uint32_t key) { // Bitmap check
 	if (!cht_has(cht, key))
-		return NULL;
+		return NULL ;
 	uint32_t hval = hash(key) % (cht->bitmap_size * BITMAP_UNIT);
 	uint32_t offset = bitmap_popcnt(cht->bitmap, hval);
 
@@ -183,4 +185,39 @@ void cht_free(cht* cht) {
 	free(cht->payloads);
 	hash_free(cht->overflow);
 	free(cht);
+}
+/**===================================================================
+ * Create class information for Hash
+ ======================================================================*/
+
+void cht_algo_build(const algo* self, kv* datas, uint32_t size) {
+	cht_build((cht*) self, datas, size);
+}
+
+uint8_t* cht_algo_access(const algo* self, uint32_t key) {
+	return cht_find_uniq((cht*) self, key)->payload;
+}
+
+void cht_algo_scan(const algo* self, uint32_t key, scan_context* context) {
+	cht_scan((cht*) self, key, context);
+}
+
+void cht_algo_free(const algo* self) {
+	cht_free((cht*) self);
+}
+
+algo_class cht_class;
+
+void cht_init_class() {
+	cht_class.name = "cht";
+	cht_class.build = cht_algo_build;
+	cht_class.access = cht_algo_access;
+	cht_class.scan = cht_algo_scan;
+	cht_class.free = cht_algo_free;
+}
+
+algo* cht_algo_new() {
+	cht* table = (cht*) malloc(sizeof(cht));
+	table->prototype = &cht_class;
+	return (algo*) table;
 }

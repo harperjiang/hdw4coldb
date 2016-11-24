@@ -8,15 +8,14 @@
 #ifndef SRC_PERF_H_
 #define SRC_PERF_H_
 
-#include "hash.h"
 #include "cht.h"
+#include "hash.h"
 
-uint32_t* 	perf_loadkey(const char* filename, uint32_t* sizeholder);
+typedef struct _kvlist {
+	kv* entries;
+	uint32_t size;
+} kvlist;
 
-void 		perf_buildcht(cht* table, const char* filename);
-void 		perf_buildhash(hashtable* table, const char* filename);
-
-void		perf_scancht(cht* table, kv* workload, uint32_t size, void (*scanfunc)(uint32_t, uint8_t*, uint8_t*,void*));
-void		perf_scanhash(hashtable* table, kv* workload, uint32_t size, void (*scanfunc)(uint32_t, uint8_t*, uint8_t*,void*));
+void perf_loadkey(const char* filename, kvlist* result);
 
 #endif /* SRC_PERF_H_ */

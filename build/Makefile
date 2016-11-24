@@ -19,6 +19,7 @@ C_SRCS = \
 ../src/perf.c \
 ../src/util.c \
 ../src/cat.c \
+../src/algo.c \
 ../src/log.c \
 ../src/timer.c \
 ../tool/gentestdata.c \
@@ -31,6 +32,7 @@ COMMON_OBJS = \
 ./src/chash.o \
 ./src/cht.o \
 ./src/cat.o \
+./src/algo.o \
 ./src/hash.o \
 ./src/perf.o \
 ./src/log.o \
@@ -54,6 +56,7 @@ space_analysis \
 C_DEPS = \
 ./src/chash.d \
 ./src/cht.d \
+./src/algo.d \
 ./src/cat.d \
 ./src/hash.d \
 ./src/perf.d \
