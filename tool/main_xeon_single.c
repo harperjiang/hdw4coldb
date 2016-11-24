@@ -60,13 +60,13 @@ bool uniq) {
 }
 
 void print_help() {
-	fprintf(stdout, "Usage: main_xeon_single [options]");
+	fprintf(stdout, "Usage: main_xeon_single [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -u --unique	\touter is unique\n");
 	fprintf(stdout, " -o --outer=FILE \tfile for outer table\n");
 	fprintf(stdout, " -i --inner=File \tfile for inner table\n");
-	fprintf(stdout, " -h --help \tdisplay this information\n");
+	fprintf(stdout, " -h --help \t\tdisplay this information\n");
 	exit(0);
 }
 
@@ -116,7 +116,7 @@ int main(int argc, char** argv) {
 
 	kvlist outerkeys;
 	kvlist innerkeys;
-	log_info("Loading files");
+	log_info("Loading files\n");
 	perf_loadkey(outerfile, &outerkeys);
 	perf_loadkey(innerfile, &innerkeys);
 	log_info("Outer file size: %u\n", outerkeys.size);

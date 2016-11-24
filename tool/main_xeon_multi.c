@@ -133,7 +133,7 @@ bool uniq) {
 }
 
 void print_help() {
-	fprintf(stdout, "Usage: main_xeon_multi [options]");
+	fprintf(stdout, "Usage: main_xeon_multi [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -t --thread=NUM\tnumber of threads\n");

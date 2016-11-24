@@ -17,8 +17,8 @@
 int main(int argc, char** argv) {
 
 	int c;
-	char* alg;
-	char* file;
+	char* alg = NULL;
+	char* file = NULL;
 	while ((c = getopt(argc, argv, "a:o:")) != -1) {
 		switch (c) {
 		case 'a':

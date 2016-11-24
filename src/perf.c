@@ -49,5 +49,5 @@ void perf_loadkey(const char* filename, kvlist* result) {
 
 	fclose(f);
 	result->entries = buffer;
-	result->size = size;
+	result->size = counter;
 }
