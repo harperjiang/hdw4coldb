@@ -195,7 +195,8 @@ void cht_algo_build(const algo* self, kv* datas, uint32_t size) {
 }
 
 uint8_t* cht_algo_access(const algo* self, uint32_t key) {
-	return cht_find_uniq((cht*) self, key)->payload;
+	cht_entry* entry = cht_find_uniq((cht*) self, key);
+	return entry == NULL ? NULL : entry->payload;
 }
 
 void cht_algo_scan(const algo* self, uint32_t key, scan_context* context) {

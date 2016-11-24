@@ -122,7 +122,8 @@ void hash_algo_build(const algo* self, kv* datas, uint32_t size) {
 }
 
 uint8_t* hash_algo_access(const algo* self, uint32_t key) {
-	return hash_get((hashtable*) self, key)->payload;
+	entry* entry = hash_get((hashtable*) self, key);
+	return entry == NULL ? NULL : entry->payload;
 }
 
 void hash_algo_scan(const algo* self, uint32_t key, scan_context* context) {
