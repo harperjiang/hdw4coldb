@@ -16,7 +16,7 @@ TEST( CAT, Build) {
 
 	cat* table = (cat*) malloc(sizeof(cat));
 
-	entry* entries = (entry*) malloc(sizeof(entry) * 125000);
+	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
 
 	for (uint32_t i = 0; i < 125000; i++) {
 		entries[i].key = i + 5000;
@@ -41,7 +41,7 @@ TEST( CAT, FindUnique) {
 
 	cat* table = (cat*) malloc(sizeof(cat));
 
-	entry* entries = (entry*) malloc(sizeof(entry) * 125000);
+	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
 
 	for (uint32_t i = 0; i < 125000; i++) {
 		entries[i].key = i + 5000;
@@ -68,7 +68,7 @@ TEST( CAT, Has) {
 
 	cat* table = (cat*) malloc(sizeof(cat));
 
-	entry* entries = (entry*) malloc(sizeof(entry) * 125000);
+	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
 
 	for (uint32_t i = 0; i < 125000; i++) {
 		entries[i].key = i + 5000;

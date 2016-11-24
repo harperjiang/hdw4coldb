@@ -5,8 +5,8 @@
  *      Author: harper
  */
 #include <gtest/gtest.h>
-#include "../src/hash.h"
 #include <stdlib.h>
+#include "../src/hash.h"
 
 TEST( Hash, Build) {
 	kv* entries = (kv*) malloc(sizeof(kv) * 32);
@@ -54,7 +54,7 @@ TEST( Hash, Get) {
 	ASSERT_EQ(ht->bucket_size, 32 * RATIO);
 
 	for (int i = 0; i < 32; i++) {
-		entry* entry = hash_get(ht, i + 1);
+		kv* entry = hash_get(ht, i + 1);
 
 		ASSERT_EQ(i, entry->payload[0]);
 		ASSERT_EQ(3, entry->payload[2]);
@@ -142,7 +142,7 @@ TEST( Hash, Organize) {
 	ASSERT_TRUE(ht->bucket_size >= 132 * RATIO);
 
 	for (int i = 0; i < 100; i++) {
-		entry* entry = hash_get(ht, i + 100);
+		kv* entry = hash_get(ht, i + 100);
 
 		ASSERT_EQ(i, entry->payload[0]);
 		ASSERT_EQ(3, entry->payload[2]);
