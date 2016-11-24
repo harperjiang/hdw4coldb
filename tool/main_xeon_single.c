@@ -114,6 +114,8 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	init_class();
+
 	kvlist outerkeys;
 	kvlist innerkeys;
 	log_info("Loading files\n");

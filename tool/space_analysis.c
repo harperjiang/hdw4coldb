@@ -32,6 +32,8 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	init_class();
+
 	kvlist outer;
 
 	perf_loadkey(file, &outer);
