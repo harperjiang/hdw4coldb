@@ -12,7 +12,7 @@
 #include <pthread.h>
 #include "perf.h"
 
-uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
+void perf_loadkey(const char* filename, kvlist* result) {
 	FILE* f = fopen(filename, "r");
 
 	if (NULL == f) {
@@ -26,20 +26,21 @@ uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 	uint32_t counter = 0;
 	uint32_t size = 1000;
 
-	uint32_t *buffer = (uint32_t*) malloc(sizeof(uint32_t) * size);
+	kv *buffer = (kv*) malloc(sizeof(kv) * size);
 
 	while ((read = getline(&line, &len, f)) != -1) {
 		if (strlen(line) == 0)
 			continue;
 		uint32_t data = (uint32_t) strtoul(line, NULL, 10);
-		buffer[counter++] = data;
+		buffer[counter].key = data;
+
+		counter++;
 
 		if (counter == size) {
 			uint32_t newsize = size * 2;
-			uint32_t* new_buffer = (uint32_t*) malloc(
-					sizeof(uint32_t) * newsize);
-			memcpy(new_buffer, buffer, size * sizeof(uint32_t));
-			uint32_t* oldbuffer = buffer;
+			kv* new_buffer = (kv*) malloc(sizeof(kv) * newsize);
+			memcpy(new_buffer, buffer, size * sizeof(kv));
+			kv* oldbuffer = buffer;
 			buffer = new_buffer;
 			free(oldbuffer);
 			size = newsize;
@@ -47,10 +48,6 @@ uint32_t* perf_loadkey(const char* filename, uint32_t* sizeholder) {
 	}
 
 	fclose(f);
-	*sizeholder = counter;
-	return buffer;
-}
-
-void perf_dummykv(keylist* result, kv* entry) {
-
+	result->entries = buffer;
+	result->size = size;
 }

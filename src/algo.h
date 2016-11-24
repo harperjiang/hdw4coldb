@@ -28,6 +28,8 @@ typedef struct _scan_context {
 	void* params;
 } scan_context;
 
+typedef struct _algo algo;
+
 typedef struct _algo_class {
 	const char* name;
 	void (*build)(const algo* self, kv* datas, uint32_t size);
