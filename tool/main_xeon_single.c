@@ -38,6 +38,8 @@ bool uniq) {
 	timer_token token;
 	timer_start(&token);
 
+	match_counter = 0;
+
 	if (uniq) {
 		for (uint32_t i = 0; i < innerfile->size; i++) {
 			kv inner = innerfile->entries[i];
