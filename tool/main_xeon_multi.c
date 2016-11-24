@@ -39,26 +39,25 @@ void process(uint32_t key, uint8_t* outer, uint8_t* inner, uint32_t* result) {
 	(*result)++;
 }
 
-void partition(kvlist* key, uint32_t keysize, uint32_t pnum,
-		thread_arg* partitions) {
+void partition(kvlist* key, uint32_t pnum, thread_arg* partitions) {
 	// Direct split to pnum pieces
 	for (uint32_t i = 0; i < pnum; i++) {
 		partitions[i].inner = key;
-		partitions[i].start = (keysize / pnum) * i;
-		partitions[i].stop = (keysize / pnum) * (i + 1);
+		partitions[i].start = (key->size / pnum) * i;
+		partitions[i].stop = (key->size / pnum) * (i + 1);
 	}
-	partitions[pnum - 1].stop = keysize - 1;
+	partitions[pnum - 1].stop = key->size - 1;
 }
 
 void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
-		algo_obj* table, kvlist* inner, bool uniq, void* (*thread_func)(void*)) {
+		algo* table, kvlist* inner, bool uniq, void* (*thread_func)(void*)) {
 	sem_t semaphore;
 	sem_init(&semaphore, 0, 0);
 
-	partition(keys, keysize, numthread, args);
+	partition(inner, numthread, args);
 
 	for (uint32_t i = 0; i < numthread; i++) {
-		args[i].table = table;
+		args[i].algo_obj = table;
 		args[i].uniq = uniq;
 		args[i].sema = &semaphore;
 		args[i].result = 0;
@@ -80,11 +79,10 @@ void* xm_thread_access(void* arg) {
 
 	if (context->uniq) {
 		for (uint32_t i = context->start; i < context->stop; i++) {
-			kv* entry = alg->prototype->access(alg,
-					context->inner->entries[i].key);
-			if (NULL != entry) {
-				process(context->key[i], entry->payload,
-						context->inner->entries[i].payload, &context->result);
+			kv inner = context->inner->entries[i];
+			uint8_t* outer = alg->prototype->access(alg, inner.key);
+			if (NULL != outer) {
+				process(inner.key, outer, inner.payload, &context->result);
 			}
 		}
 	} else {
@@ -102,13 +100,13 @@ void* xm_thread_access(void* arg) {
 }
 
 void xm_access(algo* algo_obj, kvlist* outer, kvlist* inner, uint32_t numthread,
-bool scan) {
+bool uniq) {
 	srand(time(NULL));
 	log_info("Running %s join with %d threads\n", algo_obj->prototype->name,
 			numthread);
 
 	log_info("Building outer table\n");
-	algo_obj->prototype->build(algo_obj, outerfile->entries, outerfile->size);
+	algo_obj->prototype->build(algo_obj, outer->entries, outer->size);
 	log_info("Building outer table done\n");
 
 // Run
@@ -132,8 +130,6 @@ bool scan) {
 
 	log_info("Running time: %u, matched row %u\n", token.wallclockms,
 			match_counter);
-
-	free(keys);
 }
 
 void print_help() {
@@ -200,10 +196,10 @@ int main(int argc, char** argv) {
 	kvlist outerkeys;
 	kvlist innerkeys;
 	log_info("Loading files");
-	perf_loadkey(outerfile, &outerkey);
-	perf_loadkey(innerfile, &innerkey);
-	log_info("Outer file size: %u\n", outerkey.size);
-	log_info("Inner file size: %u\n", innerkey.size);
+	perf_loadkey(outerfile, &outerkeys);
+	perf_loadkey(innerfile, &innerkeys);
+	log_info("Outer file size: %u\n", outerkeys.size);
+	log_info("Inner file size: %u\n", innerkeys.size);
 
 	algo* algo;
 	if (!strcmp("hash", alg)) {
@@ -214,7 +210,7 @@ int main(int argc, char** argv) {
 		algo = cht_algo_new();
 	}
 
-	xm_access(algo, outerkey, innerkey, numthread, uniq);
+	xm_access(algo, &outerkeys, &innerkeys, numthread, uniq);
 
 	free(outerkeys.entries);
 	free(innerkeys.entries);

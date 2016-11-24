@@ -39,27 +39,24 @@ bool uniq) {
 	timer_start(&token);
 
 	if (uniq) {
-		for (uint32_t i = 0; i < innerfile.size; i++) {
-			kv* outerEntry = algo_obj->prototype->access(algo_obj,
-					innerfile.entries[i].key);
-			if (outerEntry != NULL)
-				process(outerEntry->key, outerEntry->payload,
-						innerfile.entries[i]->payload);
+		for (uint32_t i = 0; i < innerfile->size; i++) {
+			kv inner = innerfile->entries[i];
+			uint8_t* outerpl = algo_obj->prototype->access(algo_obj, inner.key);
+			if (outerpl != NULL)
+				process(inner.key, outerpl, inner.payload);
 		}
 	} else {
 		scan_context sc;
 		sc.func = scan_dummy;
-		for (uint32_t i = 0; i < innerfile.size; i++) {
+		for (uint32_t i = 0; i < innerfile->size; i++) {
 			sc.inner = innerfile->entries[i].payload;
-			algo_obj->prototype->scan(algo_obj, innerfile.entries[i].key, &sc);
+			algo_obj->prototype->scan(algo_obj, innerfile->entries[i].key, &sc);
 		}
 	}
 	timer_stop(&token);
 
 	log_info("Running time: %u, matched row %u\n", token.wallclockms,
 			match_counter);
-
-	free(keys);
 }
 
 void print_help() {
@@ -120,10 +117,10 @@ int main(int argc, char** argv) {
 	kvlist outerkeys;
 	kvlist innerkeys;
 	log_info("Loading files");
-	perf_loadkey(outerfile, &outerkey);
-	perf_loadkey(innerfile, &innerkey);
-	log_info("Outer file size: %u\n", outerkey.size);
-	log_info("Inner file size: %u\n", innerkey.size);
+	perf_loadkey(outerfile, &outerkeys);
+	perf_loadkey(innerfile, &innerkeys);
+	log_info("Outer file size: %u\n", outerkeys.size);
+	log_info("Inner file size: %u\n", innerkeys.size);
 
 	algo* algo;
 	if (!strcmp("hash", alg)) {
@@ -134,7 +131,7 @@ int main(int argc, char** argv) {
 		algo = cht_algo_new();
 	}
 
-	xs_access(algo, outerkey, innerkey, uniq);
+	xs_access(algo, &outerkeys, &innerkeys, uniq);
 
 	free(outerkeys.entries);
 	free(innerkeys.entries);

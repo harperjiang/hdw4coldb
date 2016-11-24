@@ -7,23 +7,52 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <getopt.h>
+#include <string.h>
+#include "../src/algo.h"
 #include "../src/perf.h"
 #include "../src/cht.h"
 #include "../src/hash.h"
 
 int main(int argc, char** argv) {
 
-	if (atoi(argv[2]) == 1) {
-		cht* ct = (cht*) malloc(sizeof(cht));
-		perf_buildcht(ct, argv[1]);
+	int c;
+	char* alg;
+	char* file;
+	while ((c = getopt(argc, argv, "a:o:")) != -1) {
+		switch (c) {
+		case 'a':
+			alg = optarg;
+			break;
+		case 'o':
+			file = optarg;
+			break;
+		default:
+			exit(1);
+		}
+	}
+
+	kvlist outer;
+
+	perf_loadkey(file, &outer);
+
+	if (!strcmp("hash", alg)) {
+		algo* algobj = hash_algo_new();
+		algobj->prototype->build(algobj, outer.entries, outer.size);
+		hashtable* ht = (hashtable*) algobj;
+		printf("Hash: bucket size %u\n", ht->bucket_size);
+	} else if (!strcmp("cht", alg)) {
+		algo* algobj = cht_algo_new();
+		algobj->prototype->build(algobj, outer.entries, outer.size);
+		cht* ct = (cht*) algobj;
 		printf("CHT: bitmap size %u\n", ct->bitmap_size);
 		printf("CHT: payload size %u\n", ct->payload_size);
 		printf("CHT: overflow bkt size %u\n", ct->overflow->bucket_size);
 		printf("CHT: overflow size %u\n", ct->overflow->size);
 	} else {
-		hashtable* ht = (hashtable*) malloc(sizeof(hashtable));
-		perf_buildhash(ht, argv[1]);
-		printf("Hash: bucket size %u\n", ht->bucket_size);
+		exit(1);
 	}
+
+	free(outer.entries);
 }
 
