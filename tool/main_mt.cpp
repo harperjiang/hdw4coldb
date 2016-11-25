@@ -15,12 +15,15 @@
 #include <assert.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include "../src/perf.h"
-#include "../src/log.h"
-#include "../src/timer.h"
+#include "../src/Lookup.h"
+#include "../src/Hash.h"
+#include "../src/CHT.h"
+#include "../src/util.h"
+#include "../src/Logger.h"
+#include "../src/Timer.h"
 
 typedef struct _thread_arg {
-	algo* algo_obj;
+	Lookup* lookup;
 	kvlist* inner;
 	uint32_t start;
 	uint32_t stop;
@@ -50,14 +53,14 @@ void partition(kvlist* key, uint32_t pnum, thread_arg* partitions) {
 }
 
 void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
-		algo* table, kvlist* inner, bool uniq, void* (*thread_func)(void*)) {
+		Lookup* table, kvlist* inner, bool uniq, void* (*thread_func)(void*)) {
 	sem_t semaphore;
 	sem_init(&semaphore, 0, 0);
 
 	partition(inner, numthread, args);
 
 	for (uint32_t i = 0; i < numthread; i++) {
-		args[i].algo_obj = table;
+		args[i].lookup = table;
 		args[i].uniq = uniq;
 		args[i].sema = &semaphore;
 		args[i].result = 0;
@@ -75,50 +78,49 @@ void* xm_thread_access(void* arg) {
 	thread_arg *context = (thread_arg*) arg;
 	context->result = 0;
 
-	algo* alg = context->algo_obj;
+	Lookup* alg = context->lookup;
 
 	if (context->uniq) {
 		for (uint32_t i = context->start; i < context->stop; i++) {
 			kv inner = context->inner->entries[i];
-			uint8_t* outer = alg->prototype->access(alg, inner.key);
+			uint8_t* outer = alg->access(inner.key);
 			if (NULL != outer) {
 				process(inner.key, outer, inner.payload, &context->result);
 			}
 		}
 	} else {
-		scan_context sc;
-		sc.func = scan_func;
-		sc.params = context;
+		ScanContext sc(scan_func, context);
 		for (uint32_t i = context->start; i < context->stop; i++) {
-			sc.inner = context->inner->entries[i].payload;
-			alg->prototype->scan(alg, context->inner->entries[i].key, &sc);
+			sc.updateInner(context->inner->entries[i].payload);
+			alg->scan(context->inner->entries[i].key, &sc);
 		}
 	}
 	sem_post(context->sema);
 	pthread_exit(NULL);
-	return NULL ;
+	return NULL;
 }
 
-void xm_access(algo* algo_obj, kvlist* outer, kvlist* inner, uint32_t numthread,
-bool uniq) {
+void xm_access(Lookup* lookup, kvlist* outer, kvlist* inner, uint32_t numthread,
+		bool uniq) {
 	srand(time(NULL));
-	log_info("Running %s join with %d threads\n", algo_obj->prototype->name,
+	Logger logger;
+
+	logger.info("Running %s join with %d threads\n", lookup->getName(),
 			numthread);
 
-	log_info("Building outer table\n");
-	algo_obj->prototype->build(algo_obj, outer->entries, outer->size);
-	log_info("Building outer table done\n");
+	logger.info("Building outer table\n");
+	lookup->build(outer->entries, outer->size);
+	logger.info("Building outer table done\n");
 
 // Run
 
-	timer_token token;
-	timer_start(&token);
+	Timer timer;
+	timer.start();
 
 	pthread_t threads[numthread];
 	thread_arg args[numthread];
 
-	run_thread(threads, args, numthread, algo_obj, inner, uniq,
-			xm_thread_access);
+	run_thread(threads, args, numthread, lookup, inner, uniq, xm_thread_access);
 
 // Collect result
 	uint32_t match_counter = 0;
@@ -126,9 +128,9 @@ bool uniq) {
 		match_counter += args[i].result;
 	}
 
-	timer_stop(&token);
+	timer.stop();
 
-	log_info("Running time: %u, matched row %u\n", token.wallclockms,
+	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
 			match_counter);
 }
 
@@ -145,7 +147,6 @@ void print_help() {
 }
 
 int main(int argc, char** argv) {
-
 	bool uniq = false;
 	char* alg = NULL;
 	char* outerfile = NULL;
@@ -193,27 +194,29 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	init_class();
+	Logger logger;
 
 	kvlist outerkeys;
 	kvlist innerkeys;
-	log_info("Loading files");
-	perf_loadkey(outerfile, &outerkeys);
-	perf_loadkey(innerfile, &innerkeys);
-	log_info("Outer file size: %u\n", outerkeys.size);
-	log_info("Inner file size: %u\n", innerkeys.size);
+	logger.info("Loading files\n");
+	loadkey(outerfile, &outerkeys);
+	loadkey(innerfile, &innerkeys);
+	logger.info("Outer file size: %u\n", outerkeys.size);
+	logger.info("Inner file size: %u\n", innerkeys.size);
 
-	algo* algo;
+	Lookup* lookup;
 	if (!strcmp("hash", alg)) {
-		algo = hash_algo_new();
+		lookup = new Hash();
 	} else if (!strcmp("cht", alg)) {
-		algo = cht_algo_new();
+		lookup = new CHT();
 	} else {
-		algo = cht_algo_new();
+		lookup = new CHT();
 	}
 
-	xm_access(algo, &outerkeys, &innerkeys, numthread, uniq);
+	xm_access(lookup, &outerkeys, &innerkeys, numthread, uniq);
 
-	free(outerkeys.entries);
-	free(innerkeys.entries);
+	delete[] outerkeys.entries;
+	delete[] innerkeys.entries;
+
+	delete lookup;
 }

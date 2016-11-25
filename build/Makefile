@@ -1,7 +1,7 @@
 # Makefile for generating programs for performance test
 
 CC=g++
-CC_FLAG= -O3 -Wall -c -fmessage-length=0 -pthread
+CC_FLAG= -O3 -Wall -std=gnu++11 -c -fmessage-length=0 -pthread
 RM=rm
 ifeq ($(OS),Windows_NT)
 	EXE_SUFFIX=.exe
@@ -13,20 +13,18 @@ BIN = ../bin
 LIBS = -pthread
 
 C_SRCS = \
-../src/chash.c \
-../src/cht.c \
-../src/hash.c \
-../src/perf.c \
-../src/util.c \
-../src/cat.c \
-../src/algo.c \
-../src/log.c \
-../src/timer.c \
-../tool/gentestdata.c \
-../tool/mergedata.c \
-../tool/main_xeon_single.c \
-../tool/main_xeon_multi.c \
-../tool/space_analysis.c \
+CPP_SRCS += \
+../src/CHT.cpp \
+../src/Hash.cpp \
+../src/Logger.cpp \
+../src/Lookup.cpp \
+../src/Timer.cpp \
+../src/util.cpp \
+../tool/gentestdata.cpp \
+../tool/mergedata.cpp \
+../tool/main_single.cpp \
+../tool/main_mt.cpp \
+../tool/space_analysis.cpp \
 
 COMMON_OBJS = \
 ./src/chash.o \
@@ -42,31 +40,28 @@ COMMON_OBJS = \
 EXE_OBJS = \
 ./tool/gendata.o \
 ./tool/mergedata.o \
-./tool/main_xeon_single.o \
-./tool/main_xeon_multi.o \
+./tool/main_single.o \
+./tool/main_mt.o \
 ./tool/space_analysis.o \
 
 EXES = \
 gendata \
 mergedata \
-main_xeon_single \
-main_xeon_multi \
+main_single \
+main_mt \
 space_analysis \
 
 C_DEPS = \
-./src/chash.d \
-./src/cht.d \
-./src/algo.d \
-./src/cat.d \
-./src/hash.d \
-./src/perf.d \
+./src/CHT.d \
+./src/Hash.d \
+./src/Logger.d \
+./src/Lookup.d \
+./src/Timer.d \
 ./src/util.d \
-./src/log.d \
-./src/timer.d \
 ./tool/gentestdata.d \
 ./tool/mergedata.d \
-./tool/main_xeon_single.d \
-./tool/main_xeon_multi.d \
+./tool/main_single.d \
+./tool/main_mt.d \
 ./tool/space_analysis.d \ 
 
 default: $(EXES)
@@ -77,13 +72,13 @@ $(EXES): %: ./tool/%.o $(COMMON_OBJS) $(BIN)
 	@echo '$@ Generated'
 	@echo ' '
 
-src/%.o: ../src/%.c src
+src/%.o: ../src/%.cpp src
 	@echo 'Building file: $<'
 	$(CC) $(CC_FLAG) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 	
-tool/%.o: ../tool/%.c tool
+tool/%.o: ../tool/%.cpp tool
 	@echo 'Building file: $<'
 	$(CC) $(CC_FLAG) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'

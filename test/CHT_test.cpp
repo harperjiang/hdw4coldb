@@ -16,9 +16,9 @@ TEST( CHT, Build) {
 
 	srand(time(NULL));
 
-	cht* table = (cht*) malloc(sizeof(cht));
+	CHT* table = new CHT();
 
-	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
+	kv* entries = new kv[125000];
 
 	for (int i = 0; i < 125000; i++) {
 		entries[i].key = (uint32_t) rand();
@@ -28,41 +28,41 @@ TEST( CHT, Build) {
 	}
 
 	// Fill in random data
-	cht_build(table, entries, 125000);
-	free(entries);
+	table->build(entries, 125000);
+	delete[] entries;
 
-	ASSERT_TRUE(125000 >= table->payload_size);
-	ASSERT_EQ(125000 * BITMAP_FACTOR / 32, table->bitmap_size);
+	ASSERT_TRUE(125000 >= table->payloadSize());
+	ASSERT_EQ(125000 * BITMAP_FACTOR / 32, table->bitmapSize());
 
-	cht_free(table);
+	delete table;
 }
 
 TEST( CHT, FindUnique) {
 	srand(time(NULL));
 
-	cht* table = (cht*) malloc(sizeof(cht));
+	CHT* table = new CHT();
 
-	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
+	kv* entries = new kv[125000];
 
 	for (int i = 0; i < 125000; i++) {
-		entries[i].key = i + 1;
+		entries[i].key = i+1;
 		for (int j = 0; j < 4; j++) {
 			entries[i].payload[j] = (uint8_t) (rand() % 0xff);
 		}
 	}
 
 	// Fill in random data
-	cht_build(table, entries, 125000);
+	table->build(entries, 125000);
 
 	for (int i = 0; i < 125000; i++) {
-		cht_entry* entry = cht_find_uniq(table, entries[i].key);
+		kv* entry = table->findUnique(entries[i].key);
 		ASSERT_TRUE(entry != NULL);
 		for (int j = 0; j < 4; j++) {
 			ASSERT_EQ(entries[i].payload[j], entry->payload[j]);
 		}
 	}
-	free(entries);
-	cht_free(table);
+	delete[] entries;
+	delete table;
 }
 
 uint32_t counter;
@@ -72,49 +72,52 @@ void myscanfunc(uint32_t key, uint8_t* outer, uint8_t* inner, void*param) {
 
 TEST( CHT, Scan) {
 
-	srand(time(NULL));
+	CHT* table = new CHT();
 
-	cht* table = (cht*) malloc(sizeof(cht));
-
-	kv* entries = (kv*) malloc(sizeof(kv) * 50);
+	kv* entries = new kv[50];
 
 	for (int i = 0; i < 50; i++) {
-		entries[i].key = i % 10 + 1;
+		entries[i].key = (i%10)+1;
 		for (int j = 0; j < 4; j++) {
 			entries[i].payload[j] = (uint8_t) (rand() % 0xff);
 		}
 	}
 
 	// Fill in random data
-	cht_build(table, entries, 50);
-	scan_context context;
-	context.func = myscanfunc;
+	table->build(entries, 50);
+
+	ScanContext context(myscanfunc,NULL);
 
 	for (int i = 0; i < 50; i++) {
-		context.inner = entries[i].payload;
+		context.updateInner(entries[i].payload);
 		counter = 0;
-		cht_scan(table, entries[i].key, &context);
+		table->scan(entries[i].key, &context);
 		ASSERT_EQ(5, counter);
 	}
-	free(entries);
-	cht_free(table);
+
+	delete[] entries;
+	delete table;
 }
 
 TEST( CHT, Has) {
-	srand(time(NULL));
+	CHT* table = new CHT();
 
-	cht* table = (cht*) malloc(sizeof(cht));
-	kv* entries = (kv*) malloc(sizeof(kv) * 125000);
-	uint32_t key_counter = 1;
+	kv* entries = new kv[125000];
+
 	for (int i = 0; i < 125000; i++) {
-		entries[i].key = key_counter++;
+		entries[i].key = (uint32_t) rand();
+		for (int j = 0; j < 4; j++) {
+			entries[i].payload[j] = (uint8_t) (rand() % 0xff);
+		}
 	}
 
-	cht_build(table, entries, 125000);
+	// Fill in random data
+	table->build(entries, 125000);
+
 	for (int i = 0; i < 125000; i++) {
-		ASSERT_TRUE(cht_has(table, entries[i].key));
+		ASSERT_TRUE(table->has(entries[i].key));
 	}
 
-	free(entries);
-	cht_free(table);
+	delete[] entries;
+	delete table;
 }

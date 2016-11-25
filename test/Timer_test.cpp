@@ -4,18 +4,19 @@
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include "../src/timer.h"
+
+#include "../src/Timer.h"
 
 TEST( Timer, Run) {
 
-	timer_token token;
+	Timer* timer = new Timer();
 	for (int i = 0; i < 10; i++) {
-		timer_start(&token);
+		timer->start();
 
 		usleep(500000);
 
-		timer_stop(&token);
+		timer->stop();
 
-		ASSERT_TRUE(480 < token.wallclockms && token.wallclockms < 520);
+		ASSERT_TRUE(480 < timer->wallclockms() && timer->wallclockms() < 520);
 	}
 }

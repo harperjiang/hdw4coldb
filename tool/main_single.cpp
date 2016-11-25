@@ -11,9 +11,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
-#include "../src/perf.h"
-#include "../src/log.h"
-#include "../src/timer.h"
+#include "../src/Lookup.h"
+#include "../src/Hash.h"
+#include "../src/CHT.h"
+#include "../src/util.h"
+#include "../src/Logger.h"
+#include "../src/Timer.h"
 
 // Join and print num matched
 uint32_t match_counter;
@@ -27,37 +30,37 @@ void process(uint32_t key, uint8_t* outer, uint8_t* inner) {
 }
 
 //
-void xs_access(algo* algo_obj, kvlist* outerfile, kvlist* innerfile,
-bool uniq) {
+void xs_access(Lookup* lookup, kvlist* outerfile, kvlist* innerfile,
+		bool uniq) {
 	srand(time(NULL));
+	Logger logger;
 
-	log_info("Running %s join\n", algo_obj->prototype->name);
-	log_info("Building outer table\n");
-	algo_obj->prototype->build(algo_obj, outerfile->entries, outerfile->size);
-	log_info("Building outer table done\n");
-	timer_token token;
-	timer_start(&token);
+	logger.info("Running %s join\n", lookup->getName());
+	logger.info("Building outer table\n");
+	lookup->build(outerfile->entries, outerfile->size);
+	logger.info("Building outer table done\n");
+	Timer timer;
+	timer.start();
 
 	match_counter = 0;
 
 	if (uniq) {
 		for (uint32_t i = 0; i < innerfile->size; i++) {
 			kv inner = innerfile->entries[i];
-			uint8_t* outerpl = algo_obj->prototype->access(algo_obj, inner.key);
+			uint8_t* outerpl = lookup->access(inner.key);
 			if (outerpl != NULL)
 				process(inner.key, outerpl, inner.payload);
 		}
 	} else {
-		scan_context sc;
-		sc.func = scan_dummy;
+		ScanContext sc(scan_dummy, NULL);
 		for (uint32_t i = 0; i < innerfile->size; i++) {
-			sc.inner = innerfile->entries[i].payload;
-			algo_obj->prototype->scan(algo_obj, innerfile->entries[i].key, &sc);
+			sc.updateInner(innerfile->entries[i].payload);
+			lookup->scan(innerfile->entries[i].key, &sc);
 		}
 	}
-	timer_stop(&token);
+	timer.stop();
 
-	log_info("Running time: %u, matched row %u\n", token.wallclockms,
+	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
 			match_counter);
 }
 
@@ -116,27 +119,28 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	init_class();
+	Logger logger;
 
 	kvlist outerkeys;
 	kvlist innerkeys;
-	log_info("Loading files\n");
-	perf_loadkey(outerfile, &outerkeys);
-	perf_loadkey(innerfile, &innerkeys);
-	log_info("Outer file size: %u\n", outerkeys.size);
-	log_info("Inner file size: %u\n", innerkeys.size);
+	logger.info("Loading files\n");
+	loadkey(outerfile, &outerkeys);
+	loadkey(innerfile, &innerkeys);
+	logger.info("Outer file size: %u\n", outerkeys.size);
+	logger.info("Inner file size: %u\n", innerkeys.size);
 
-	algo* algo;
+	Lookup* lookup;
 	if (!strcmp("hash", alg)) {
-		algo = hash_algo_new();
+		lookup = new Hash();
 	} else if (!strcmp("cht", alg)) {
-		algo = cht_algo_new();
+		lookup = new CHT();
 	} else {
-		algo = cht_algo_new();
+		lookup = new CHT();
 	}
 
-	xs_access(algo, &outerkeys, &innerkeys, uniq);
+	xs_access(lookup, &outerkeys, &innerkeys, uniq);
 
-	free(outerkeys.entries);
-	free(innerkeys.entries);
+	delete[] outerkeys.entries;
+	delete[] innerkeys.entries;
+	delete lookup;
 }

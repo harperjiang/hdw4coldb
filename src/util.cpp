@@ -1,18 +1,13 @@
 /*
- * exp_prep.c
+ * util.c
  *
- *  Created on: Nov 19, 2016
- *      Author: Cathy
+ *  Created on: Nov 17, 2016
+ *      Author: harper
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
-#include <time.h>
-#include <pthread.h>
-#include "perf.h"
+#include "util.h"
 
-void perf_loadkey(const char* filename, kvlist* result) {
+void loadkey(const char* filename, kvlist* result) {
 	FILE* f = fopen(filename, "r");
 
 	if (NULL == f) {
@@ -26,7 +21,7 @@ void perf_loadkey(const char* filename, kvlist* result) {
 	uint32_t counter = 0;
 	uint32_t size = 1000;
 
-	kv *buffer = (kv*) malloc(sizeof(kv) * size);
+	kv *buffer = new kv[size];
 
 	while ((read = getline(&line, &len, f)) != -1) {
 		if (strlen(line) == 0)
@@ -38,11 +33,11 @@ void perf_loadkey(const char* filename, kvlist* result) {
 
 		if (counter == size) {
 			uint32_t newsize = size * 2;
-			kv* new_buffer = (kv*) malloc(sizeof(kv) * newsize);
-			memcpy(new_buffer, buffer, size * sizeof(kv));
+			kv* new_buffer = new kv[newsize];
+			::memcpy(new_buffer, buffer, size * sizeof(kv));
 			kv* oldbuffer = buffer;
 			buffer = new_buffer;
-			free(oldbuffer);
+			delete []oldbuffer;
 			size = newsize;
 		}
 	}

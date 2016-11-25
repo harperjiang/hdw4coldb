@@ -12,12 +12,19 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef struct _timer_token {
-	struct timeval 	start;
-	uint64_t 		wallclockms;
-} timer_token;
+class Timer {
+private:
+	struct timeval _start;
+	uint64_t _wallclockms = 0;
 
-void timer_start(timer_token* token);
-void timer_stop(timer_token* token);
+public:
+	Timer();
+	virtual ~Timer();
+
+	void start();
+	void stop();
+
+	uint64_t wallclockms();
+};
 
 #endif /* SRC_TIMER_H_ */

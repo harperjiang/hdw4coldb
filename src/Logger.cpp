@@ -8,17 +8,14 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include "log.h"
 
-char log_buffer[1000];
+#include "Logger.h"
 
-void log_info(const char* format, ...) {
-
+void Logger::info(const char* format, ...) {
 	sprintf(log_buffer, "%s%s", "[INFO ]", format);
 
 	va_list arg;
 	va_start(arg, log_buffer);
 	vfprintf(stdout, log_buffer, arg);
 	va_end(arg);
-
 }
