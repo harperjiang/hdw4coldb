@@ -27,15 +27,12 @@ CPP_SRCS += \
 ../tool/space_analysis.cpp \
 
 COMMON_OBJS = \
-./src/chash.o \
-./src/cht.o \
-./src/cat.o \
-./src/algo.o \
-./src/hash.o \
-./src/perf.o \
-./src/log.o \
-./src/util.o \
-./src/timer.o \
+./src/CHT.o \
+./src/Hash.o \
+./src/Logger.o \
+./src/Lookup.o \
+./src/Timer.o \
+./src/util.o 
 
 EXE_OBJS = \
 ./tool/gendata.o \
