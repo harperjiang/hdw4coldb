@@ -29,10 +29,10 @@
 using namespace std;
 
 /* convert the kernel file into a string */
-int convertToString(const char *filename, std::string& s)
-{
+int convertToString(const char *filename, std::string& s) {
 	size_t size;
-	char* str = "__kernel void helloworld(__global char* in, __global char* out){ int num = get_global_id(0);out[num] = in[num] + 1;}";
+	char* str =
+			"__kernel void helloworld(__global char* in, __global char* out){ int num = get_global_id(0);out[num] = in[num] + 1;}";
 	s = str;
 	return 0;
 }
@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
 	cl_uint numDevices = 0;
 	cl_device_id *devices;
 	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
+	cout << "Number of GPU discovered : " << numDevices << endl;
 	if (numDevices == 0)	//no GPU available.
 			{
 		cout << "No GPU device available." << endl;
@@ -76,12 +77,19 @@ int main(int argc, char* argv[]) {
 				devices, NULL);
 	}
 
+	char* devName = new char[100];
+	status = clGetDeviceInfo(devices[0], CL_DEVICE_NAME, 100, devName,
+	NULL);
+	if (!status) {
+		cout << "Discovered GPU name: " << devName << endl;
+	}
+	delete[] devName;
 	/*Step 3: Create context.*/
 	cl_context context = clCreateContext(NULL, 1, devices, NULL, NULL, NULL);
 
 	/*Step 4: Creating command queue associate with the context.*/
 	cl_command_queue commandQueue = clCreateCommandQueue(context, devices[0], 0,
-			NULL);
+	NULL);
 
 	/*Step 5: Create program object */
 	const char *filename = "HelloWorld_Kernel.cl";
@@ -146,7 +154,6 @@ int main(int argc, char* argv[]) {
 		devices = NULL;
 	}
 
-	std
-	::cout<<"Passed!\n";
+	std::cout << "Passed!\n";
 	return SUCCESS;
 }
