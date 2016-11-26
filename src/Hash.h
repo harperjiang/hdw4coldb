@@ -31,7 +31,7 @@ public:
 	void put(uint32_t key, uint8_t* payload);
 	uint32_t size();
 	uint32_t bucketSize();
-	void organize(uin32_t newsize);
+	void organize(uint32_t newsize);
 protected:
 	void internalPut(uint32_t key, uint8_t* payload);
 };
