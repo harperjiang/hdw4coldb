@@ -69,13 +69,7 @@ void Hash::scan(uint32_t key, ScanContext* context) {
 	}
 }
 
-void Hash::put(uint32_t key, uint8_t* payload) {
-// No zero key
-	assert(key != 0);
-	if (this->_size * RATIO > this->bucket_size) {
-		this->organize();
-	}
-
+void Hash::internalPut(uint32_t key, uint8_t* payload) {
 	uint32_t hval = hash(key) % this->bucket_size;
 	kv* bucket = this->buckets + hval;
 
@@ -89,6 +83,15 @@ void Hash::put(uint32_t key, uint8_t* payload) {
 			sizeof(uint8_t) * PAYLOAD_SIZE);
 
 	this->_size += 1;
+}
+
+void Hash::put(uint32_t key, uint8_t* payload) {
+// No zero key
+	assert(key != 0);
+	if (this->_size * RATIO > this->bucket_size) {
+		this->organize(this->bucket_size * RATIO);
+	}
+	internalPut(key, payload);
 }
 
 kv* Hash::get(uint32_t key) {
@@ -114,9 +117,7 @@ bool Hash::has(uint32_t key) {
 	return get(key) != NULL;
 }
 
-void Hash::organize() {
-	uint32_t newbktsize = this->bucket_size * RATIO;
-
+void Hash::organize(uint32_t newbktsize) {
 	kv* newbkts = new kv[newbktsize]();
 
 	kv* oldbkts = this->buckets;
@@ -128,7 +129,7 @@ void Hash::organize() {
 
 	for (uint32_t i = 0; i < oldbktsize; i++) {
 		if (oldbkts[i].key != 0)
-			this->put(oldbkts[i].key, oldbkts[i].payload);
+			this->internalPut(oldbkts[i].key, oldbkts[i].payload);
 	}
 	delete[] oldbkts;
 }

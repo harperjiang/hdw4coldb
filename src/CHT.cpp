@@ -139,6 +139,7 @@ void CHT::build(kv* entries, uint32_t size) {
 					PAYLOAD_SIZE * sizeof(uint8_t));
 		}
 	}
+	overflow->organize(overflow->size() * RATIO);
 }
 
 bool CHT::has(uint32_t key) {
