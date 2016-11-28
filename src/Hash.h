@@ -13,7 +13,7 @@
 #define RATIO 1.5
 
 class Hash: public Lookup {
-private:
+public:
 	uint32_t _size;
 	uint32_t bucket_size;
 	kv *buckets;

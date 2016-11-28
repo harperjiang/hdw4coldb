@@ -65,7 +65,7 @@ void xs_access(Lookup* lookup, kvlist* outerfile, kvlist* innerfile,
 }
 
 void print_help() {
-	fprintf(stdout, "Usage: main_xeon_single [options]\n");
+	fprintf(stdout, "Usage: main_single [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -u --unique	\touter is unique\n");

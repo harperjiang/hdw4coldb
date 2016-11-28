@@ -135,7 +135,7 @@ void xm_access(Lookup* lookup, kvlist* outer, kvlist* inner, uint32_t numthread,
 }
 
 void print_help() {
-	fprintf(stdout, "Usage: main_xeon_multi [options]\n");
+	fprintf(stdout, "Usage: main_mt [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -t --thread=NUM\tnumber of threads\n");

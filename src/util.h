@@ -34,9 +34,9 @@ inline uint32_t popcount(uint32_t input) {
 /*
  * Multiplicative hashing
  */
-inline uint32_t hash(uint32_t v);
+inline uint32_t mut_hash(uint32_t v);
 
-inline uint32_t hash(uint32_t v) {
+inline uint32_t mut_hash(uint32_t v) {
 	return v * UINT32_C(2654435761);
 }
 

@@ -12,7 +12,7 @@
 #include "Lookup.h"
 
 class CHT: public Lookup {
-private:
+public:
 	uint64_t* bitmap;
 	uint32_t bitmap_size;
 	kv* payloads;

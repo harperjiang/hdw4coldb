@@ -22,138 +22,424 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <getopt.h>
 
-#define SUCCESS 0
-#define FAILURE 1
+#include "../src/Timer.h"
+#include "../src/CHT.h"
+#include "../src/Logger.h"
+#include "../src/opencl/CLEnv.h"
+#include "../src/opencl/CLProgram.h"
+#include "../src/util.h"
+
+#define THRESHOLD 5
+#define BITMAP_FACTOR 	4
+#define BITMAP_EXT 		32
+#define BITMAP_UNIT 	32
+#define BITMAP_EXTMASK 	0xffffffff00000000
+#define BITMAP_MASK		0xffffffff
+
+#define OVERFLOW_INIT   10000
+#define MIN_SIZE 	1000
 
 using namespace std;
 
-/* convert the kernel file into a string */
-int convertToString(const char *filename, std::string& s) {
-	size_t size;
-	char* str =
-			"__kernel void helloworld(__global char* in, __global char* out){ int num = get_global_id(0);out[num] = in[num] + 1;}";
-	s = str;
-	return 0;
+Logger logger;
+
+extern bool bitmap_test(uint64_t* bitmap, uint32_t offset);
+extern uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t offset);
+
+void runHash(kvlist* outer, kvlist* inner) {
+	logger.info("Running hash join\n");
+	Hash* hash = new Hash();
+	hash->build(outer->entries, outer->size);
+
+	CLEnv* env = new CLEnv();
+
+	CLProgram* hashScan = new CLProgram(env, "scan_hash");
+	hashScan->fromFile("scan_hash.cl", 4);
+
+	uint32_t meta[2];
+	meta[1] = hash->bucket_size;
+	uint32_t* payload = new uint32_t[hash->bucket_size];
+	for (uint32_t i = 0; i < hash->bucket_size; i++) {
+		payload[i] = hash->buckets[i].key;
+	}
+
+	uint32_t* innerkey = new uint32_t[inner->size];
+	for (uint32_t i = 0; i < inner->size; i++) {
+		innerkey[i] = inner->entries[i].key;
+	}
+
+	Timer timer;
+	timer.start();
+
+	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* payloadBuffer = new CLBuffer(env, payload,
+			sizeof(uint32_t) * hash->bucket_size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* innerKeyBuffer = new CLBuffer(env, innerkey,
+			sizeof(uint32_t) * inner->size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* resultBuffer = new CLBuffer(env, NULL,
+			sizeof(uint32_t) * inner->size, CL_MEM_WRITE_ONLY);
+
+	hashScan->setBuffer(0, metaBuffer);
+	hashScan->setBuffer(1, payloadBuffer);
+	hashScan->setBuffer(2, innerKeyBuffer);
+	hashScan->setBuffer(3, resultBuffer);
+
+	hashScan->execute(inner->size);
+
+	uint32_t* result = (uint32_t*) resultBuffer->map(CL_MAP_READ);
+	uint32_t sum = 0;
+	for (uint32_t i = 0; i < inner->size; i++) {
+		sum += result[i] == 0xffffffff ? 0 : 1;
+	}
+	resultBuffer->unmap();
+
+	timer.stop();
+	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(), sum);
+
+	delete metaBuffer;
+	delete payloadBuffer;
+	delete innerKeyBuffer;
+	delete resultBuffer;
+
+	delete hashScan;
+	delete env;
+	delete hash;
 }
 
-int main(int argc, char* argv[]) {
+void runChtStep(kvlist* outer, kvlist* inner) {
+	Timer timer;
+	logger.info("Running CHT Step Join\n");
+	logger.info("Building Outer Table\n");
+	CHT* cht = new CHT();
+	cht->build(outer->entries, outer->size);
+	logger.info("Building Outer Table Done\n");
+	uint32_t meta[2];
 
-	/*Step1: Getting platforms and choose an available one.*/
-	cl_uint numPlatforms;	//the NO. of platforms
-	cl_platform_id platform = NULL;	//the chosen platform
-	cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
-	if (status != CL_SUCCESS) {
-		cout << "Error: Getting platforms!" << endl;
-		return FAILURE;
+	meta[0] = cht->bitmap_size;
+
+	uint32_t* innerkey = new uint32_t[inner->size];
+	for (uint32_t i = 0; i < inner->size; i++) {
+		innerkey[i] = inner->entries[i].key;
 	}
 
-	/*For clarity, choose the first available platform. */
-	if (numPlatforms > 0) {
-		cl_platform_id* platforms = (cl_platform_id*) malloc(
-				numPlatforms * sizeof(cl_platform_id));
-		status = clGetPlatformIDs(numPlatforms, platforms, NULL);
-		platform = platforms[0];
-		free(platforms);
+	uint32_t* cht_payload = new uint32_t[cht->payload_size];
+	for (uint32_t i = 0; i < cht->payload_size; i++) {
+		cht_payload[i] = cht->payloads[i].key;
 	}
 
-	/*Step 2:Query the platform and choose the first GPU device if has one.Otherwise use the CPU as device.*/
-	cl_uint numDevices = 0;
-	cl_device_id *devices;
-	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
-	cout << "Number of GPU discovered : " << numDevices << endl;
-	if (numDevices == 0)	//no GPU available.
-			{
-		cout << "No GPU device available." << endl;
-		cout << "Choose CPU as default device." << endl;
-		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 0, NULL,
-				&numDevices);
-		devices = (cl_device_id*) malloc(numDevices * sizeof(cl_device_id));
-		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, numDevices,
-				devices, NULL);
-	} else {
-		devices = (cl_device_id*) malloc(numDevices * sizeof(cl_device_id));
-		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices,
-				devices, NULL);
+	uint32_t* hash_payload = new uint32_t[cht->overflow->bucket_size];
+	for (uint32_t i = 0; i < cht->overflow->bucket_size; i++) {
+		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
-	char* devName = new char[100];
-	status = clGetDeviceInfo(devices[0], CL_DEVICE_NAME, 100, devName,
-	NULL);
-	if (!status) {
-		cout << "Discovered GPU name: " << devName << endl;
+	timer.start();
+
+	CLEnv* env = new CLEnv();
+
+	CLProgram* scanBitmap = new CLProgram(env, "scan_bitmap");
+	scanBitmap->fromFile("scan_bitmap.cl", 4);
+	CLProgram* scanCht = new CLProgram(env, "scan_cht");
+	scanCht->fromFile("scan_cht.cl", 5);
+	CLProgram* scanHash = new CLProgram(env, "scan_hash");
+	scanHash->fromFile("scan_hash.cl", 4);
+
+	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
+			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
+			sizeof(uint64_t) * cht->bitmap_size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey,
+			sizeof(uint32_t) * inner->size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* chtpayloadBuffer = new CLBuffer(env, cht_payload,
+			sizeof(uint32_t) * inner->size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* hashpayloadBuffer = new CLBuffer(env, hash_payload,
+			sizeof(uint32_t) * cht->overflow->bucket_size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+
+	CLBuffer* bitmapResultBuffer = new CLBuffer(env, NULL,
+			sizeof(char) * inner->size, CL_MEM_READ_WRITE);
+
+	scanBitmap->setBuffer(0, metaBuffer);
+	scanBitmap->setBuffer(1, bitmapBuffer);
+	scanBitmap->setBuffer(2, innerkeyBuffer);
+	scanBitmap->setBuffer(3, bitmapResultBuffer);
+
+	scanBitmap->execute(inner->size);
+
+	char* bitmapResult = (char*) bitmapResultBuffer->map(CL_MAP_READ);
+
+//	uint32_t* passBitmap = new uint32_t[inner->size];
+
+	uint32_t counter = 0;
+	uint32_t matched = 0;
+	for (uint32_t i = 0; i < inner->size; i++) {
+		if (bitmapResult[i] && cht->has(innerkey[i])) {
+//			passBitmap[counter++] = innerkey[i];
+			matched ++;
+		}
 	}
-	delete[] devName;
-	/*Step 3: Create context.*/
-	cl_context context = clCreateContext(NULL, 1, devices, NULL, NULL, NULL);
+	uint numPassBitmap = counter;
+	bitmapResultBuffer->unmap();
+/*
+	CLBuffer* passbitmapKeyBuffer = new CLBuffer(env, passBitmap,
+			numPassBitmap * sizeof(uint32_t),
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* chtResultBuffer = new CLBuffer(env, NULL,
+			numPassBitmap * sizeof(uint32_t), CL_MEM_WRITE_ONLY);
 
-	/*Step 4: Creating command queue associate with the context.*/
-	cl_command_queue commandQueue = clCreateCommandQueue(context, devices[0], 0,
-	NULL);
+	scanCht->setBuffer(0, metaBuffer);
+	scanCht->setBuffer(1, bitmapBuffer);
+	scanCht->setBuffer(2, chtpayloadBuffer);
+	scanCht->setBuffer(3, passbitmapKeyBuffer);
+	scanCht->setBuffer(4, chtResultBuffer);
 
-	/*Step 5: Create program object */
-	const char *filename = "HelloWorld_Kernel.cl";
-	string sourceStr;
-	status = convertToString(filename, sourceStr);
-	const char *source = sourceStr.c_str();
-	size_t sourceSize[] = { strlen(source) };
-	cl_program program = clCreateProgramWithSource(context, 1, &source,
-			sourceSize, NULL);
+	scanCht->execute(numPassBitmap);
 
-	/*Step 6: Build program. */
-	status = clBuildProgram(program, 1, devices, NULL, NULL, NULL);
+	uint32_t* chtResult = (uint32_t*) chtResultBuffer->map(CL_MAP_READ);
 
-	/*Step 7: Initial input,output for the host and create memory objects for the kernel*/
-	const char* input = "GdkknVnqkc";
-	size_t strlength = strlen(input);
-	cout << "input string:" << endl;
-	cout << input << endl;
-	char *output = (char*) malloc(strlength + 1);
+	uint32_t* failedCht = new uint32_t[numPassBitmap];
 
-	cl_mem inputBuffer = clCreateBuffer(context,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-			(strlength + 1) * sizeof(char), (void *) input, NULL);
-	cl_mem outputBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-			(strlength + 1) * sizeof(char), NULL, NULL);
+	counter = 0;
+	uint32_t matched = 0;
+	for (uint32_t i = 0; i < numPassBitmap; i++) {
+		if (0xffffffff == chtResult[i]) {
+			failedCht[counter++] = passBitmap[i];
+		} else {
+			matched++;
+		}
+	}
+	chtResultBuffer->unmap();
 
-	/*Step 8: Create kernel object */
-	cl_kernel kernel = clCreateKernel(program, "helloworld", NULL);
+	uint32_t numFailedCht = counter;
 
-	/*Step 9: Sets Kernel arguments.*/
-	status = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *) &inputBuffer);
-	status = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *) &outputBuffer);
+	CLBuffer* failedchtkeyBuffer = new CLBuffer(env, failedCht,
+			numFailedCht * sizeof(uint32_t),
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* finalResultBuffer = new CLBuffer(env, NULL,
+			numFailedCht * sizeof(uint32_t), CL_MEM_WRITE_ONLY);
 
-	/*Step 10: Running the kernel.*/
-	size_t global_work_size[1] = { strlength };
-	status = clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL,
-			global_work_size, NULL, 0, NULL, NULL);
+	scanHash->setBuffer(0, metaBuffer);
+	scanHash->setBuffer(1, hashpayloadBuffer);
+	scanHash->setBuffer(2, failedchtkeyBuffer);
+	scanHash->setBuffer(3, finalResultBuffer);
 
-	/*Step 11: Read the cout put back to host memory.*/
-	status = clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0,
-			strlength * sizeof(char), output, 0, NULL, NULL);
+	scanHash->execute(numFailedCht);
 
-	output[strlength] = '\0';//Add the terminal character to the end of output.
-	cout << "\noutput string:" << endl;
-	cout << output << endl;
+	uint32_t* result = (uint32_t*) finalResultBuffer->map(CL_MAP_READ);
 
-	/*Step 12: Clean the resources.*/
-	status = clReleaseKernel(kernel);				//Release kernel.
-	status = clReleaseProgram(program);			//Release the program object.
-	status = clReleaseMemObject(inputBuffer);		//Release mem object.
-	status = clReleaseMemObject(outputBuffer);
-	status = clReleaseCommandQueue(commandQueue);	//Release  Command queue.
-	status = clReleaseContext(context);				//Release context.
-
-	if (output != NULL) {
-		free(output);
-		output = NULL;
+	for (uint32_t i = 0; i < numFailedCht; i++) {
+		if (result[i] != 0xffffffff)
+			matched++;
 	}
 
-	if (devices != NULL) {
-		free(devices);
-		devices = NULL;
+	finalResultBuffer->unmap();
+*/
+	timer.stop();
+
+	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
+			matched);
+
+//	delete[] failedCht;
+//	delete[] passBitmap;
+	delete[] hash_payload;
+	delete[] cht_payload;
+	delete[] innerkey;
+
+	delete metaBuffer;
+	delete bitmapBuffer;
+	delete innerkeyBuffer;
+	delete bitmapResultBuffer;
+	delete chtpayloadBuffer;
+	delete hashpayloadBuffer;
+//	delete chtResultBuffer;
+//	delete failedchtkeyBuffer;
+//	delete finalResultBuffer;
+
+	delete scanBitmap;
+	delete scanCht;
+	delete scanHash;
+	delete env;
+
+	delete cht;
+}
+
+void runCht(kvlist* outer, kvlist* inner) {
+	Timer timer;
+	logger.info("Running CHT Join\n");
+	logger.info("Building Outer Table\n");
+	CHT* cht = new CHT();
+	cht->build(outer->entries, outer->size);
+	logger.info("Building Outer Table Done\n");
+
+	uint32_t meta[2];
+	meta[0] = cht->bitmap_size;
+	meta[1] = cht->overflow->bucket_size;
+
+	uint32_t* innerkey = new uint32_t[inner->size];
+	for (uint32_t i = 0; i < inner->size; i++) {
+		innerkey[i] = inner->entries[i].key;
 	}
 
-	std::cout << "Passed!\n";
-	return SUCCESS;
+	uint32_t* cht_payload = new uint32_t[cht->payload_size];
+	for (uint32_t i = 0; i < cht->payload_size; i++) {
+		cht_payload[i] = cht->payloads[i].key;
+	}
+
+	uint32_t* hash_payload = new uint32_t[cht->overflow->bucket_size];
+	for (uint32_t i = 0; i < cht->overflow->bucket_size; i++) {
+		hash_payload[i] = cht->overflow->buckets[i].key;
+	}
+
+	timer.start();
+
+	CLEnv* env = new CLEnv();
+
+	CLProgram* scanChtFull = new CLProgram(env, "scan_cht_full");
+	scanChtFull->fromFile("scan_cht_full.cl", 6);
+
+	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
+			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
+			sizeof(uint64_t) * cht->bitmap_size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* chtpayloadBuffer = new CLBuffer(env, cht_payload,
+			sizeof(uint32_t) * inner->size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* hashpayloadBuffer = new CLBuffer(env, hash_payload,
+			sizeof(uint32_t) * cht->overflow->bucket_size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey,
+			sizeof(uint32_t) * inner->size,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+
+	CLBuffer* resultBuffer = new CLBuffer(env, NULL,
+			sizeof(uint32_t) * inner->size, CL_MEM_READ_WRITE);
+
+	scanChtFull->setBuffer(0, metaBuffer);
+	scanChtFull->setBuffer(1, bitmapBuffer);
+	scanChtFull->setBuffer(2, chtpayloadBuffer);
+	scanChtFull->setBuffer(3, hashpayloadBuffer);
+	scanChtFull->setBuffer(4, innerkeyBuffer);
+	scanChtFull->setBuffer(5, resultBuffer);
+
+	scanChtFull->execute(inner->size);
+
+	uint32_t* result = (uint32_t*) resultBuffer->map(CL_MAP_READ);
+
+	uint32_t matched = 0;
+	for (uint32_t i = 0; i < inner->size; i++) {
+		if (result[i] != 0xffffffff)
+			matched++;
+	}
+
+	resultBuffer->unmap();
+
+	timer.stop();
+
+	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
+			matched);
+
+	delete[] hash_payload;
+	delete[] cht_payload;
+	delete[] innerkey;
+
+	delete metaBuffer;
+	delete bitmapBuffer;
+	delete innerkeyBuffer;
+	delete chtpayloadBuffer;
+	delete hashpayloadBuffer;
+	delete resultBuffer;
+
+	delete scanChtFull;
+	delete env;
+
+	delete cht;
+}
+
+void print_help() {
+	fprintf(stdout, "Usage: main_opencl [options]\n");
+	fprintf(stdout, "Available options:\n");
+	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
+	fprintf(stdout, " -o --outer=FILE \tfile for outer table\n");
+	fprintf(stdout, " -i --inner=File \tfile for inner table\n");
+	fprintf(stdout, " -h --help \tdisplay this information\n");
+	exit(0);
+}
+
+int main(int argc, char** argv) {
+	bool uniq = false;
+	char* alg = NULL;
+	char* outerfile = NULL;
+	char* innerfile = NULL;
+	uint32_t numthread = 1;
+
+	if (argc == 1) {
+		print_help();
+		exit(0);
+	}
+
+	int option_index = 0;
+	static struct option long_options[] = {
+			{ "alg", required_argument, 0, 'a' }, { "outer", required_argument,
+					0, 'o' }, { "inner",
+			required_argument, 0, 'i' }, { "help",
+			no_argument, 0, 'h' } };
+
+	int c;
+	while ((c = getopt_long(argc, argv, "a:o:i:h", long_options, &option_index))
+			!= -1) {
+		switch (c) {
+		case 'a':
+			alg = optarg;
+			break;
+		case 'u':
+			uniq = true;
+			break;
+		case 'o':
+			outerfile = optarg;
+			break;
+		case 't':
+			numthread = strtoul(optarg, NULL, 0);
+			break;
+		case 'i':
+			innerfile = optarg;
+			break;
+		case 'h':
+			print_help();
+			break;
+		default:
+			fprintf(stderr, "unrecognized option or missing argument\n");
+			print_help();
+			break;
+		}
+	}
+
+	Logger logger;
+
+	kvlist outerkeys;
+	kvlist innerkeys;
+	logger.info("Loading files\n");
+	loadkey(outerfile, &outerkeys);
+	loadkey(innerfile, &innerkeys);
+	logger.info("Outer file size: %u\n", outerkeys.size);
+	logger.info("Inner file size: %u\n", innerkeys.size);
+
+	if (!strcmp("hash", alg)) {
+		runHash(&outerkeys, &innerkeys);
+	} else if (!strcmp("chtstep", alg)) {
+		runChtStep(&outerkeys, &innerkeys);
+	} else if (!strcmp("cht", alg)) {
+		runCht(&outerkeys, &innerkeys);
+	}
+
+	delete[] outerkeys.entries;
+	delete[] innerkeys.entries;
+
 }

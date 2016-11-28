@@ -8,9 +8,12 @@
 #include <gtest/gtest.h>
 #include <time.h>
 #include <stdlib.h>
+#include <iostream>
 #include "../src/cht.h"
 
 #define BITMAP_FACTOR 4
+
+using namespace std;
 
 TEST( CHT, Build) {
 

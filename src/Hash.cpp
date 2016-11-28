@@ -57,7 +57,7 @@ void Hash::scan(uint32_t key, ScanContext* context) {
 	assert(key != 0);
 	if (this->_size == 0)
 		return;
-	uint32_t hval = hash(key) % this->bucket_size;
+	uint32_t hval = mut_hash(key) % this->bucket_size;
 	kv* bucket = this->buckets + hval;
 
 	while (bucket->key != 0) {
@@ -70,7 +70,7 @@ void Hash::scan(uint32_t key, ScanContext* context) {
 }
 
 void Hash::internalPut(uint32_t key, uint8_t* payload) {
-	uint32_t hval = hash(key) % this->bucket_size;
+	uint32_t hval = mut_hash(key) % this->bucket_size;
 	kv* bucket = this->buckets + hval;
 
 	while (bucket->key != 0) {
@@ -86,7 +86,7 @@ void Hash::internalPut(uint32_t key, uint8_t* payload) {
 }
 
 void Hash::put(uint32_t key, uint8_t* payload) {
-// No zero key
+	// No zero key
 	assert(key != 0);
 	if (this->_size * RATIO > this->bucket_size) {
 		this->organize(this->bucket_size * RATIO);
@@ -99,7 +99,7 @@ kv* Hash::get(uint32_t key) {
 	assert(key != 0);
 	if (this->_size == 0)
 		return NULL;
-	uint32_t hval = hash(key) % this->bucket_size;
+	uint32_t hval = mut_hash(key) % this->bucket_size;
 	kv* bucket = this->buckets + hval;
 
 	while (bucket->key != 0 && bucket->key != key) {
