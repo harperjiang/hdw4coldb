@@ -14,7 +14,7 @@ CLEnv::CLEnv() {
 	platform = NULL;	//the chosen platform
 	cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to get platforms.\n");
+		logger.error("Failed to get platforms %d.\n", status);
 		return;
 	}
 
@@ -53,6 +53,9 @@ CLEnv::CLEnv() {
 		logger.error("Failed to query devices: %d\n", status);
 		return;
 	}
+	if(numDevices > 1) {
+		logger.info("Multiple devices discovered\n");
+	}
 	device = devices[0];
 	free(devices);
 
@@ -68,8 +71,7 @@ CLEnv::CLEnv() {
 		return;
 	}
 	/* Creating command queue associate with the context.*/
-	commandQueue = clCreateCommandQueueWithProperties(context, device, NULL,
-			&status);
+	commandQueue = clCreateCommandQueue(context, device, NULL, &status);
 	if (status != CL_SUCCESS) {
 		logger.error("Failed to create command queue: %d\n", status);
 		return;

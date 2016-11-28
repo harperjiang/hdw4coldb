@@ -74,7 +74,7 @@ void runHash(kvlist* outer, kvlist* inner) {
 	timer.start();
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
-			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	CLBuffer* payloadBuffer = new CLBuffer(env, payload,
 			sizeof(uint32_t) * hash->bucket_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -149,7 +149,7 @@ void runChtStep(kvlist* outer, kvlist* inner) {
 	scanHash->fromFile("scan_hash.cl", 4);
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -175,19 +175,17 @@ void runChtStep(kvlist* outer, kvlist* inner) {
 
 	char* bitmapResult = (char*) bitmapResultBuffer->map(CL_MAP_READ);
 
-//	uint32_t* passBitmap = new uint32_t[inner->size];
+	uint32_t* passBitmap = new uint32_t[inner->size];
 
 	uint32_t counter = 0;
-	uint32_t matched = 0;
 	for (uint32_t i = 0; i < inner->size; i++) {
 		if (bitmapResult[i] && cht->has(innerkey[i])) {
-//			passBitmap[counter++] = innerkey[i];
-			matched ++;
+			passBitmap[counter++] = innerkey[i];
 		}
 	}
 	uint numPassBitmap = counter;
 	bitmapResultBuffer->unmap();
-/*
+
 	CLBuffer* passbitmapKeyBuffer = new CLBuffer(env, passBitmap,
 			numPassBitmap * sizeof(uint32_t),
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -240,14 +238,14 @@ void runChtStep(kvlist* outer, kvlist* inner) {
 	}
 
 	finalResultBuffer->unmap();
-*/
+
 	timer.stop();
 
 	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
 			matched);
 
-//	delete[] failedCht;
-//	delete[] passBitmap;
+	delete[] failedCht;
+	delete[] passBitmap;
 	delete[] hash_payload;
 	delete[] cht_payload;
 	delete[] innerkey;
@@ -258,9 +256,9 @@ void runChtStep(kvlist* outer, kvlist* inner) {
 	delete bitmapResultBuffer;
 	delete chtpayloadBuffer;
 	delete hashpayloadBuffer;
-//	delete chtResultBuffer;
-//	delete failedchtkeyBuffer;
-//	delete finalResultBuffer;
+	delete chtResultBuffer;
+	delete failedchtkeyBuffer;
+	delete finalResultBuffer;
 
 	delete scanBitmap;
 	delete scanCht;
@@ -305,7 +303,7 @@ void runCht(kvlist* outer, kvlist* inner) {
 	scanChtFull->fromFile("scan_cht_full.cl", 6);
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -370,15 +368,23 @@ void print_help() {
 	fprintf(stdout, " -o --outer=FILE \tfile for outer table\n");
 	fprintf(stdout, " -i --inner=File \tfile for inner table\n");
 	fprintf(stdout, " -h --help \tdisplay this information\n");
+	fprintf(stdout, " -v --devinfo \tdisplay the detected device info\n");
+	exit(0);
+}
+
+void display_device() {
+	CLEnv* env = new CLEnv();
+	env->logger.setLevel(DEBUG);
+	env->displayDeviceInfo();
+
+	delete env;
 	exit(0);
 }
 
 int main(int argc, char** argv) {
-	bool uniq = false;
 	char* alg = NULL;
 	char* outerfile = NULL;
 	char* innerfile = NULL;
-	uint32_t numthread = 1;
 
 	if (argc == 1) {
 		print_help();
@@ -390,29 +396,26 @@ int main(int argc, char** argv) {
 			{ "alg", required_argument, 0, 'a' }, { "outer", required_argument,
 					0, 'o' }, { "inner",
 			required_argument, 0, 'i' }, { "help",
-			no_argument, 0, 'h' } };
+			no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' } };
 
 	int c;
-	while ((c = getopt_long(argc, argv, "a:o:i:h", long_options, &option_index))
+	while ((c = getopt_long(argc, argv, "a:o:i:hv", long_options, &option_index))
 			!= -1) {
 		switch (c) {
 		case 'a':
 			alg = optarg;
 			break;
-		case 'u':
-			uniq = true;
-			break;
 		case 'o':
 			outerfile = optarg;
-			break;
-		case 't':
-			numthread = strtoul(optarg, NULL, 0);
 			break;
 		case 'i':
 			innerfile = optarg;
 			break;
 		case 'h':
 			print_help();
+			break;
+		case 'v':
+			display_device();
 			break;
 		default:
 			fprintf(stderr, "unrecognized option or missing argument\n");

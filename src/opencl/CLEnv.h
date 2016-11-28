@@ -17,9 +17,10 @@ class CLBuffer;
 class CLEnv {
 	friend class CLProgram;
 	friend class CLBuffer;
-private:
-	Logger logger = Logger("CLEnv");
 
+public:
+	Logger logger = Logger("CLEnv");
+private:
 	cl_platform_id platform = NULL;
 	cl_device_id device = NULL;
 	cl_context context = NULL;
@@ -27,13 +28,14 @@ private:
 
 	char vendor[50];
 protected:
-	void displayDeviceInfo();
-	char* vendorName();
 public:
+
 	CLEnv();
 	virtual ~CLEnv();
 
 public:
+	void displayDeviceInfo();
+	char* vendorName();
 	bool isAMD();
 };
 

@@ -1,7 +1,7 @@
 # Makefile for generating programs for performance test
 
 CC=g++
-INCLUDE= -I/cygdrive/e/amd_app_sdk/3.0/include
+INCLUDE= -I $(AMDAPPSDKROOT)/include
 CC_FLAG= -O3 -Wall -std=gnu++11 -c -fmessage-length=0 -pthread $(INCLUDE)
 
 RM=rm
@@ -12,7 +12,7 @@ else
 endif
 
 BIN = ../bin
-LIBS = -pthread -L/cygdrive/e/amd_app_sdk/3.0/lib/x86_64 -lOpenCL
+LIBS = -pthread -L $(AMDAPPSDKROOT)/lib/x86_64 -lOpenCL
 
 C_SRCS = \
 CPP_SRCS += \
