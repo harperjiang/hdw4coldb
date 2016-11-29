@@ -20,6 +20,9 @@ CLEnv::CLEnv() {
 
 	/* Choose the first available platform. */
 	if (numPlatforms > 0) {
+		if (numPlatforms > 1) {
+			logger.info("Multiple platform discovered\n");
+		}
 		cl_platform_id* platforms = (cl_platform_id*) malloc(
 				numPlatforms * sizeof(cl_platform_id));
 		status = clGetPlatformIDs(numPlatforms, platforms, NULL);
@@ -53,7 +56,7 @@ CLEnv::CLEnv() {
 		logger.error("Failed to query devices: %d\n", status);
 		return;
 	}
-	if(numDevices > 1) {
+	if (numDevices > 1) {
 		logger.info("Multiple devices discovered\n");
 	}
 	device = devices[0];
@@ -71,7 +74,7 @@ CLEnv::CLEnv() {
 		return;
 	}
 	/* Creating command queue associate with the context.*/
-	commandQueue = clCreateCommandQueue(context, device, NULL, &status);
+	commandQueue = clCreateCommandQueue(context, device, 0, &status);
 	if (status != CL_SUCCESS) {
 		logger.error("Failed to create command queue: %d\n", status);
 		return;
@@ -93,46 +96,63 @@ CLEnv::~CLEnv() {
 }
 
 void CLEnv::displayDeviceInfo() {
-	unsigned long memSize;
-	char devName[30];
-	cl_int status;
-	status = clGetDeviceInfo(device, CL_DEVICE_NAME, 30, devName, NULL);
-	if (status == CL_SUCCESS) {
-		logger.debug("Device Name: %s\n", devName);
+	cl_uint numDevices = 0;
+	cl_device_id *devices;
+	cl_int status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL,
+			&numDevices);
+	if (status != CL_SUCCESS) {
+		return;
 	}
-	status = clGetDeviceInfo(device, CL_DEVICE_VENDOR, 30, devName, NULL);
-	if (status == CL_SUCCESS) {
-		logger.debug("Device Vendor: %s\n", devName);
+	logger.debug("Number of GPU discovered : %d\n", numDevices);
+	devices = (cl_device_id*) malloc(numDevices * sizeof(cl_device_id));
+	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices,
+	NULL);
+	if (status != CL_SUCCESS) {
+		return;
 	}
-	status = clGetDeviceInfo(device, CL_DEVICE_VERSION, 30, devName, NULL);
-	if (status == CL_SUCCESS) {
-		logger.debug("OpenCL Version: %s\n", devName);
-	}
-	status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE,
-			sizeof(unsigned long), &memSize, NULL);
-	if (status == CL_SUCCESS) {
-		logger.debug("Device global mem size: %uMB\n", memSize / (1 << 20));
-	}
-	status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE,
-			sizeof(unsigned long), &memSize, NULL);
-	if (status == CL_SUCCESS) {
-		logger.debug("Device global mem cache size: %uKB\n",
-				memSize / (1 << 10));
-	}
-	status = clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE,
-			sizeof(unsigned long), &memSize, NULL);
-	if (status == CL_SUCCESS) {
-		logger.debug("Device local mem size: %uKB\n", memSize / (1 << 10));
-	}
-	status = clGetDeviceInfo(device, CL_DEVICE_MAX_CLOCK_FREQUENCY,
-			sizeof(unsigned long), &memSize, NULL);
-	if (status == CL_SUCCESS) {
-		logger.debug("Device frequency: %u MHz\n", memSize);
-	}
-	status = clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS,
-			sizeof(unsigned long), &memSize, NULL);
-	if (status == CL_SUCCESS) {
-		logger.debug("Device max compute unit: %u \n", memSize);
+	for (uint32_t i = 0; i < numDevices; i++) {
+		logger.debug("Device #%u\n", i);
+		unsigned long memSize;
+		char devName[30];
+		cl_int status;
+		status = clGetDeviceInfo(device, CL_DEVICE_NAME, 30, devName, NULL);
+		if (status == CL_SUCCESS) {
+			logger.debug("Device Name: %s\n", devName);
+		}
+		status = clGetDeviceInfo(device, CL_DEVICE_VENDOR, 30, devName, NULL);
+		if (status == CL_SUCCESS) {
+			logger.debug("Device Vendor: %s\n", devName);
+		}
+		status = clGetDeviceInfo(device, CL_DEVICE_VERSION, 30, devName, NULL);
+		if (status == CL_SUCCESS) {
+			logger.debug("OpenCL Version: %s\n", devName);
+		}
+		status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE,
+				sizeof(unsigned long), &memSize, NULL);
+		if (status == CL_SUCCESS) {
+			logger.debug("Device global mem size: %uMB\n", memSize / (1 << 20));
+		}
+		status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE,
+				sizeof(unsigned long), &memSize, NULL);
+		if (status == CL_SUCCESS) {
+			logger.debug("Device global mem cache size: %uKB\n",
+					memSize / (1 << 10));
+		}
+		status = clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE,
+				sizeof(unsigned long), &memSize, NULL);
+		if (status == CL_SUCCESS) {
+			logger.debug("Device local mem size: %uKB\n", memSize / (1 << 10));
+		}
+		status = clGetDeviceInfo(device, CL_DEVICE_MAX_CLOCK_FREQUENCY,
+				sizeof(unsigned long), &memSize, NULL);
+		if (status == CL_SUCCESS) {
+			logger.debug("Device frequency: %u MHz\n", memSize);
+		}
+		status = clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS,
+				sizeof(unsigned long), &memSize, NULL);
+		if (status == CL_SUCCESS) {
+			logger.debug("Device max compute unit: %u \n", memSize);
+		}
 	}
 }
 
