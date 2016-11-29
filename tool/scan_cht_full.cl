@@ -6,7 +6,7 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 	int index = get_global_id(0);
 	uint key = inner[index];
 	uint bitmapSize = meta[0] * 32;
-
+	uint payloadSize = meta[2];
 	uint hash = (key * ((uint)2654435761)) % bitmapSize;
 
 	uint bitmapIndex = hash / BITMAP_SIZE;
@@ -17,14 +17,13 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 		uint offset = (uint)(bitmap[bitmapIndex] >> 32) + popcount((uint)(bitmap[bitmapIndex] & bitmapMask));
 
 		uint i = 0;
-		for(i = 0; i < THRESHOLD; i++) {
-			if(chtPayload[offset+i] == key) {
-				// Found
-				result[index] = offset+i;
-				return;
-			}
+		while(i< THRESHOLD && offset+i < payloadSize && chtPayload[offset+i] != key) {
+			i++;
 		}
-		if(i== THRESHOLD) {
+		if(chtPayload[offset+i] == key) {
+			result[index] = offset+i;
+			return;
+		} else {
 			// Search in Hash
 			uint bucket_size = meta[1];
 
