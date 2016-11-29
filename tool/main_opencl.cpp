@@ -1,4 +1,3 @@
-
 // For clarity,error checking has been omitted.
 #include <CL/cl.h>
 #include <string.h>
@@ -58,7 +57,7 @@ void runHash(kvlist* outer, kvlist* inner) {
 	timer.start();
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
-	CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	CLBuffer* payloadBuffer = new CLBuffer(env, payload,
 			sizeof(uint32_t) * hash->bucket_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -66,7 +65,8 @@ void runHash(kvlist* outer, kvlist* inner) {
 			sizeof(uint32_t) * inner->size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	CLBuffer* resultBuffer = new CLBuffer(env, NULL,
-			sizeof(uint32_t) * inner->size, CL_MEM_WRITE_ONLY|CL_MEM_ALLOC_HOST_PTR);
+			sizeof(uint32_t) * inner->size,
+			CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR);
 
 	hashScan->setBuffer(0, metaBuffer);
 	hashScan->setBuffer(1, payloadBuffer);
@@ -133,7 +133,7 @@ void runChtStep(kvlist* outer, kvlist* inner) {
 	scanHash->fromFile("scan_hash.cl", 4);
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
-	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -280,24 +280,29 @@ void runCht(kvlist* outer, kvlist* inner) {
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
-	timer.start();
-
 	CLEnv* env = new CLEnv();
 
 	CLProgram* scanChtFull = new CLProgram(env, "scan_cht_full");
 	scanChtFull->fromFile("scan_cht_full.cl", 6);
 
+	timer.start();
+
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 3,
-	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+
 	CLBuffer* chtpayloadBuffer = new CLBuffer(env, cht_payload,
-			sizeof(uint32_t) * inner->size,
+			sizeof(uint32_t) * cht->payload_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+
 	CLBuffer* hashpayloadBuffer = new CLBuffer(env, hash_payload,
-			sizeof(uint32_t) * cht->overflow->bucket_size,
+			sizeof(uint32_t) * (0 == cht->overflow->bucket_size) ?
+					1 : cht->overflow->bucket_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+
 	CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey,
 			sizeof(uint32_t) * inner->size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);

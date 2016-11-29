@@ -20,13 +20,16 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 		while(i< THRESHOLD && offset+i < payloadSize && chtPayload[offset+i] != key) {
 			i++;
 		}
-		if(chtPayload[offset+i] == key) {
-			result[index] = offset+i;
+		if(offset+i < payloadSize && chtPayload[offset+i] == key) {
+			result[index] = offset + i;
 			return;
 		} else {
 			// Search in Hash
 			uint bucket_size = meta[1];
-
+			if(0 == bucket_size) {
+				result[index] = 0xffffffff;
+				return;
+			}
 			uint counter = (key * ((uint)2654435761)) % bucket_size;
 			while(hashpayload[counter]!= key && hashpayload[counter] != 0) {
 				counter = (counter + 1) % bucket_size;
