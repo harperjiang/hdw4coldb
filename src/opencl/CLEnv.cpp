@@ -71,7 +71,7 @@ CLEnv::CLEnv() {
 		return;
 	}
 	/* Creating command queue associate with the context.*/
-	commandQueue = clCreateCommandQueue(context, device, NULL, &status);
+	commandQueue = clCreateCommandQueue(context, device, 0, &status);
 	if (status != CL_SUCCESS) {
 		logger.error("Failed to create command queue: %d\n", status);
 		return;

@@ -48,7 +48,7 @@ Logger logger;
 extern bool bitmap_test(uint64_t* bitmap, uint32_t offset);
 extern uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t offset);
 
-void runHash(kvlist* outer, kvlist* inner) {
+void runHash(kvlist* outer, kvlist* inner, uint split) {
 	logger.info("Running hash join\n");
 	Hash* hash = new Hash();
 	hash->build(outer->entries, outer->size);
@@ -73,45 +73,60 @@ void runHash(kvlist* outer, kvlist* inner) {
 	Timer timer;
 	timer.start();
 
+	uint splitRound = 1;
+	uint workSize = inner->size;
+	if (split != 0) {
+		splitRound = inner->size / split;
+		workSize = split;
+		while (workSize * splitRound < inner->size)
+			splitRound++;
+	}
+
+	uint matched = 0;
+
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
 	CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	CLBuffer* payloadBuffer = new CLBuffer(env, payload,
 			sizeof(uint32_t) * hash->bucket_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-	CLBuffer* innerKeyBuffer = new CLBuffer(env, innerkey,
-			sizeof(uint32_t) * inner->size,
-			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-	CLBuffer* resultBuffer = new CLBuffer(env, NULL,
-			sizeof(uint32_t) * inner->size, CL_MEM_WRITE_ONLY);
 
-	hashScan->setBuffer(0, metaBuffer);
-	hashScan->setBuffer(1, payloadBuffer);
-	hashScan->setBuffer(2, innerKeyBuffer);
-	hashScan->setBuffer(3, resultBuffer);
+	for (uint i = 0; i < splitRound; i++) {
+		CLBuffer* innerKeyBuffer = new CLBuffer(env, innerkey + i * workSize,
+				sizeof(uint32_t) * workSize,
+				CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+		CLBuffer* resultBuffer = new CLBuffer(env, NULL,
+				sizeof(uint32_t) * workSize, CL_MEM_WRITE_ONLY);
 
-	hashScan->execute(inner->size);
+		hashScan->setBuffer(0, metaBuffer);
+		hashScan->setBuffer(1, payloadBuffer);
+		hashScan->setBuffer(2, innerKeyBuffer);
+		hashScan->setBuffer(3, resultBuffer);
 
-	uint32_t* result = (uint32_t*) resultBuffer->map(CL_MAP_READ);
-	uint32_t sum = 0;
-	for (uint32_t i = 0; i < inner->size; i++) {
-		sum += result[i] == 0xffffffff ? 0 : 1;
+		hashScan->execute(workSize);
+
+		uint32_t* result = (uint32_t*) resultBuffer->map(CL_MAP_READ);
+		for (uint32_t i = 0; i < workSize; i++) {
+			matched += result[i] == 0xffffffff ? 0 : 1;
+		}
+		resultBuffer->unmap();
+
+		delete innerKeyBuffer;
+		delete resultBuffer;
 	}
-	resultBuffer->unmap();
 
 	timer.stop();
-	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(), sum);
+	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
+			matched);
 
 	delete metaBuffer;
 	delete payloadBuffer;
-	delete innerKeyBuffer;
-	delete resultBuffer;
 
 	delete hashScan;
 	delete env;
 	delete hash;
 }
 
-void runChtStep(kvlist* outer, kvlist* inner) {
+void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 	Timer timer;
 	logger.info("Running CHT Step Join\n");
 	logger.info("Building Outer Table\n");
@@ -268,7 +283,7 @@ void runChtStep(kvlist* outer, kvlist* inner) {
 	delete cht;
 }
 
-void runCht(kvlist* outer, kvlist* inner) {
+void runCht(kvlist* outer, kvlist* inner, uint split) {
 	Timer timer;
 	logger.info("Running CHT Join\n");
 	logger.info("Building Outer Table\n");
@@ -385,7 +400,7 @@ int main(int argc, char** argv) {
 	char* alg = NULL;
 	char* outerfile = NULL;
 	char* innerfile = NULL;
-
+	uint split = 0;
 	if (argc == 1) {
 		print_help();
 		exit(0);
@@ -396,11 +411,12 @@ int main(int argc, char** argv) {
 			{ "alg", required_argument, 0, 'a' }, { "outer", required_argument,
 					0, 'o' }, { "inner",
 			required_argument, 0, 'i' }, { "help",
-			no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' } };
+			no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' }, {
+					"split", required_argument }, 0, 's' };
 
 	int c;
-	while ((c = getopt_long(argc, argv, "a:o:i:hv", long_options, &option_index))
-			!= -1) {
+	while ((c = getopt_long(argc, argv, "a:o:i:hvs:", long_options,
+			&option_index)) != -1) {
 		switch (c) {
 		case 'a':
 			alg = optarg;
@@ -410,6 +426,9 @@ int main(int argc, char** argv) {
 			break;
 		case 'i':
 			innerfile = optarg;
+			break;
+		case 's':
+			split = strtoul(optarg, NULL, 10);
 			break;
 		case 'h':
 			print_help();
@@ -435,11 +454,11 @@ int main(int argc, char** argv) {
 	logger.info("Inner file size: %u\n", innerkeys.size);
 
 	if (!strcmp("hash", alg)) {
-		runHash(&outerkeys, &innerkeys);
+		runHash(&outerkeys, &innerkeys, split);
 	} else if (!strcmp("chtstep", alg)) {
-		runChtStep(&outerkeys, &innerkeys);
+		runChtStep(&outerkeys, &innerkeys, split);
 	} else if (!strcmp("cht", alg)) {
-		runCht(&outerkeys, &innerkeys);
+		runCht(&outerkeys, &innerkeys, split);
 	}
 
 	delete[] outerkeys.entries;
