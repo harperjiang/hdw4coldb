@@ -1,19 +1,3 @@
-/**********************************************************************
- Copyright ?015 Advanced Micro Devices, Inc. All rights reserved.
-
- Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
- ?Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
- ?Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or
- other materials provided with the distribution.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY
- DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ********************************************************************/
-
 // For clarity,error checking has been omitted.
 #include <CL/cl.h>
 #include <string.h>
@@ -32,7 +16,6 @@
 #include "../src/util.h"
 
 #define THRESHOLD 5
-#define BITMAP_FACTOR 	4
 #define BITMAP_EXT 		32
 #define BITMAP_UNIT 	32
 #define BITMAP_EXTMASK 	0xffffffff00000000
@@ -291,9 +274,10 @@ void runCht(kvlist* outer, kvlist* inner, uint split) {
 	cht->build(outer->entries, outer->size);
 	logger.info("Building Outer Table Done\n");
 
-	uint32_t meta[2];
+	uint32_t meta[3];
 	meta[0] = cht->bitmap_size;
 	meta[1] = cht->overflow->bucket_size;
+	meta[2] = cht->payload_size;
 
 	uint32_t* innerkey = new uint32_t[inner->size];
 	for (uint32_t i = 0; i < inner->size; i++) {
@@ -310,24 +294,29 @@ void runCht(kvlist* outer, kvlist* inner, uint split) {
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
-	timer.start();
-
 	CLEnv* env = new CLEnv();
 
 	CLProgram* scanChtFull = new CLProgram(env, "scan_cht_full");
 	scanChtFull->fromFile("scan_cht_full.cl", 6);
 
-	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
+	timer.start();
+
+	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 3,
 	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+
 	CLBuffer* chtpayloadBuffer = new CLBuffer(env, cht_payload,
-			sizeof(uint32_t) * inner->size,
+			sizeof(uint32_t) * cht->payload_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+
 	CLBuffer* hashpayloadBuffer = new CLBuffer(env, hash_payload,
-			sizeof(uint32_t) * cht->overflow->bucket_size,
+			sizeof(uint32_t) * (0 == cht->overflow->bucket_size) ?
+					1 : cht->overflow->bucket_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+
 	CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey,
 			sizeof(uint32_t) * inner->size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);

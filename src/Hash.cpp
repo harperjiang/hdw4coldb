@@ -87,7 +87,8 @@ void Hash::internalPut(uint32_t key, uint8_t* payload) {
 
 void Hash::put(uint32_t key, uint8_t* payload) {
 	// No zero key
-	assert(key != 0);
+	if (key == 0)
+		return;
 	if (this->_size * RATIO > this->bucket_size) {
 		this->organize(this->bucket_size * RATIO);
 	}
@@ -95,8 +96,9 @@ void Hash::put(uint32_t key, uint8_t* payload) {
 }
 
 kv* Hash::get(uint32_t key) {
-// No zero key is allowed
-	assert(key != 0);
+	// No zero key is allowed
+	if (key == 0)
+		return NULL;
 	if (this->_size == 0)
 		return NULL;
 	uint32_t hval = mut_hash(key) % this->bucket_size;
