@@ -20,6 +20,7 @@ private:
 private:
 	CLEnv* env;
 	CLProgram* program = NULL;
+	unsigned int _offset;
 	unsigned int _size;
 
 	void* rwData = NULL;

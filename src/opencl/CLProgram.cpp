@@ -101,11 +101,7 @@ void CLProgram::setBuffer(unsigned int index, CLBuffer* buffer) {
 		logger.error("CLEnv not set\n");
 		return;
 	}
-	if (index < numBuffer && buffers[index] != buffer) {
-		// Purge old buffer
-		if (buffers[index] != NULL) {
-			delete buffers[index];
-		}
+	if (index < numBuffer) {
 		buffers[index] = buffer;
 	} else {
 		logger.error("Set buffer index out of Bounds: %d\n", index);
