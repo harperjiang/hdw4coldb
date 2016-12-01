@@ -109,6 +109,49 @@ void runHash(kvlist* outer, kvlist* inner, uint split) {
 	delete hash;
 }
 
+void scan_chthash(uint* meta, ulong* bitmap, uint* chtPayload,
+		uint* hashpayload, uint* inner, uint* result, uint index) {
+	uint key = inner[index];
+	uint bitmapSize = meta[0] * 32;
+	uint payloadSize = meta[2];
+	uint hash = (key * ((uint) 2654435761)) % bitmapSize;
+
+	uint bitmapIndex = hash / BITMAP_UNIT;
+	uint bitmapOffset = hash % BITMAP_UNIT;
+
+	ulong bitmapMask = ~(0xffffffffffffffff << bitmapOffset);
+	uint offset = (uint) (bitmap[bitmapIndex] >> 32)
+			+ popcount((uint) (bitmap[bitmapIndex] & bitmapMask));
+
+	uint i = 0;
+	while (i < THRESHOLD && offset + i < payloadSize
+			&& chtPayload[offset + i] != key) {
+		i++;
+	}
+	if (offset + i < payloadSize && chtPayload[offset + i] == key) {
+		//result[index] = offset + i;
+		result[index] = 1;
+		return;
+	} else {
+		// Search in Hash
+		uint bucket_size = meta[1];
+		if (0 == bucket_size) {
+			result[index] = 3;
+			return;
+		}
+		uint counter = (key * ((uint) 2654435761)) % bucket_size;
+		while (hashpayload[counter] != key && hashpayload[counter] != 0) {
+			counter = (counter + 1) % bucket_size;
+		}
+		if (hashpayload[counter] == key) {
+			result[index] = 2;
+		} else {
+			result[index] = 3;
+		}
+	}
+
+}
+
 void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 	Timer timer;
 	logger.info("Running CHT Step Join\n");
@@ -143,10 +186,8 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 
 	CLProgram* scanBitmap = new CLProgram(env, "scan_bitmap");
 	scanBitmap->fromFile("scan_bitmap.cl", 4);
-	CLProgram* scanCht = new CLProgram(env, "scan_cht");
-	scanCht->fromFile("scan_cht.cl", 5);
-	CLProgram* scanHash = new CLProgram(env, "scan_hash");
-	scanHash->fromFile("scan_hash.cl", 4);
+	CLProgram* scanCht = new CLProgram(env, "scan_chthash");
+	scanCht->fromFile("scan_chthash.cl", 6);
 
 	uint splitRound = 1;
 	uint workSize = inner->size;
@@ -159,20 +200,19 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 
 	timer.start();
 
-	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
+	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 3,
 			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	CLBuffer* chtpayloadBuffer = new CLBuffer(env, cht_payload,
-			sizeof(uint32_t) * inner->size,
+			sizeof(uint32_t) * cht->payload_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	CLBuffer* hashpayloadBuffer = new CLBuffer(env, hash_payload,
-			sizeof(uint32_t) * cht->overflow->bucket_size,
+			sizeof(uint32_t) * (meta[1] == 0 ? 1 : meta[1]),
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	uint32_t* passedkey = new uint32_t[workSize];
-	uint32_t* overflowkey = new uint32_t[workSize];
 
 	for (uint sIndex = 0; sIndex < splitRound; sIndex++) {
 		CLBuffer* innerkeyBuffer = new CLBuffer(env,
@@ -206,66 +246,35 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 		CLBuffer* passbitmapKeyBuffer = new CLBuffer(env, passedkey,
 				numPassBitmap * sizeof(uint32_t),
 				CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-		CLBuffer* chtResultBuffer = new CLBuffer(env, NULL,
+		CLBuffer* resultBuffer = new CLBuffer(env, NULL,
 				numPassBitmap * sizeof(uint32_t), CL_MEM_WRITE_ONLY);
 
 		scanCht->setBuffer(0, metaBuffer);
 		scanCht->setBuffer(1, bitmapBuffer);
 		scanCht->setBuffer(2, chtpayloadBuffer);
-		scanCht->setBuffer(3, passbitmapKeyBuffer);
-		scanCht->setBuffer(4, chtResultBuffer);
+		scanCht->setBuffer(3, hashpayloadBuffer);
+		scanCht->setBuffer(4, passbitmapKeyBuffer);
+		scanCht->setBuffer(5, resultBuffer);
 
 		scanCht->execute(numPassBitmap);
 
-		uint32_t* chtResult = (uint32_t*) chtResultBuffer->map(CL_MAP_READ);
-
-		counter = 0;
+		uint32_t* chtResult = (uint32_t*) resultBuffer->map(CL_MAP_READ);
 
 		for (uint32_t i = 0; i < numPassBitmap; i++) {
-			if (0xffffffff == chtResult[i]) {
-				overflowkey[counter++] = passedkey[i];
-			} else {
+			if (chtResult[i] != 0xffffffff) {
 				matched++;
 			}
 		}
-		chtResultBuffer->unmap();
+		resultBuffer->unmap();
+
 		delete passbitmapKeyBuffer;
-		delete chtResultBuffer;
-
-		uint32_t numFailedCht = counter;
-
-		CLBuffer* failedchtkeyBuffer = new CLBuffer(env, overflowkey,
-				numFailedCht * sizeof(uint32_t),
-				CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-		CLBuffer* finalResultBuffer = new CLBuffer(env, NULL,
-				numFailedCht * sizeof(uint32_t), CL_MEM_WRITE_ONLY);
-
-		scanHash->setBuffer(0, metaBuffer);
-		scanHash->setBuffer(1, hashpayloadBuffer);
-		scanHash->setBuffer(2, failedchtkeyBuffer);
-		scanHash->setBuffer(3, finalResultBuffer);
-
-		scanHash->execute(numFailedCht);
-
-		uint32_t* result = (uint32_t*) finalResultBuffer->map(CL_MAP_READ);
-
-		for (uint32_t i = 0; i < numFailedCht; i++) {
-			if (result[i] != 0xffffffff)
-				matched++;
-		}
-
-		finalResultBuffer->unmap();
-
-		delete failedchtkeyBuffer;
-		delete finalResultBuffer;
-
+		delete resultBuffer;
 	}
 	timer.stop();
 
 	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
 			matched);
 
-	delete[] overflowkey;
 	delete[] passedkey;
 	delete[] hash_payload;
 	delete[] cht_payload;
@@ -278,7 +287,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 
 	delete scanBitmap;
 	delete scanCht;
-	delete scanHash;
 	delete env;
 
 	delete cht;
