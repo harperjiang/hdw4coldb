@@ -314,7 +314,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split) {
 			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 
 	uint32_t matched = 0;
-	for (uint i = 0; i < splitRound; i++) {
+	for (uint sIndex = 0; sIndex < splitRound; sIndex++) {
 		uint offset = sIndex * workSize;
 		uint length =
 				(sIndex + 1) * workSize > inner->size ?
