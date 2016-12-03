@@ -68,27 +68,32 @@ void runHash(kvlist* outer, kvlist* inner, uint split) {
 	uint matched = 0;
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
-			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR );
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	CLBuffer* payloadBuffer = new CLBuffer(env, payload,
 			sizeof(uint32_t) * hash->bucket_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	for (uint sIndex = 0; sIndex < splitRound; sIndex++) {
-		CLBuffer* innerKeyBuffer = new CLBuffer(env,
-				innerkey + sIndex * workSize, sizeof(uint32_t) * workSize,
+		uint offset = sIndex * workSize;
+		uint length =
+				(sIndex + 1) * workSize > inner->size ?
+						inner->size - sIndex * workSize : workSize;
+
+		CLBuffer* innerKeyBuffer = new CLBuffer(env, innerkey + offset,
+				sizeof(uint32_t) * length,
 				CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 		CLBuffer* resultBuffer = new CLBuffer(env, NULL,
-				sizeof(uint32_t) * workSize, CL_MEM_WRITE_ONLY);
+				sizeof(uint32_t) * length, CL_MEM_WRITE_ONLY);
 
 		hashScan->setBuffer(0, metaBuffer);
 		hashScan->setBuffer(1, payloadBuffer);
 		hashScan->setBuffer(2, innerKeyBuffer);
 		hashScan->setBuffer(3, resultBuffer);
 
-		hashScan->execute(workSize);
+		hashScan->execute(length);
 
 		uint32_t* result = (uint32_t*) resultBuffer->map(CL_MAP_READ);
-		for (uint32_t i = 0; i < workSize; i++) {
+		for (uint32_t i = 0; i < length; i++) {
 			matched += result[i] == 0xffffffff ? 0 : 1;
 		}
 		resultBuffer->unmap();
@@ -107,49 +112,6 @@ void runHash(kvlist* outer, kvlist* inner, uint split) {
 	delete hashScan;
 	delete env;
 	delete hash;
-}
-
-void scan_chthash(uint* meta, ulong* bitmap, uint* chtPayload,
-		uint* hashpayload, uint* inner, uint* result, uint index) {
-	uint key = inner[index];
-	uint bitmapSize = meta[0] * 32;
-	uint payloadSize = meta[2];
-	uint hash = (key * ((uint) 2654435761)) % bitmapSize;
-
-	uint bitmapIndex = hash / BITMAP_UNIT;
-	uint bitmapOffset = hash % BITMAP_UNIT;
-
-	ulong bitmapMask = ~(0xffffffffffffffff << bitmapOffset);
-	uint offset = (uint) (bitmap[bitmapIndex] >> 32)
-			+ popcount((uint) (bitmap[bitmapIndex] & bitmapMask));
-
-	uint i = 0;
-	while (i < THRESHOLD && offset + i < payloadSize
-			&& chtPayload[offset + i] != key) {
-		i++;
-	}
-	if (offset + i < payloadSize && chtPayload[offset + i] == key) {
-		//result[index] = offset + i;
-		result[index] = 1;
-		return;
-	} else {
-		// Search in Hash
-		uint bucket_size = meta[1];
-		if (0 == bucket_size) {
-			result[index] = 3;
-			return;
-		}
-		uint counter = (key * ((uint) 2654435761)) % bucket_size;
-		while (hashpayload[counter] != key && hashpayload[counter] != 0) {
-			counter = (counter + 1) % bucket_size;
-		}
-		if (hashpayload[counter] == key) {
-			result[index] = 2;
-		} else {
-			result[index] = 3;
-		}
-	}
-
 }
 
 void runChtStep(kvlist* outer, kvlist* inner, uint split) {
@@ -353,12 +315,17 @@ void runCht(kvlist* outer, kvlist* inner, uint split) {
 
 	uint32_t matched = 0;
 	for (uint i = 0; i < splitRound; i++) {
-		CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey + i * workSize,
-				sizeof(uint32_t) * workSize,
+		uint offset = sIndex * workSize;
+		uint length =
+				(sIndex + 1) * workSize > inner->size ?
+						inner->size - sIndex * workSize : workSize;
+
+		CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey + offset,
+				sizeof(uint32_t) * length,
 				CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 		CLBuffer* resultBuffer = new CLBuffer(env, NULL,
-				sizeof(uint32_t) * workSize, CL_MEM_READ_WRITE);
+				sizeof(uint32_t) * length, CL_MEM_READ_WRITE);
 
 		scanChtFull->setBuffer(0, metaBuffer);
 		scanChtFull->setBuffer(1, bitmapBuffer);
@@ -367,11 +334,11 @@ void runCht(kvlist* outer, kvlist* inner, uint split) {
 		scanChtFull->setBuffer(4, innerkeyBuffer);
 		scanChtFull->setBuffer(5, resultBuffer);
 
-		scanChtFull->execute(inner->size);
+		scanChtFull->execute(length);
 
 		uint32_t* result = (uint32_t*) resultBuffer->map(CL_MAP_READ);
 
-		for (uint32_t i = 0; i < workSize; i++) {
+		for (uint32_t i = 0; i < length; i++) {
 			if (result[i] != 0xffffffff)
 				matched++;
 		}
