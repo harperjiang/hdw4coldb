@@ -6,6 +6,7 @@ __kernel void scan_cht(__global uint* meta, __global ulong* bitmap, __global uin
 	int index = get_global_id(0);
 
 	uint bitmapSize = meta[0];
+	uint chtpayloadSize = meta[2];
 
 	uint key = innerKey[index];
 	uint hash = (key * ((uint)2654435761)) % (bitmapSize * BITMAP_SIZE);
@@ -17,13 +18,11 @@ __kernel void scan_cht(__global uint* meta, __global ulong* bitmap, __global uin
 	uint offset = (uint)(bitmap[bitmapIndex] >> 32) + popcount((uint)(bitmap[bitmapIndex] & bitmapMask));
 
 	uint i = 0;
-	for(i = 0; i < THRESHOLD; i++) {
+	for(i = 0; i < THRESHOLD && offset + i < chtpayloadSize; i++) {
 		if(chtPayload[offset+i] == key) {
 			result[index] = offset+i;
-			break;
+			return;
 		}
 	}
-	if(i== THRESHOLD) {
-		result[index] = 0xffffffff;
-	}
+	result[index] = 0xffffffff;
 }
