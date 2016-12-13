@@ -1,18 +1,26 @@
 # Makefile for generating programs for performance test
 
 CC=g++
-INCLUDE= -I $(AMDAPPSDKROOT)/include -I $(CUDASDK)/include
-CC_FLAG= -O3 -Wall -std=gnu++11 -c -fmessage-length=0 -pthread $(INCLUDE) -DCUDA_PROFILING
+
+INCLUDE_OPENCL= -I $(AMDAPPSDKROOT)/include 
+INCLUDE_CUDA= -I $(CUDASDK)/include
+
+CC_FLAG= -O3 -Wall -std=gnu++11 -c -fmessage-length=0 -pthread $(INCLUDE_OPENCL) $(INCLUDE_CUDA)
+
+BIN = ../bin
+
+LIB_OPENCL= -L $(AMDAPPSDKROOT)/lib/x86_64 -lOpenCL
+LIB_CUDA= -L $(CUDASDK)/lib64 -lcudart
+LIBS = -pthread $(LIB_OPENCL) $(LIB_CUDA) 
 
 RM=rm
+
 ifeq ($(OS),Windows_NT)
 	EXE_SUFFIX=.exe
 else
 	EXE_SUFFIX=	
 endif
 
-BIN = ../bin
-LIBS = -pthread -L $(AMDAPPSDKROOT)/lib/x86_64 -lOpenCL -L $(CUDASDK)/lib64 -lcudart
 
 C_SRCS = \
 CPP_SRCS += \

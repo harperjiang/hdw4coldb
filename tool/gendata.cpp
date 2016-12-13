@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 			abort();
 		}
 	// Check arguments
-	if (argc == 0 || size == 0) {
+	if (argc == 1 || size == 0) {
 		print_help();
 		exit(0);
 	}

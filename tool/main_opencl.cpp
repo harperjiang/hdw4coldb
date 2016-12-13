@@ -14,9 +14,6 @@
 #include "../src/opencl/CLEnv.h"
 #include "../src/opencl/CLProgram.h"
 #include "../src/util.h"
-#ifdef CUDA_PROFILING
-#include <cuda_profiler_api.h>
-#endif
 
 #define THRESHOLD 5
 #define BITMAP_EXT 		32
@@ -451,9 +448,6 @@ int main(int argc, char** argv) {
 	logger.info("Outer file size: %u\n", outerkeys.size);
 	logger.info("Inner file size: %u\n", innerkeys.size);
 
-#ifdef CUDA_PROFILING
-	cudaProfilerStart();
-#endif
 	if (!strcmp("hash", alg)) {
 		runHash(&outerkeys, &innerkeys, split);
 	} else if (!strcmp("chtstep", alg)) {
@@ -461,9 +455,6 @@ int main(int argc, char** argv) {
 	} else if (!strcmp("cht", alg)) {
 		runCht(&outerkeys, &innerkeys, split);
 	}
-#ifdef CUDA_PROFILING
-	cudaProfilerStop();
-#endif
 	delete[] outerkeys.entries;
 	delete[] innerkeys.entries;
 
