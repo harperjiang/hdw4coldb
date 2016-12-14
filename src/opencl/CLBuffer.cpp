@@ -155,16 +155,17 @@ unsigned int CLBuffer::size() {
 
 void CLBuffer::profiling(const char* name, cl_event event) {
 	if (env->enableProfiling) {
+		clWaitForEvents(1, &event);
 		cl_ulong start = 0, end = 0;
 		clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START,
 				sizeof(cl_ulong), &start, NULL);
 		clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END,
 				sizeof(cl_ulong), &end, NULL);
 
-		logger->debug("%x buffer size %u, %s execution time start %lu\n",
-				mem_obj, _size, name, start);
-		logger->debug("%x buffer size %u, %s execution time end %lu\n", mem_obj,
-				_size, name, end);
+//		logger->debug("%x buffer size %u, %s execution time start %lu\n",
+//				mem_obj, _size, name, start);
+//		logger->debug("%x buffer size %u, %s execution time end %lu\n", mem_obj,
+//				_size, name, end);
 		logger->debug("%x buffer size %u, %s execution time %u us\n", mem_obj,
 				_size, name, (end - start) / 1000);
 	}

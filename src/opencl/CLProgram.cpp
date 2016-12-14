@@ -166,14 +166,15 @@ bool CLProgram::execute(unsigned int workSize) {
 	}
 	// Profiling the event
 	if (env->enableProfiling) {
+		clWaitForEvents(1, &event);
 		cl_ulong start = 0, end = 0;
 		clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START,
 				sizeof(cl_ulong), &start, NULL);
 		clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END,
 				sizeof(cl_ulong), &end, NULL);
-		logger->debug("%s execution time start %lu\n", this->name, start);
-		logger->debug("%s execution time end %lu\n", this->name, end);
-		logger->debug("%s execution time %u us\n", this->name,
+//		logger->debug("%s execution time start %lu\n", this->name, start);
+//		logger->debug("%s execution time end %lu\n", this->name, end);
+		logger->debug("%s execution time %lu us\n", this->name,
 				(end - start) / 1000);
 	}
 	return true;

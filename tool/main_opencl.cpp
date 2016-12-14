@@ -101,7 +101,7 @@ void runHash(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 	}
 
 	timer.stop();
-	logger->info("Running time: %u, matched row %u\n", timer.wallclockms(),
+	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
 			matched);
 
 	delete metaBuffer;
@@ -233,7 +233,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	}
 	timer.stop();
 
-	logger->info("Running time: %u, matched row %u\n", timer.wallclockms(),
+	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
 			matched);
 
 	delete[] passedkey;
@@ -351,7 +351,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 	}
 	timer.stop();
 
-	logger->info("Running time: %u, matched row %u\n", timer.wallclockms(),
+	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
 			matched);
 
 	delete[] hash_payload;
