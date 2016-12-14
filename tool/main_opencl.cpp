@@ -28,9 +28,6 @@ using namespace std;
 
 Logger* logger = Logger::getLogger("main_opencl");
 
-extern bool bitmap_test(uint64_t* bitmap, uint32_t offset);
-extern uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t offset);
-
 void runHash(kvlist* outer, kvlist* inner, uint split) {
 	logger->info("Running hash join\n");
 	Hash* hash = new Hash();
@@ -444,6 +441,9 @@ int main(int argc, char** argv) {
 	loadkey(innerfile, &innerkeys);
 	logger->info("Outer file size: %u\n", outerkeys.size);
 	logger->info("Inner file size: %u\n", innerkeys.size);
+
+	Logger::getLogger("CLBuffer")->setLevel(DEBUG);
+	Logger::getLogger("CLProgram")->setLevel(DEBUG);
 
 	if (!strcmp("hash", alg)) {
 		runHash(&outerkeys, &innerkeys, split);

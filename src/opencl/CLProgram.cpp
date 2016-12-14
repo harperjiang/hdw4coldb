@@ -127,30 +127,30 @@ void CLProgram::setOutput(unsigned int index, unsigned int size) {
 
 bool CLProgram::execute(unsigned int workSize) {
 	if (NULL == env) {
-		logger->error("%s: CLEnv not set\n", this->name);
+		logger->error("%s CLEnv not set\n", this->name);
 		return false;
 	}
 	cl_int status;
 	if (NULL == program) {
-		logger->error("%s: Program not init\n", this->name);
+		logger->error("%s Program not init\n", this->name);
 		return false;
 	}
 
 	if (NULL == kernel) {
 		kernel = clCreateKernel(program, this->name, &status);
 		if (CL_SUCCESS != status) {
-			logger->error("%s: Cannot init kernel : %d\n", this->name, status);
+			logger->error("%s Cannot init kernel : %d\n", this->name, status);
 			return false;
 		}
 	}
 	// Set kernel arguments
 	for (unsigned int i = 0; i < numBuffer; i++) {
 		if (NULL == buffers[i]) {
-			logger->error("%s: Parameter %d not initialized\n", this->name, i);
+			logger->error("%s Parameter %d not initialized\n", this->name, i);
 			return false;
 		}
 		if (!buffers[i]->attach(this, i)) {
-			logger->error("%s: Buffer %d creation failed. Stop execution.\n",
+			logger->error("%s Buffer %d creation failed. Stop execution.\n",
 					this->name, i);
 			return false;
 		}
@@ -161,7 +161,7 @@ bool CLProgram::execute(unsigned int workSize) {
 			global_work_size,
 			NULL, 0, NULL, &event);
 	if (status != CL_SUCCESS) {
-		logger->error("%s: Failed to execute kernel: %d\n", this->name, status);
+		logger->error("%s failed to execute kernel: %d\n", this->name, status);
 		return false;
 	}
 	// Profiling the event
@@ -171,7 +171,7 @@ bool CLProgram::execute(unsigned int workSize) {
 				sizeof(cl_ulong), &start, NULL);
 		clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END,
 				sizeof(cl_ulong), &end, NULL);
-		logger->debug("%s: Execution Time %u us", (end - start) / 1000);
+		logger->debug("%s execution time %u us", (end - start) / 1000);
 	}
 	return true;
 }

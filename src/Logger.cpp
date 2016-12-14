@@ -14,7 +14,6 @@
 
 uint size = 0;
 uint limit = 10;
-
 Logger** loggers = (Logger**) ::malloc(sizeof(Logger*) * limit);
 
 Logger* Logger::getLogger(const char* name) {
