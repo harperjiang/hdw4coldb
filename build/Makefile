@@ -2,13 +2,13 @@
 
 CC=g++
 
-INCLUDE_OPENCL= -I $(AMDAPPSDKROOT)/include
+INCLUDE_OPENCL= -I $(CUDASDK)/include
 
 CC_FLAG= -O3 -Wall -std=gnu++11 -c -fmessage-length=0 -pthread $(INCLUDE_OPENCL)
 
 BIN = ../bin
 
-LIB_OPENCL= -L $(AMDAPPSDKROOT)/lib/x86_64 -lOpenCL
+LIB_OPENCL= -L $(CUDASDK)/lib64 -lOpenCL
 
 LIBS = -pthread $(LIB_OPENCL)
 
