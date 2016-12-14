@@ -449,8 +449,10 @@ int main(int argc, char** argv) {
 	logger->info("Outer file size: %u\n", outerkeys.size);
 	logger->info("Inner file size: %u\n", innerkeys.size);
 
-	Logger::getLogger("CLBuffer")->setLevel(DEBUG);
-	Logger::getLogger("CLProgram")->setLevel(DEBUG);
+	if (enableProfiling) {
+		Logger::getLogger("CLBuffer")->setLevel(DEBUG);
+		Logger::getLogger("CLProgram")->setLevel(DEBUG);
+	}
 
 	if (!strcmp("hash", alg)) {
 		runHash(&outerkeys, &innerkeys, split, enableProfiling);
