@@ -57,7 +57,7 @@ bool CLBuffer::attach(CLProgram* program, unsigned int index) {
 				mem_obj, program->name, index, status);
 		return false;
 	}
-	logger->debug("%x buffer attached to kernel %s at %d", mem_obj,
+	logger->debug("%x buffer attached to kernel %s at %d\n", mem_obj,
 			program->name, index);
 	return true;
 }
@@ -160,7 +160,12 @@ void CLBuffer::profiling(const char* name, cl_event event) {
 				sizeof(cl_ulong), &start, NULL);
 		clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END,
 				sizeof(cl_ulong), &end, NULL);
-		logger->debug("%x buffer size %u, %s execution time %u us", mem_obj,
+
+		logger->debug("%x buffer size %u, %s execution time start %lu\n",
+				mem_obj, _size, name, start);
+		logger->debug("%x buffer size %u, %s execution time end %lu\n", mem_obj,
+				_size, name, end);
+		logger->debug("%x buffer size %u, %s execution time %u us\n", mem_obj,
 				_size, name, (end - start) / 1000);
 	}
 }
