@@ -383,7 +383,6 @@ void print_help() {
 
 void display_device() {
 	CLEnv* env = new CLEnv();
-	env->logger.setLevel(DEBUG);
 	env->displayDeviceInfo();
 
 	delete env;

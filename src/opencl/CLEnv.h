@@ -17,10 +17,10 @@ class CLBuffer;
 class CLEnv {
 	friend class CLProgram;
 	friend class CLBuffer;
-
-public:
-	Logger logger = Logger("CLEnv");
 private:
+	Logger logger = Logger("CLEnv");
+	bool enableProfiling;
+
 	cl_platform_id platform = NULL;
 	cl_device_id device = NULL;
 	cl_context context = NULL;
@@ -30,7 +30,7 @@ private:
 protected:
 public:
 
-	CLEnv();
+	CLEnv(bool enableProfiling = false);
 	virtual ~CLEnv();
 
 public:

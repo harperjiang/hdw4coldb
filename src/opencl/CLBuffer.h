@@ -32,6 +32,7 @@ private:
 	cl_event event;
 private:
 	bool checkEnv(const char* name);
+	void profiling(const char* name, cl_event event);
 public:
 	CLBuffer(CLEnv*, void*, unsigned int, cl_mem_flags);
 	virtual ~CLBuffer();

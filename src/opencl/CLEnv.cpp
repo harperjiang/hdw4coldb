@@ -8,7 +8,8 @@
 #include <cstring>
 #include "CLEnv.h"
 
-CLEnv::CLEnv() {
+CLEnv::CLEnv(bool enableProfiling) {
+	this->enableProfiling = enableProfiling;
 	/* Getting platforms and choose an available one.*/
 	cl_uint numPlatforms;	//the NO. of platforms
 	platform = NULL;	//the chosen platform
@@ -74,7 +75,9 @@ CLEnv::CLEnv() {
 		return;
 	}
 	/* Creating command queue associate with the context.*/
-	commandQueue = clCreateCommandQueue(context, device, 0, &status);
+
+	commandQueue = clCreateCommandQueue(context, device,
+			enableProfiling ? CL_QUEUE_PROFILING_ENABLE : 0, &status);
 	if (status != CL_SUCCESS) {
 		logger.error("Failed to create command queue: %d\n", status);
 		return;
@@ -96,6 +99,9 @@ CLEnv::~CLEnv() {
 }
 
 void CLEnv::displayDeviceInfo() {
+	Level oldLevel = this->logger.getLevel();
+	if (oldLevel > DEBUG)
+		this->logger.setLevel(DEBUG);
 	cl_uint numDevices = 0;
 	cl_device_id *devices;
 	cl_int status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL,
@@ -154,6 +160,7 @@ void CLEnv::displayDeviceInfo() {
 			logger.debug("Device max compute unit: %u \n", memSize);
 		}
 	}
+	this->logger.setLevel(oldLevel);
 }
 
 char* CLEnv::vendorName() {

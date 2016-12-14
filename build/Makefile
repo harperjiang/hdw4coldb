@@ -2,16 +2,15 @@
 
 CC=g++
 
-INCLUDE_OPENCL= -I $(AMDAPPSDKROOT)/include 
-INCLUDE_CUDA= -I $(CUDASDK)/include
+INCLUDE_OPENCL= -I $(AMDAPPSDKROOT)/include
 
-CC_FLAG= -O3 -Wall -std=gnu++11 -c -fmessage-length=0 -pthread $(INCLUDE_OPENCL) $(INCLUDE_CUDA)
+CC_FLAG= -O3 -Wall -std=gnu++11 -c -fmessage-length=0 -pthread $(INCLUDE_OPENCL)
 
 BIN = ../bin
 
 LIB_OPENCL= -L $(AMDAPPSDKROOT)/lib/x86_64 -lOpenCL
-LIB_CUDA= -L $(CUDASDK)/lib64 -lcudart
-LIBS = -pthread $(LIB_OPENCL) $(LIB_CUDA) 
+
+LIBS = -pthread $(LIB_OPENCL)
 
 RM=rm
 

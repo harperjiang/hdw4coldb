@@ -25,13 +25,13 @@ CLProgram::~CLProgram() {
 		status = clReleaseKernel(kernel); //Release kernel.
 	}
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to release kernel\n");
+		logger.error("%s: Failed to release kernel\n", this->name);
 	}
 	if (NULL != program) {
 		status = clReleaseProgram(program);
 	}
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to release program\n");
+		logger.error("%s: Failed to release program\n", this->name);
 	}
 	if (status != CL_SUCCESS) {
 
@@ -45,11 +45,11 @@ CLProgram::~CLProgram() {
 void CLProgram::fromFile(const char* sourceFile, unsigned int numParams,
 		const char* option) {
 	if (NULL == env) {
-		logger.error("CLEnv not set\n");
+		logger.error("%s: CLEnv not set\n", this->name);
 		return;
 	}
 	if (program != NULL) {
-		logger.warn("Program has already been initialized.\n");
+		logger.warn("%s: Program has already been initialized.\n", this->name);
 		return;
 	}
 	std::ifstream f(sourceFile);
@@ -63,11 +63,11 @@ void CLProgram::fromFile(const char* sourceFile, unsigned int numParams,
 void CLProgram::fromString(const char* source, unsigned int numParams,
 		const char* option) {
 	if (NULL == env) {
-		logger.error("CLEnv not set\n");
+		logger.error("%s: CLEnv not set\n", this->name);
 		return;
 	}
 	if (program != NULL) {
-		logger.warn("Program has already been initialized.\n");
+		logger.warn("%s: Program has already been initialized.\n", this->name);
 		return;
 	}
 	const size_t length = strlen(source);
@@ -75,20 +75,27 @@ void CLProgram::fromString(const char* source, unsigned int numParams,
 	program = clCreateProgramWithSource(env->context, 1, &source, &length,
 			&status);
 	if (status != CL_SUCCESS) {
-		logger.error("Program loading failed: %d\n", status);
+		logger.error("%s: Program loading failed: %d\n", this->name, status);
 		program = NULL;
 		return;
 	}
 	status = clBuildProgram(program, 1, &env->device, option, NULL, NULL);
 	if (status != CL_SUCCESS) {
-		logger.error("Program build failed: %d\n", status);
+		logger.error("%s: Program build failed: %d\n", this->name, status);
 
 		char log[0x10000];
 		clGetProgramBuildInfo(program, env->device, CL_PROGRAM_BUILD_LOG,
 				0x10000, log, NULL);
-		logger.error("Build Log:\n%s\n", log);
+		logger.error("%s: Build Log:\n%s\n", this->name, log);
 
 		program = NULL;
+		return;
+	}
+
+	kernel = clCreateKernel(program, this->name, &status);
+	if (CL_SUCCESS != status) {
+		logger.error("%s: Kernel failed to initialize: %d\n", this->name,
+				status);
 		return;
 	}
 
@@ -98,20 +105,20 @@ void CLProgram::fromString(const char* source, unsigned int numParams,
 
 void CLProgram::setBuffer(unsigned int index, CLBuffer* buffer) {
 	if (NULL == env) {
-		logger.error("CLEnv not set\n");
+		logger.error("%s: CLEnv not set\n", this->name);
 		return;
 	}
 	if (index < numBuffer) {
 		buffers[index] = buffer;
 	} else {
-		logger.error("Set buffer index out of Bounds: %d\n", index);
+		logger.error("%s: Set buffer index out of Bounds: %d\n", this->name,
+				index);
 	}
 }
 
 void CLProgram::setInput(unsigned int index, void * data, unsigned int size) {
-	setBuffer(index,
-			new CLBuffer(env, data, size,
-					CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY));
+	setBuffer(index, new CLBuffer(env, data, size,
+	CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY));
 }
 
 void CLProgram::setOutput(unsigned int index, unsigned int size) {
@@ -120,30 +127,31 @@ void CLProgram::setOutput(unsigned int index, unsigned int size) {
 
 bool CLProgram::execute(unsigned int workSize) {
 	if (NULL == env) {
-		logger.error("CLEnv not set\n");
+		logger.error("%s: CLEnv not set\n", this->name);
 		return false;
 	}
 	cl_int status;
 	if (NULL == program) {
-		logger.error("Program not init\n");
+		logger.error("%s: Program not init\n", this->name);
 		return false;
 	}
 
 	if (NULL == kernel) {
 		kernel = clCreateKernel(program, this->name, &status);
 		if (CL_SUCCESS != status) {
-			logger.error("Cannot init kernel : %d\n", status);
+			logger.error("%s: Cannot init kernel : %d\n", this->name, status);
 			return false;
 		}
 	}
 	// Set kernel arguments
 	for (unsigned int i = 0; i < numBuffer; i++) {
 		if (NULL == buffers[i]) {
-			logger.error("Parameter %d not initialized\n", i);
+			logger.error("%s: Parameter %d not initialized\n", this->name, i);
 			return false;
 		}
 		if (!buffers[i]->attach(this, i)) {
-			logger.error("Buffer %d creation failed. Stop execution.\n", i);
+			logger.error("%s: Buffer %d creation failed. Stop execution.\n",
+					this->name, i);
 			return false;
 		}
 	}
@@ -153,8 +161,17 @@ bool CLProgram::execute(unsigned int workSize) {
 			global_work_size,
 			NULL, 0, NULL, &event);
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to execute kernel: %d\n", status);
+		logger.error("%s: Failed to execute kernel: %d\n", this->name, status);
 		return false;
+	}
+	// Profiling the event
+	if (env->enableProfiling) {
+		cl_ulong start = 0, end = 0;
+		clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START,
+				sizeof(cl_ulong), &start, NULL);
+		clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END,
+				sizeof(cl_ulong), &end, NULL);
+		logger.debug("%s: Execution Time %u us", (end - start) / 1000);
 	}
 	return true;
 }
