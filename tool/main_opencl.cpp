@@ -28,12 +28,13 @@ using namespace std;
 
 Logger* logger = Logger::getLogger("main_opencl");
 
-void runHash(kvlist* outer, kvlist* inner, uint split) {
+void runHash(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
+		false) {
 	logger->info("Running hash join\n");
 	Hash* hash = new Hash();
 	hash->build(outer->entries, outer->size);
 
-	CLEnv* env = new CLEnv();
+	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* hashScan = new CLProgram(env, "scan_hash");
 	hashScan->fromFile("scan_hash.cl", 4);
@@ -111,7 +112,8 @@ void runHash(kvlist* outer, kvlist* inner, uint split) {
 	delete hash;
 }
 
-void runChtStep(kvlist* outer, kvlist* inner, uint split) {
+void runChtStep(kvlist* outer, kvlist* inner, uint split,
+		bool enableProfiling) {
 	Timer timer;
 	logger->info("Running CHT Step Join\n");
 	logger->info("Building Outer Table\n");
@@ -141,7 +143,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
-	CLEnv* env = new CLEnv();
+	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* scanBitmap = new CLProgram(env, "scan_bitmap");
 	scanBitmap->fromFile("scan_bitmap.cl", 4);
@@ -251,7 +253,8 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 	delete cht;
 }
 
-void runCht(kvlist* outer, kvlist* inner, uint split) {
+void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
+		false) {
 	Timer timer;
 	logger->info("Running CHT Join\n");
 	logger->info("Building Outer Table\n");
@@ -279,7 +282,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split) {
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
-	CLEnv* env = new CLEnv();
+	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* scanChtFull = new CLProgram(env, "scan_cht_full");
 	scanChtFull->fromFile("scan_cht_full.cl", 6);
@@ -372,6 +375,7 @@ void print_help() {
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -o --outer=FILE \tfile for outer table\n");
 	fprintf(stdout, " -i --inner=File \tfile for inner table\n");
+	fprintf(stdout, " -p --profiling \tenable profiling\n");
 	fprintf(stdout, " -h --help \tdisplay this information\n");
 	fprintf(stdout, " -v --devinfo \tdisplay the detected device info\n");
 	fprintf(stdout, " -s --split \tsplit the probe table\n");
@@ -390,6 +394,7 @@ int main(int argc, char** argv) {
 	char* alg = NULL;
 	char* outerfile = NULL;
 	char* innerfile = NULL;
+	bool enableProfiling = false;
 	uint split = 0;
 	if (argc == 1) {
 		print_help();
@@ -399,11 +404,10 @@ int main(int argc, char** argv) {
 	int option_index = 0;
 	static struct option long_options[] = {
 			{ "alg", required_argument, 0, 'a' }, { "outer", required_argument,
-					0, 'o' }, { "inner",
-			required_argument, 0, 'i' }, { "help",
+					0, 'o' }, { "inner", required_argument, 0, 'i' }, { "help",
 			no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' }, {
-					"split",
-					optional_argument }, 0, 's' };
+					"split", optional_argument, 0, 's' }, { "profiling",
+			no_argument, 0, 'p' } };
 
 	int c;
 	while ((c = getopt_long(argc, argv, "a:o:i:hvs:", long_options,
@@ -411,6 +415,9 @@ int main(int argc, char** argv) {
 		switch (c) {
 		case 'a':
 			alg = optarg;
+			break;
+		case 'p':
+			enableProfiling = true;
 			break;
 		case 'o':
 			outerfile = optarg;
@@ -446,11 +453,11 @@ int main(int argc, char** argv) {
 	Logger::getLogger("CLProgram")->setLevel(DEBUG);
 
 	if (!strcmp("hash", alg)) {
-		runHash(&outerkeys, &innerkeys, split);
+		runHash(&outerkeys, &innerkeys, split, enableProfiling);
 	} else if (!strcmp("chtstep", alg)) {
-		runChtStep(&outerkeys, &innerkeys, split);
+		runChtStep(&outerkeys, &innerkeys, split, enableProfiling);
 	} else if (!strcmp("cht", alg)) {
-		runCht(&outerkeys, &innerkeys, split);
+		runCht(&outerkeys, &innerkeys, split, enableProfiling);
 	}
 	delete[] outerkeys.entries;
 	delete[] innerkeys.entries;
