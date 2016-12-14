@@ -15,14 +15,14 @@ CLEnv::CLEnv(bool enableProfiling) {
 	platform = NULL;	//the chosen platform
 	cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to get platforms %d.\n", status);
+		logger->error("Failed to get platforms %d.\n", status);
 		return;
 	}
 
 	/* Choose the first available platform. */
 	if (numPlatforms > 0) {
 		if (numPlatforms > 1) {
-			logger.info("Multiple platform discovered\n");
+			logger->info("Multiple platform discovered\n");
 		}
 		cl_platform_id* platforms = (cl_platform_id*) malloc(
 				numPlatforms * sizeof(cl_platform_id));
@@ -30,7 +30,7 @@ CLEnv::CLEnv(bool enableProfiling) {
 		platform = platforms[0];
 		free(platforms);
 	} else {
-		logger.error("No platform available.\n");
+		logger->error("No platform available.\n");
 		return;
 	}
 
@@ -38,11 +38,11 @@ CLEnv::CLEnv(bool enableProfiling) {
 	cl_uint numDevices = 0;
 	cl_device_id *devices;
 	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
-	logger.debug("Number of GPU discovered : %d\n", numDevices);
+	logger->debug("Number of GPU discovered : %d\n", numDevices);
 	if (numDevices == 0) {
 		//no GPU available.
-		logger.warn("No GPU device available.\n");
-		logger.warn("Choose CPU as default device.\n");
+		logger->warn("No GPU device available.\n");
+		logger->warn("Choose CPU as default device.\n");
 		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 0, NULL,
 				&numDevices);
 		devices = (cl_device_id*) malloc(numDevices * sizeof(cl_device_id));
@@ -54,24 +54,24 @@ CLEnv::CLEnv(bool enableProfiling) {
 				devices, NULL);
 	}
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to query devices: %d\n", status);
+		logger->error("Failed to query devices: %d\n", status);
 		return;
 	}
 	if (numDevices > 1) {
-		logger.info("Multiple devices discovered\n");
+		logger->info("Multiple devices discovered\n");
 	}
 	device = devices[0];
 	free(devices);
 
 	/* Display Device Information */
 
-	if (logger.isDebugEnabled()) {
+	if (logger->isDebugEnabled()) {
 		this->displayDeviceInfo();
 	}
 	/* Create context.*/
 	context = clCreateContext(NULL, 1, &device, NULL, NULL, &status);
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to create context: %d\n", status);
+		logger->error("Failed to create context: %d\n", status);
 		return;
 	}
 	/* Creating command queue associate with the context.*/
@@ -79,7 +79,7 @@ CLEnv::CLEnv(bool enableProfiling) {
 	commandQueue = clCreateCommandQueue(context, device,
 			enableProfiling ? CL_QUEUE_PROFILING_ENABLE : 0, &status);
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to create command queue: %d\n", status);
+		logger->error("Failed to create command queue: %d\n", status);
 		return;
 	}
 	/* Query vendor infos */
@@ -90,18 +90,18 @@ CLEnv::CLEnv(bool enableProfiling) {
 CLEnv::~CLEnv() {
 	cl_int status = clReleaseCommandQueue(commandQueue);
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to release command queue: %d\n", status);
+		logger->error("Failed to release command queue: %d\n", status);
 	}
 	status = clReleaseContext(context);
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to release context: %d\n", status);
+		logger->error("Failed to release context: %d\n", status);
 	}
 }
 
 void CLEnv::displayDeviceInfo() {
-	Level oldLevel = this->logger.getLevel();
+	Level oldLevel = this->logger->getLevel();
 	if (oldLevel > DEBUG)
-		this->logger.setLevel(DEBUG);
+		this->logger->setLevel(DEBUG);
 	cl_uint numDevices = 0;
 	cl_device_id *devices;
 	cl_int status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL,
@@ -109,7 +109,7 @@ void CLEnv::displayDeviceInfo() {
 	if (status != CL_SUCCESS) {
 		return;
 	}
-	logger.debug("Number of GPU discovered : %d\n", numDevices);
+	logger->debug("Number of GPU discovered : %d\n", numDevices);
 	devices = (cl_device_id*) malloc(numDevices * sizeof(cl_device_id));
 	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices,
 	NULL);
@@ -117,50 +117,50 @@ void CLEnv::displayDeviceInfo() {
 		return;
 	}
 	for (uint32_t i = 0; i < numDevices; i++) {
-		logger.debug("Device #%u\n", i);
+		logger->debug("Device #%u\n", i);
 		unsigned long memSize;
 		char devName[30];
 		cl_int status;
 		status = clGetDeviceInfo(device, CL_DEVICE_NAME, 30, devName, NULL);
 		if (status == CL_SUCCESS) {
-			logger.debug("Device Name: %s\n", devName);
+			logger->debug("Device Name: %s\n", devName);
 		}
 		status = clGetDeviceInfo(device, CL_DEVICE_VENDOR, 30, devName, NULL);
 		if (status == CL_SUCCESS) {
-			logger.debug("Device Vendor: %s\n", devName);
+			logger->debug("Device Vendor: %s\n", devName);
 		}
 		status = clGetDeviceInfo(device, CL_DEVICE_VERSION, 30, devName, NULL);
 		if (status == CL_SUCCESS) {
-			logger.debug("OpenCL Version: %s\n", devName);
+			logger->debug("OpenCL Version: %s\n", devName);
 		}
 		status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE,
 				sizeof(unsigned long), &memSize, NULL);
 		if (status == CL_SUCCESS) {
-			logger.debug("Device global mem size: %uMB\n", memSize / (1 << 20));
+			logger->debug("Device global mem size: %uMB\n", memSize / (1 << 20));
 		}
 		status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE,
 				sizeof(unsigned long), &memSize, NULL);
 		if (status == CL_SUCCESS) {
-			logger.debug("Device global mem cache size: %uKB\n",
+			logger->debug("Device global mem cache size: %uKB\n",
 					memSize / (1 << 10));
 		}
 		status = clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE,
 				sizeof(unsigned long), &memSize, NULL);
 		if (status == CL_SUCCESS) {
-			logger.debug("Device local mem size: %uKB\n", memSize / (1 << 10));
+			logger->debug("Device local mem size: %uKB\n", memSize / (1 << 10));
 		}
 		status = clGetDeviceInfo(device, CL_DEVICE_MAX_CLOCK_FREQUENCY,
 				sizeof(unsigned long), &memSize, NULL);
 		if (status == CL_SUCCESS) {
-			logger.debug("Device frequency: %u MHz\n", memSize);
+			logger->debug("Device frequency: %u MHz\n", memSize);
 		}
 		status = clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS,
 				sizeof(unsigned long), &memSize, NULL);
 		if (status == CL_SUCCESS) {
-			logger.debug("Device max compute unit: %u \n", memSize);
+			logger->debug("Device max compute unit: %u \n", memSize);
 		}
 	}
-	this->logger.setLevel(oldLevel);
+	this->logger->setLevel(oldLevel);
 }
 
 char* CLEnv::vendorName() {
@@ -168,7 +168,7 @@ char* CLEnv::vendorName() {
 		return vendor;
 	cl_int status = clGetDeviceInfo(device, CL_DEVICE_VENDOR, 50, vendor, NULL);
 	if (status != CL_SUCCESS) {
-		logger.error("Failed to query vendor name\n");
+		logger->error("Failed to query vendor name\n");
 	}
 	return vendor;
 }

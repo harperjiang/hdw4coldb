@@ -16,7 +16,7 @@ class CLProgram;
 
 class CLBuffer {
 private:
-	Logger logger = Logger("CLBuffer");
+	Logger* logger = Logger::getLogger("CLBuffer");
 private:
 	CLEnv* env;
 	CLProgram* program = NULL;

@@ -26,13 +26,13 @@
 
 using namespace std;
 
-Logger logger;
+Logger* logger = Logger::getLogger("main_opencl");
 
 extern bool bitmap_test(uint64_t* bitmap, uint32_t offset);
 extern uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t offset);
 
 void runHash(kvlist* outer, kvlist* inner, uint split) {
-	logger.info("Running hash join\n");
+	logger->info("Running hash join\n");
 	Hash* hash = new Hash();
 	hash->build(outer->entries, outer->size);
 
@@ -68,7 +68,7 @@ void runHash(kvlist* outer, kvlist* inner, uint split) {
 	uint matched = 0;
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 2,
-			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 	CLBuffer* payloadBuffer = new CLBuffer(env, payload,
 			sizeof(uint32_t) * hash->bucket_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -103,7 +103,7 @@ void runHash(kvlist* outer, kvlist* inner, uint split) {
 	}
 
 	timer.stop();
-	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
+	logger->info("Running time: %u, matched row %u\n", timer.wallclockms(),
 			matched);
 
 	delete metaBuffer;
@@ -116,12 +116,12 @@ void runHash(kvlist* outer, kvlist* inner, uint split) {
 
 void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 	Timer timer;
-	logger.info("Running CHT Step Join\n");
-	logger.info("Building Outer Table\n");
+	logger->info("Running CHT Step Join\n");
+	logger->info("Building Outer Table\n");
 
 	CHT* cht = new CHT();
 	cht->build(outer->entries, outer->size);
-	logger.info("Building Outer Table Done\n");
+	logger->info("Building Outer Table Done\n");
 
 	uint32_t meta[3];
 
@@ -163,7 +163,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 	timer.start();
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 3,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -234,7 +234,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 	}
 	timer.stop();
 
-	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
+	logger->info("Running time: %u, matched row %u\n", timer.wallclockms(),
 			matched);
 
 	delete[] passedkey;
@@ -256,11 +256,11 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split) {
 
 void runCht(kvlist* outer, kvlist* inner, uint split) {
 	Timer timer;
-	logger.info("Running CHT Join\n");
-	logger.info("Building Outer Table\n");
+	logger->info("Running CHT Join\n");
+	logger->info("Building Outer Table\n");
 	CHT* cht = new CHT();
 	cht->build(outer->entries, outer->size);
-	logger.info("Building Outer Table Done\n");
+	logger->info("Building Outer Table Done\n");
 
 	uint32_t meta[3];
 	meta[0] = cht->bitmap_size;
@@ -298,7 +298,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split) {
 	timer.start();
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 3,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
@@ -351,7 +351,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split) {
 	}
 	timer.stop();
 
-	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
+	logger->info("Running time: %u, matched row %u\n", timer.wallclockms(),
 			matched);
 
 	delete[] hash_payload;
@@ -437,15 +437,13 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	Logger logger;
-
 	kvlist outerkeys;
 	kvlist innerkeys;
-	logger.info("Loading files\n");
+	logger->info("Loading files\n");
 	loadkey(outerfile, &outerkeys);
 	loadkey(innerfile, &innerkeys);
-	logger.info("Outer file size: %u\n", outerkeys.size);
-	logger.info("Inner file size: %u\n", innerkeys.size);
+	logger->info("Outer file size: %u\n", outerkeys.size);
+	logger->info("Inner file size: %u\n", innerkeys.size);
 
 	if (!strcmp("hash", alg)) {
 		runHash(&outerkeys, &innerkeys, split);

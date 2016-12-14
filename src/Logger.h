@@ -19,9 +19,11 @@ private:
 	const char* name;
 	Level level = INFO;
 	char log_buffer[1000];
-public:
+
 	Logger();
 	Logger(const char* name);
+public:
+	static Logger* getLogger(const char* name);
 
 	Level getLevel();
 	void setLevel(Level);

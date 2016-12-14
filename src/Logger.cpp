@@ -6,12 +6,34 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 
 #include "Logger.h"
 
-Logger gLogger("");
+uint size = 0;
+uint limit = 10;
+
+Logger** loggers = (Logger**) ::malloc(sizeof(Logger*) * limit);
+
+Logger* Logger::getLogger(const char* name) {
+	for (uint i = 0; i < size; i++) {
+		if (0 == ::strcmp(loggers[i]->name, name))
+			return loggers[i];
+	}
+	// Add new logger
+	if (size == limit) {
+		uint newLimit = limit * 2;
+		Logger** tmp = (Logger**) ::malloc(sizeof(Logger*) * newLimit);
+		::memcpy(tmp, loggers, sizeof(Logger*) * limit);
+		::free(loggers);
+		limit = newLimit;
+		loggers = tmp;
+	}
+	loggers[size++] = new Logger(name);
+	return loggers[size - 1];
+}
 
 Logger::Logger() {
 	this->name = "";

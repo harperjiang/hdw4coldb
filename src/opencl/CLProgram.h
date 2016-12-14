@@ -16,7 +16,7 @@
 class CLProgram {
 	friend class CLBuffer;
 private:
-	Logger logger = Logger("CLProgram");
+	Logger* logger = Logger::getLogger("CLProgram");
 	const char* name;
 private:
 	CLEnv* env;

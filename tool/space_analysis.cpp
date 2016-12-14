@@ -14,6 +14,8 @@
 #include "../src/util.h"
 #include "../src/Logger.h"
 
+Logger* logger = Logger::getLogger("space_analysis");
+
 int main(int argc, char** argv) {
 
 	int c;
@@ -33,22 +35,22 @@ int main(int argc, char** argv) {
 	}
 
 	kvlist outer;
-	Logger logger;
 
 	loadkey(file, &outer);
 
 	if (!strcmp("hash", alg)) {
 		Hash *hash = new Hash();
 		hash->build(outer.entries, outer.size);
-		logger.info("Hash: bucket size %u\n", hash->bucketSize());
+		logger->info("Hash: bucket size %u\n", hash->bucketSize());
 		delete hash;
 	} else if (!strcmp("cht", alg)) {
 		CHT* cht = new CHT();
 		cht->build(outer.entries, outer.size);
-		logger.info("CHT: bitmap size %u\n", cht->bitmapSize());
-		logger.info("CHT: payload size %u\n", cht->payloadSize());
-		logger.info("CHT: overflow bkt size %u\n", cht->getOverflow()->bucketSize());
-		logger.info("CHT: overflow size %u\n", cht->getOverflow()->size());
+		logger->info("CHT: bitmap size %u\n", cht->bitmapSize());
+		logger->info("CHT: payload size %u\n", cht->payloadSize());
+		logger->info("CHT: overflow bkt size %u\n",
+				cht->getOverflow()->bucketSize());
+		logger->info("CHT: overflow size %u\n", cht->getOverflow()->size());
 		delete cht;
 	} else {
 		exit(1);

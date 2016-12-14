@@ -21,6 +21,8 @@
 // Join and print num matched
 uint32_t match_counter;
 
+Logger* logger = Logger::getLogger("main_single");
+
 void scan_dummy(uint32_t key, uint8_t* outer, uint8_t* inner, void*params) {
 	match_counter++;
 }
@@ -33,12 +35,11 @@ void process(uint32_t key, uint8_t* outer, uint8_t* inner) {
 void xs_access(Lookup* lookup, kvlist* outerfile, kvlist* innerfile,
 		bool uniq) {
 	srand(time(NULL));
-	Logger logger;
 
-	logger.info("Running %s join\n", lookup->getName());
-	logger.info("Building outer table\n");
+	logger->info("Running %s join\n", lookup->getName());
+	logger->info("Building outer table\n");
 	lookup->build(outerfile->entries, outerfile->size);
-	logger.info("Building outer table done\n");
+	logger->info("Building outer table done\n");
 	Timer timer;
 	timer.start();
 
@@ -60,7 +61,7 @@ void xs_access(Lookup* lookup, kvlist* outerfile, kvlist* innerfile,
 	}
 	timer.stop();
 
-	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
+	logger->info("Running time: %u, matched row %u\n", timer.wallclockms(),
 			match_counter);
 }
 
@@ -119,15 +120,13 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	Logger logger;
-
 	kvlist outerkeys;
 	kvlist innerkeys;
-	logger.info("Loading files\n");
+	logger->info("Loading files\n");
 	loadkey(outerfile, &outerkeys);
 	loadkey(innerfile, &innerkeys);
-	logger.info("Outer file size: %u\n", outerkeys.size);
-	logger.info("Inner file size: %u\n", innerkeys.size);
+	logger->info("Outer file size: %u\n", outerkeys.size);
+	logger->info("Inner file size: %u\n", innerkeys.size);
 
 	Lookup* lookup;
 	if (!strcmp("hash", alg)) {

@@ -18,7 +18,7 @@ class CLEnv {
 	friend class CLProgram;
 	friend class CLBuffer;
 private:
-	Logger logger = Logger("CLEnv");
+	Logger* logger = Logger::getLogger("CLEnv");
 	bool enableProfiling;
 
 	cl_platform_id platform = NULL;

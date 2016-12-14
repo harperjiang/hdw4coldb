@@ -32,8 +32,9 @@ typedef struct _thread_arg {
 	sem_t* sema;
 } thread_arg;
 
-// Join and print num matched
+Logger* logger = Logger::getLogger("main_mt");
 
+// Join and print num matched
 void scan_func(uint32_t key, uint8_t* outer, uint8_t* inner, void* params) {
 	((thread_arg*) params)->result++;
 }
@@ -103,14 +104,13 @@ void* xm_thread_access(void* arg) {
 void xm_access(Lookup* lookup, kvlist* outer, kvlist* inner, uint32_t numthread,
 		bool uniq) {
 	srand(time(NULL));
-	Logger logger;
 
-	logger.info("Running %s join with %d threads\n", lookup->getName(),
+	logger->info("Running %s join with %d threads\n", lookup->getName(),
 			numthread);
 
-	logger.info("Building outer table\n");
+	logger->info("Building outer table\n");
 	lookup->build(outer->entries, outer->size);
-	logger.info("Building outer table done\n");
+	logger->info("Building outer table done\n");
 
 // Run
 
@@ -130,7 +130,7 @@ void xm_access(Lookup* lookup, kvlist* outer, kvlist* inner, uint32_t numthread,
 
 	timer.stop();
 
-	logger.info("Running time: %u, matched row %u\n", timer.wallclockms(),
+	logger->info("Running time: %u, matched row %u\n", timer.wallclockms(),
 			match_counter);
 }
 
@@ -194,15 +194,13 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	Logger logger;
-
 	kvlist outerkeys;
 	kvlist innerkeys;
-	logger.info("Loading files\n");
+	logger->info("Loading files\n");
 	loadkey(outerfile, &outerkeys);
 	loadkey(innerfile, &innerkeys);
-	logger.info("Outer file size: %u\n", outerkeys.size);
-	logger.info("Inner file size: %u\n", innerkeys.size);
+	logger->info("Outer file size: %u\n", outerkeys.size);
+	logger->info("Inner file size: %u\n", innerkeys.size);
 
 	Lookup* lookup;
 	if (!strcmp("hash", alg)) {
