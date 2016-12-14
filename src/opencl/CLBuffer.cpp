@@ -160,7 +160,7 @@ void CLBuffer::profiling(const char* name, cl_event event) {
 				sizeof(cl_ulong), &start, NULL);
 		clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END,
 				sizeof(cl_ulong), &end, NULL);
-		logger->debug("%x %s execution time %u us", mem_obj, name,
-				(end - start) / 1000);
+		logger->debug("%x buffer size %u, %s execution time %u us", mem_obj,
+				_size, name, (end - start) / 1000);
 	}
 }
