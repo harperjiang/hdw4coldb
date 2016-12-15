@@ -355,7 +355,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 		debugBuffer->unmap();
 
-		logger->info("Hash payload : %lu\n",hashpayload[1802]);
+		logger->info("Hash payload : %lu\n",hash_payload[1802]);
 
 		delete innerkeyBuffer;
 		delete resultBuffer;
