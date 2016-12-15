@@ -104,25 +104,12 @@ kv* Hash::get(uint32_t key) {
 	uint32_t hval = mut_hash(key) % this->bucket_size;
 	kv* bucket = this->buckets + hval;
 
-	// DEBUG, to be removed
-	if (key == 199954612) {
-		printf("Host hash: %lu\n", mut_hash(key));
-		printf("Host start offset: %lu\n", hval);
-	}
-
 	while (bucket->key != 0 && bucket->key != key) {
 		hval = (hval + 1) % bucket_size;
 		bucket = this->buckets + hval;
 	}
-	if (key == 199954612) {
-		printf("Host stop offset: %lu\n", hval);
-		printf("Host stop value: %lu\n", bucket->key);
-	}
-	if (bucket->key == key) {
-		return bucket;
-	}
 
-	return NULL;
+	return bucket->key == key ? bucket : NULL;
 }
 
 bool Hash::has(uint32_t key) {

@@ -36,6 +36,7 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 			if(key == (uint)199954612) {
 				debugger[0] = (key * (uint)2654435761);
 				debugger[1] = counter;
+				debugger[4] = bucket_size;
 			}
 
 			while(hashpayload[counter]!= key && hashpayload[counter] != 0) {
@@ -43,7 +44,6 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 			}
 			if(hashpayload[counter] == key) {
 				result[index] = counter;
-				debugger[index] = 4;
 			} else {
 				result[index] = 0xffffffff;
 			}

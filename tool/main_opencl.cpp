@@ -350,11 +350,12 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 		uint32_t* debug = (uint32_t*) debugBuffer->map(CL_MAP_READ);
 
-		logger->info("%lu,%lu,%lu,%lu\n", debug[0], debug[1], debug[2],
-				debug[3]);
+		logger->info("%lu,%lu,%lu,%lu,%lu\n", debug[0], debug[1], debug[2],
+				debug[3],debug[4]);
 
 		debugBuffer->unmap();
-		cht->overflow->get(199954612);
+
+		logger->info("Hash payload : %lu\n",hashpayload[1802]);
 
 		delete innerkeyBuffer;
 		delete resultBuffer;
