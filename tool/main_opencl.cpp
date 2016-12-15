@@ -328,12 +328,6 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
-	uint* result = new uint[inner->size];
-	for (uint i = 0; i < inner->size; i++) {
-		scan_cht_full(meta, cht->bitmap, cht_payload, hash_payload, innerkey,
-				result, i);
-	}
-
 	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* scanChtFull = new CLProgram(env, "scan_cht_full");
@@ -403,12 +397,13 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		uint32_t* debug = (uint32_t*) debugBuffer->map(CL_MAP_READ);
 		for (uint di = 0; di < length; di++) {
 			if (debug[di] >= 1 && debug[di] <= 5) {
-				debugSummary[di - 1] += 1;
+				debugSummary[debug[di] - 1] += 1;
 			}
 		}
 		for (uint di = 0; di < 5; di++) {
 			logger->info("%d:%d\n", di + 1, debugSummary[di]);
 		}
+		logger->info("Unmap")
 		debugBuffer->unmap();
 
 		delete innerkeyBuffer;

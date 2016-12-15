@@ -2,7 +2,7 @@
 #define BITMAP_SIZE 32
 
 __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global uint* chtPayload, __global uint* hashpayload,
-		__global uint* inner, __global uint* result, __global uint* debug) {
+		__global uint* inner, __global uint* result, __global uint* debugger) {
 	int index = get_global_id(0);
 	uint key = inner[index];
 	uint bitmapSize = meta[0] * 32;
@@ -22,14 +22,14 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 		}
 		if(offset+i < payloadSize && chtPayload[offset+i] == key) {
 			result[index] = offset + i;
-			debug[index] = 2;
+			debugger[index] = 2;
 			return;
 		} else {
 			// Search in Hash
 			uint bucket_size = meta[1];
 			if(0 == bucket_size) {
 				result[index] = 0xffffffff;
-				debug[index] = 3;
+				debugger[index] = 3;
 				return;
 			}
 			uint counter = (key * ((uint)2654435761)) % bucket_size;
@@ -38,14 +38,14 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 			}
 			if(hashpayload[counter] == key) {
 				result[index] = counter;
-				debug[index] = 4;
+				debugger[index] = 4;
 			} else {
 				result[index] = 0xffffffff;
-				debug[index] = 5;
+				debugger[index] = 5;
 			}
 		}
 	} else {
 		result[index] = 0xffffffff;
-		debug[index] = 1;
+		debugger[index] = 1;
 	}
 }
