@@ -199,7 +199,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 		uint index = i % wgSize;
 		uint offset = i / wgSize;
 		if (bitmapResult[index] & 1 << offset) {
-			passedkey[counter++] = innerkey[sIndex * workSize + i];
+			passedkey[counter++] = innerkey[i];
 		}
 	}
 	uint numPassBitmap = counter;
