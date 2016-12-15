@@ -57,7 +57,7 @@ void CLProgram::fromFile(const char* sourceFile, unsigned int numParams,
 	st << f.rdbuf();
 	std::string ss = st.str();
 	const char* source = ss.c_str();
-	this->fromString(source, numParams);
+	this->fromString(source, numParams, option);
 }
 
 void CLProgram::fromString(const char* source, unsigned int numParams,

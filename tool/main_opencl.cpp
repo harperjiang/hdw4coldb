@@ -372,6 +372,26 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 	delete cht;
 }
 
+void runExperiment() {
+	CLEnv* env = new CLEnv();
+	CLProgram* program = new CLProgram(env, "test_bitmap");
+
+	program->fromFile("test_bitmap", 1);
+
+	CLBuffer* resultBuffer = new CLBuffer(env, NULL, sizeof(uint),
+	CL_MEM_READ_WRITE);
+	program->setBuffer(0, resultBuffer);
+
+	program->execute(32);
+
+	uint* result = resultBuffer->map(CL_MAP_READ);
+
+	logger->info("%x\n", result[0]);
+
+	delete program;
+	delete env;
+}
+
 void print_help() {
 	fprintf(stdout, "Usage: main_opencl [options]\n");
 	fprintf(stdout, "Available options:\n");
@@ -464,6 +484,8 @@ int main(int argc, char** argv) {
 		runChtStep(&outerkeys, &innerkeys, split, enableProfiling);
 	} else if (!strcmp("cht", alg)) {
 		runCht(&outerkeys, &innerkeys, split, enableProfiling);
+	} else {
+		runExperiment();
 	}
 	delete[] outerkeys.entries;
 	delete[] innerkeys.entries;
