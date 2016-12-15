@@ -361,16 +361,12 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		uint32_t* debug = (uint32_t*) debugBuffer->map(CL_MAP_READ);
 		for (uint di = 0; di < length; di++) {
 			if (debug[di] == 4) {
-				for (uint ki = 0; ki < 80; ki++) {
-					if (hashPass[ki] == innerkey[di]) {
-						hashPass[ki] = 0;
-					}
-				}
+				logger->info("Device hash found: %lu\n", innerkey[di]);
 			}
 		}
 
 		for (uint di = 0; di < 80; di++) {
-				logger->info("%lu\n", innerkey[di]);
+			logger->info("%lu\n", innerkey[di]);
 		}
 
 		debugBuffer->unmap();
