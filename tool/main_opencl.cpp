@@ -354,16 +354,16 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	CLBuffer* chtpayloadBuffer = new CLBuffer(env, cht_payload,
 			sizeof(uint32_t) * cht->payload_size,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	CLBuffer* hashpayloadBuffer = new CLBuffer(env, hash_payload,
 			sizeof(uint32_t) * (0 == cht->overflow->bucket_size) ?
 					1 : cht->overflow->bucket_size,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	uint32_t matched = 0;
 	for (uint sIndex = 0; sIndex < splitRound; sIndex++) {
@@ -400,7 +400,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		resultBuffer->unmap();
 
 		uint debugSummary[5] = { 0, 0, 0, 0, 0 };
-		uint* debug = (uint*) debugBuffer->map(CL_MAP_READ);
+		uint32_t* debug = (uint32_t*) debugBuffer->map(CL_MAP_READ);
 		for (uint di = 0; di < length; di++) {
 			if (debug[di] >= 1 && debug[di] <= 5) {
 				debugSummary[di - 1] += 1;
@@ -414,7 +414,6 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		delete innerkeyBuffer;
 		delete resultBuffer;
 		delete debugBuffer;
-
 	}
 	timer.stop();
 
