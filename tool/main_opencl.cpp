@@ -123,11 +123,12 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	cht->build(outer->entries, outer->size);
 	logger->info("Building Outer Table Done\n");
 
-	uint32_t meta[3];
+	uint32_t meta[4];
 
 	meta[0] = cht->bitmap_size;
 	meta[1] = cht->overflow->bucket_size;
 	meta[2] = cht->payload_size;
+	meta[3] = inner->size;
 
 	uint32_t* innerkey = new uint32_t[inner->size];
 	for (uint32_t i = 0; i < inner->size; i++) {
@@ -151,18 +152,13 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	CLProgram* scanCht = new CLProgram(env, "scan_chthash");
 	scanCht->fromFile("scan_chthash.cl", 6);
 
-	uint splitRound = 1;
 	uint workSize = inner->size;
-	if (split != 0) {
-		splitRound = inner->size / split;
-		splitRound += inner->size % split ? 1 : 0;
-		workSize = split;
-	}
+
 	uint matched = 0;
 
 	timer.start();
 
-	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 3,
+	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 4,
 	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
@@ -176,62 +172,69 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	uint32_t* passedkey = new uint32_t[workSize];
 
-	for (uint sIndex = 0; sIndex < splitRound; sIndex++) {
-		CLBuffer* innerkeyBuffer = new CLBuffer(env,
-				innerkey + workSize * sIndex, sizeof(uint32_t) * workSize,
-				CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey,
+			sizeof(uint32_t) * workSize,
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
-		CLBuffer* bitmapResultBuffer = new CLBuffer(env, NULL,
-				sizeof(char) * workSize, CL_MEM_READ_WRITE);
+	uint bitmapResultSize = workSize / BITMAP_UNIT
+			+ (workSize % BITMAP_UNIT ? 1 : 0);
 
-		scanBitmap->setBuffer(0, metaBuffer);
-		scanBitmap->setBuffer(1, bitmapBuffer);
-		scanBitmap->setBuffer(2, innerkeyBuffer);
-		scanBitmap->setBuffer(3, bitmapResultBuffer);
+	CLBuffer* bitmapResultBuffer = new CLBuffer(env, NULL,
+			sizeof(uint) * bitmapResultSize, CL_MEM_READ_WRITE);
 
-		scanBitmap->execute(workSize);
+	scanBitmap->setBuffer(0, metaBuffer);
+	scanBitmap->setBuffer(1, bitmapBuffer);
+	scanBitmap->setBuffer(2, innerkeyBuffer);
+	scanBitmap->setBuffer(3, bitmapResultBuffer);
 
-		char* bitmapResult = (char*) bitmapResultBuffer->map(CL_MAP_READ);
+	uint wgSize = workSize / BITMAP_UNIT + (workSize % BITMAP_UNIT ? 1 : 0);
+	uint workItemSize = wgSize * BITMAP_UNIT;
+	scanBitmap->execute(workItemSize, wgSize);
 
-		uint32_t counter = 0;
-		for (uint32_t i = 0; i < workSize; i++) {
-			if (bitmapResult[i]) {
-				passedkey[counter++] = innerkey[sIndex * workSize + i];
-			}
+	uint* bitmapResult = (uint*) bitmapResultBuffer->map(CL_MAP_READ);
+
+	// Gather
+	uint32_t counter = 0;
+	for (uint32_t i = 0; i < workSize; i++) {
+		uint index = i % wgSize;
+		uint offset = i / wgSize;
+		if (bitmapResult[index] & 1 << offset) {
+			passedkey[counter++] = innerkey[i];
 		}
-		uint numPassBitmap = counter;
-		bitmapResultBuffer->unmap();
-
-		delete innerkeyBuffer;
-		delete bitmapResultBuffer;
-
-		CLBuffer* passbitmapKeyBuffer = new CLBuffer(env, passedkey,
-				numPassBitmap * sizeof(uint32_t),
-				CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-		CLBuffer* resultBuffer = new CLBuffer(env, NULL,
-				numPassBitmap * sizeof(uint32_t), CL_MEM_WRITE_ONLY);
-
-		scanCht->setBuffer(0, metaBuffer);
-		scanCht->setBuffer(1, bitmapBuffer);
-		scanCht->setBuffer(2, chtpayloadBuffer);
-		scanCht->setBuffer(3, hashpayloadBuffer);
-		scanCht->setBuffer(4, passbitmapKeyBuffer);
-		scanCht->setBuffer(5, resultBuffer);
-
-		scanCht->execute(numPassBitmap);
-
-		uint32_t* chtResult = (uint32_t*) resultBuffer->map(CL_MAP_READ);
-
-		for (uint32_t i = 0; i < numPassBitmap; i++) {
-			if (chtResult[i] != 0xffffffff) {
-				matched++;
-			}
-		}
-		resultBuffer->unmap();
-
-		delete passbitmapKeyBuffer;
-		delete resultBuffer;
 	}
+	uint numPassBitmap = counter;
+	bitmapResultBuffer->unmap();
+
+	delete innerkeyBuffer;
+	delete bitmapResultBuffer;
+
+	CLBuffer* passbitmapKeyBuffer = new CLBuffer(env, passedkey,
+			numPassBitmap * sizeof(uint32_t),
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
+	CLBuffer* resultBuffer = new CLBuffer(env, NULL,
+			numPassBitmap * sizeof(uint32_t), CL_MEM_WRITE_ONLY);
+
+	scanCht->setBuffer(0, metaBuffer);
+	scanCht->setBuffer(1, bitmapBuffer);
+	scanCht->setBuffer(2, chtpayloadBuffer);
+	scanCht->setBuffer(3, hashpayloadBuffer);
+	scanCht->setBuffer(4, passbitmapKeyBuffer);
+	scanCht->setBuffer(5, resultBuffer);
+
+	scanCht->execute(numPassBitmap);
+
+	uint32_t* chtResult = (uint32_t*) resultBuffer->map(CL_MAP_READ);
+
+	for (uint32_t i = 0; i < numPassBitmap; i++) {
+		if (chtResult[i] != 0xffffffff) {
+			matched++;
+		}
+	}
+	resultBuffer->unmap();
+
+	delete passbitmapKeyBuffer;
+	delete resultBuffer;
+
 	timer.stop();
 
 	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
@@ -327,9 +330,11 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 				CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 		CLBuffer* resultBuffer = new CLBuffer(env, NULL,
-				sizeof(uint32_t) * length, CL_MEM_READ_WRITE);
+				sizeof(uint32_t) * length,
+				CL_MEM_READ_WRITE);
 		CLBuffer* debugBuffer = new CLBuffer(env, NULL,
-				sizeof(uint32_t) * length, CL_MEM_READ_WRITE);
+				sizeof(uint32_t) * length,
+				CL_MEM_READ_WRITE);
 		scanChtFull->setBuffer(0, metaBuffer);
 		scanChtFull->setBuffer(1, bitmapBuffer);
 		scanChtFull->setBuffer(2, chtpayloadBuffer);
@@ -376,7 +381,7 @@ void runExperiment() {
 	CLEnv* env = new CLEnv();
 	CLProgram* program = new CLProgram(env, "test_bitmap");
 
-	program->fromFile("test_bitmap", 1);
+	program->fromFile("test_bitmap.cl", 1);
 
 	CLBuffer* resultBuffer = new CLBuffer(env, NULL, sizeof(uint),
 	CL_MEM_READ_WRITE);
