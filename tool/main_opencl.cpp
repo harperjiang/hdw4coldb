@@ -384,7 +384,7 @@ void runExperiment() {
 
 	program->execute(32);
 
-	uint* result = resultBuffer->map(CL_MAP_READ);
+	uint* result = (uint*) resultBuffer->map(CL_MAP_READ);
 
 	logger->info("%x\n", result[0]);
 
@@ -467,12 +467,13 @@ int main(int argc, char** argv) {
 
 	kvlist outerkeys;
 	kvlist innerkeys;
-	logger->info("Loading files\n");
-	loadkey(outerfile, &outerkeys);
-	loadkey(innerfile, &innerkeys);
-	logger->info("Outer file size: %u\n", outerkeys.size);
-	logger->info("Inner file size: %u\n", innerkeys.size);
-
+	if (outerfile != NULL && innerfile != NULL) {
+		logger->info("Loading files\n");
+		loadkey(outerfile, &outerkeys);
+		loadkey(innerfile, &innerkeys);
+		logger->info("Outer file size: %u\n", outerkeys.size);
+		logger->info("Inner file size: %u\n", innerkeys.size);
+	}
 	if (enableProfiling) {
 		Logger::getLogger("CLBuffer")->setLevel(DEBUG);
 		Logger::getLogger("CLProgram")->setLevel(DEBUG);
