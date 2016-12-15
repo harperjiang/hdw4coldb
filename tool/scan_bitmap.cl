@@ -19,5 +19,5 @@ __kernel void scan_bitmap(__global uint* meta, __global ulong* bitmap,
 
 	uint bittest = bitmap[bitmapIndex] & (1 << bitmapOffset) & 0xffffffff;
 
-	atomic_or(result+wordindex, isnotequal(bittest,0) << bitindex);
+	atomic_or(result+wordindex, isnotequal((float)bittest,(float)0) << bitindex);
 }
