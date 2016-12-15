@@ -288,7 +288,6 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 			logger->info("Host hash %lu\n", innerkey[hi]);
 		}
 	}
-	logger->info("Hash counter:%d\n", hashCounter);
 
 	CLEnv* env = new CLEnv(enableProfiling);
 
