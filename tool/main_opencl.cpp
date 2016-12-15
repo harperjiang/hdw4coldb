@@ -283,11 +283,9 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
-	uint hashPass[80];
-	uint hashCounter = 0;
 	for (uint hi = 0; hi < inner->size; hi++) {
 		if (cht->getOverflow()->has(innerkey[hi])) {
-			hashPass[hashCounter++] = innerkey[hi];
+			logger->info("Host hash %lu\n", innerkey[hi]);
 		}
 	}
 	logger->info("Hash counter:%d\n", hashCounter);
@@ -363,10 +361,6 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 			if (debug[di] == 4) {
 				logger->info("Device hash found: %lu\n", innerkey[di]);
 			}
-		}
-
-		for (uint di = 0; di < 80; di++) {
-			logger->info("%lu\n", innerkey[di]);
 		}
 
 		debugBuffer->unmap();
