@@ -409,6 +409,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		for (uint di = 0; di < 5; di++) {
 			logger->info("%d:%d\n", di + 1, debugSummary[di]);
 		}
+		debugBuffer->unmap();
 
 		delete innerkeyBuffer;
 		delete resultBuffer;
