@@ -310,8 +310,9 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	CLBuffer* hashpayloadBuffer = new CLBuffer(env, hash_payload,
-			sizeof(uint32_t) * (0 == cht->overflow->bucket_size) ?
-					1 : cht->overflow->bucket_size,
+			sizeof(uint32_t)
+					* ((0 == cht->overflow->bucket_size) ?
+							1 : cht->overflow->bucket_size),
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	uint32_t matched = 0;
