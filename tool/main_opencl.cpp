@@ -333,12 +333,6 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		scan_cht_full(meta, cht->bitmap, cht_payload, hash_payload, innerkey,
 				result, i);
 	}
-	uint localCounter = 0;
-	for (uint i = 0; i < inner->size; i++) {
-		if (result[i] != 0xffffffff)
-			localCounter++;
-	}
-	logger->info("Local Counter:%u\n", localCounter);
 
 	CLEnv* env = new CLEnv(enableProfiling);
 
@@ -384,13 +378,15 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 		CLBuffer* resultBuffer = new CLBuffer(env, NULL,
 				sizeof(uint32_t) * length, CL_MEM_READ_WRITE);
-
+		CLBuffer* debugBuffer = new CLBuffer(env, NULL,
+				sizeof(uint32_t) * length, CL_MEM_READ_WRITE);
 		scanChtFull->setBuffer(0, metaBuffer);
 		scanChtFull->setBuffer(1, bitmapBuffer);
 		scanChtFull->setBuffer(2, chtpayloadBuffer);
 		scanChtFull->setBuffer(3, hashpayloadBuffer);
 		scanChtFull->setBuffer(4, innerkeyBuffer);
 		scanChtFull->setBuffer(5, resultBuffer);
+		scanChtFull->setBuffer(6, debugBuffer);
 
 		scanChtFull->execute(length);
 
@@ -403,8 +399,20 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 		resultBuffer->unmap();
 
+		uint debugSummary[5] = { 0, 0, 0, 0, 0 };
+		uint* debug = (uint*) debugBuffer->map(CL_MAP_READ);
+		for (uint di = 0; di < length; di++) {
+			if (debug[di] >= 1 && debug[di] <= 5) {
+				debugSummary[di - 1] += 1;
+			}
+		}
+		for (uint di = 0; di < 5; di++) {
+			logger->info("%d:%d\n", di + 1, debugSummary[di]);
+		}
+
 		delete innerkeyBuffer;
 		delete resultBuffer;
+		delete debugBuffer;
 
 	}
 	timer.stop();
@@ -464,7 +472,8 @@ int main(int argc, char** argv) {
 			{ "alg", required_argument, 0, 'a' }, { "outer", required_argument,
 					0, 'o' }, { "inner", required_argument, 0, 'i' }, { "help",
 			no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' }, {
-					"split", optional_argument, 0, 's' }, { "profiling",
+					"split",
+					optional_argument, 0, 's' }, { "profiling",
 			no_argument, 0, 'p' } };
 
 	int c;
