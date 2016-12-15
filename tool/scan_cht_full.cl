@@ -22,14 +22,12 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 		}
 		if(offset+i < payloadSize && chtPayload[offset+i] == key) {
 			result[index] = offset + i;
-			debugger[index] = 2;
 			return;
 		} else {
 			// Search in Hash
 			uint bucket_size = meta[1];
 			if(0 == bucket_size) {
 				result[index] = 0xffffffff;
-				debugger[index] = 3;
 				return;
 			}
 			uint counter = (key * ((uint)2654435761)) % bucket_size;
@@ -41,11 +39,9 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 				debugger[index] = 4;
 			} else {
 				result[index] = 0xffffffff;
-				debugger[index] = 5;
 			}
 		}
 	} else {
 		result[index] = 0xffffffff;
-		debugger[index] = 1;
 	}
 }

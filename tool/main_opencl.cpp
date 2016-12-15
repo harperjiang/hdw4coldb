@@ -360,9 +360,6 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		uint debugSummary[5] = { 0, 0, 0, 0, 0 };
 		uint32_t* debug = (uint32_t*) debugBuffer->map(CL_MAP_READ);
 		for (uint di = 0; di < length; di++) {
-			if (debug[di] >= 1 && debug[di] <= 5) {
-				debugSummary[debug[di] - 1] += 1;
-			}
 			if (debug[di] == 4) {
 				for (uint ki = 0; ki < 80; ki++) {
 					if (hashPass[ki] == innerkey[di]) {
@@ -371,14 +368,9 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 				}
 			}
 		}
-		for (uint di = 0; di < 5; di++) {
-			logger->info("%d:%d\n", di + 1, debugSummary[di]);
-		}
 
 		for (uint di = 0; di < 80; di++) {
-			if (hashPass[di] != 0) {
-				logger->info("%d\n", innerkey[di]);
-			}
+				logger->info("%lu\n", innerkey[di]);
 		}
 
 		debugBuffer->unmap();
