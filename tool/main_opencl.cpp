@@ -337,7 +337,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* scanChtFull = new CLProgram(env, "scan_cht_full");
-	scanChtFull->fromFile("scan_cht_full.cl", 6);
+	scanChtFull->fromFile("scan_cht_full.cl", 7);
 
 	uint splitRound = 1;
 	uint workSize = inner->size;
