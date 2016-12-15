@@ -108,11 +108,8 @@ kv* Hash::get(uint32_t key) {
 		hval = (hval + 1) % bucket_size;
 		bucket = this->buckets + hval;
 	}
-	if (bucket->key == key) {
-		return bucket;
-	}
 
-	return NULL;
+	return bucket->key == key ? bucket : NULL;
 }
 
 bool Hash::has(uint32_t key) {
