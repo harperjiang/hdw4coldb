@@ -31,6 +31,7 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 				return;
 			}
 			uint counter = (key * ((uint)2654435761)) % bucket_size;
+
 			while(hashpayload[counter]!= key && hashpayload[counter] != 0) {
 				counter = (counter + 1) % bucket_size;
 			}

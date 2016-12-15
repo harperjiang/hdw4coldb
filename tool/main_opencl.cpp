@@ -16,6 +16,7 @@
 #include "../src/util.h"
 
 #define THRESHOLD 5
+#define BITMAP_SIZE		32
 #define BITMAP_EXT 		32
 #define BITMAP_UNIT 	32
 #define BITMAP_EXTMASK 	0xffffffff00000000
@@ -302,16 +303,17 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	CLBuffer* chtpayloadBuffer = new CLBuffer(env, cht_payload,
 			sizeof(uint32_t) * cht->payload_size,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	CLBuffer* hashpayloadBuffer = new CLBuffer(env, hash_payload,
-			sizeof(uint32_t) * (0 == cht->overflow->bucket_size) ?
-					1 : cht->overflow->bucket_size,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+			sizeof(uint32_t)
+					* ((0 == cht->overflow->bucket_size) ?
+							1 : cht->overflow->bucket_size),
+			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	uint32_t matched = 0;
 	for (uint sIndex = 0; sIndex < splitRound; sIndex++) {
@@ -326,7 +328,8 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 		CLBuffer* resultBuffer = new CLBuffer(env, NULL,
 				sizeof(uint32_t) * length, CL_MEM_READ_WRITE);
-
+		CLBuffer* debugBuffer = new CLBuffer(env, NULL,
+				sizeof(uint32_t) * length, CL_MEM_READ_WRITE);
 		scanChtFull->setBuffer(0, metaBuffer);
 		scanChtFull->setBuffer(1, bitmapBuffer);
 		scanChtFull->setBuffer(2, chtpayloadBuffer);
@@ -347,7 +350,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 		delete innerkeyBuffer;
 		delete resultBuffer;
-
+		delete debugBuffer;
 	}
 	timer.stop();
 
@@ -406,7 +409,8 @@ int main(int argc, char** argv) {
 			{ "alg", required_argument, 0, 'a' }, { "outer", required_argument,
 					0, 'o' }, { "inner", required_argument, 0, 'i' }, { "help",
 			no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' }, {
-					"split", optional_argument, 0, 's' }, { "profiling",
+					"split",
+					optional_argument, 0, 's' }, { "profiling",
 			no_argument, 0, 'p' } };
 
 	int c;
