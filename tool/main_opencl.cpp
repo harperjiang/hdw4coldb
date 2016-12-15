@@ -181,21 +181,29 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 				innerkey + workSize * sIndex, sizeof(uint32_t) * workSize,
 				CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
+		uint bitmapResultSize = workSize / BITMAP_UNIT
+				+ (workSize % BITMAP_UNIT ? 1 : 0);
+
 		CLBuffer* bitmapResultBuffer = new CLBuffer(env, NULL,
-				sizeof(char) * workSize, CL_MEM_READ_WRITE);
+				sizeof(uint) * bitmapResultSize, CL_MEM_READ_WRITE);
 
 		scanBitmap->setBuffer(0, metaBuffer);
 		scanBitmap->setBuffer(1, bitmapBuffer);
 		scanBitmap->setBuffer(2, innerkeyBuffer);
 		scanBitmap->setBuffer(3, bitmapResultBuffer);
 
-		scanBitmap->execute(workSize);
+		uint wgSize = workSize / 64 + (workSize % 64 ? 1 : 0);
 
-		char* bitmapResult = (char*) bitmapResultBuffer->map(CL_MAP_READ);
+		scanBitmap->execute(workSize, wgSize);
 
+		uint* bitmapResult = (uint*) bitmapResultBuffer->map(CL_MAP_READ);
+
+		// Gather
 		uint32_t counter = 0;
 		for (uint32_t i = 0; i < workSize; i++) {
-			if (bitmapResult[i]) {
+			uint index = i / BITMAP_SIZE;
+			uint offset = i % BITMAP_SIZE;
+			if (bitmapResult[index] & 1 << offset) {
 				passedkey[counter++] = innerkey[sIndex * workSize + i];
 			}
 		}
@@ -376,7 +384,7 @@ void runExperiment() {
 	CLEnv* env = new CLEnv();
 	CLProgram* program = new CLProgram(env, "test_bitmap");
 
-	program->fromFile("test_bitmap", 1);
+	program->fromFile("test_bitmap.cl", 1);
 
 	CLBuffer* resultBuffer = new CLBuffer(env, NULL, sizeof(uint),
 	CL_MEM_READ_WRITE);

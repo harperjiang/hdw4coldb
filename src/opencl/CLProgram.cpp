@@ -125,7 +125,11 @@ void CLProgram::setOutput(unsigned int index, unsigned int size) {
 	setBuffer(index, new CLBuffer(env, NULL, size, CL_MEM_WRITE_ONLY));
 }
 
-bool CLProgram::execute(unsigned int workSize) {
+bool CLProgram::execute(uint workSize) {
+	this->execute(workSize, 0);
+}
+
+bool CLProgram::execute(unsigned int workSize, uint groupSize) {
 	if (NULL == env) {
 		logger->error("%s CLEnv not set\n", this->name);
 		return false;
@@ -157,9 +161,10 @@ bool CLProgram::execute(unsigned int workSize) {
 	}
 	// Enqueue the program with 1D size
 	size_t global_work_size[1] = { workSize };
+	size_t local_work_size[1] = { groupSize };
 	status = clEnqueueNDRangeKernel(env->commandQueue, kernel, 1, NULL,
-			global_work_size,
-			NULL, 0, NULL, &event);
+			global_work_size, 0 == groupSize ? NULL : local_work_size, 0, NULL,
+			&event);
 	if (status != CL_SUCCESS) {
 		logger->error("%s failed to execute kernel: %d\n", this->name, status);
 		return false;

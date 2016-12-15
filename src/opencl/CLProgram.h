@@ -41,6 +41,7 @@ public:
 	void setBuffer(unsigned int index, CLBuffer* buffer);
 
 	bool execute(unsigned int workSize);
+	bool execute(unsigned int workSize, uint groupSize);
 
 	CLBuffer* getBuffer(unsigned int index);
 };
