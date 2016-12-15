@@ -354,7 +354,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 				debug[3]);
 
 		debugBuffer->unmap();
-
+		cht->overflow->get(199954612);
 
 		delete innerkeyBuffer;
 		delete resultBuffer;
