@@ -286,7 +286,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* scanChtFull = new CLProgram(env, "scan_cht_full");
-	scanChtFull->fromFile("scan_cht_full.cl", 7);
+	scanChtFull->fromFile("scan_cht_full.cl", 6);
 
 	uint splitRound = 1;
 	uint workSize = inner->size;
@@ -336,7 +336,6 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		scanChtFull->setBuffer(3, hashpayloadBuffer);
 		scanChtFull->setBuffer(4, innerkeyBuffer);
 		scanChtFull->setBuffer(5, resultBuffer);
-		scanChtFull->setBuffer(6, debugBuffer);
 
 		scanChtFull->execute(length);
 
@@ -348,17 +347,6 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		}
 
 		resultBuffer->unmap();
-
-		uint32_t* debug = (uint32_t*) debugBuffer->map(CL_MAP_READ);
-
-		for (uint i = 0; i < cht->overflow->bucket_size; i++) {
-			if (debug[i] != hash_payload[i]) {
-				logger->warn("Unmatched found: %d, %lu, %lu\n", i, debug[i],
-						hash_payload[i]);
-			}
-		}
-
-		debugBuffer->unmap();
 
 		delete innerkeyBuffer;
 		delete resultBuffer;

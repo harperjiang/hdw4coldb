@@ -12,10 +12,6 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 	uint bitmapIndex = hash / BITMAP_SIZE;
 	uint bitmapOffset = hash % BITMAP_SIZE;
 
-	if(index < meta[1]) {
-		debugger[index] = hashpayload[index];
-	}
-	
 	if(bitmap[bitmapIndex] & (1 << bitmapOffset) & 0xffffffff) {
 		ulong bitmapMask = ~(0xffffffffffffffff << bitmapOffset);
 		uint offset = (uint)(bitmap[bitmapIndex] >> 32) + popcount((uint)(bitmap[bitmapIndex] & bitmapMask));
