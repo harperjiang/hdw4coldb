@@ -2,7 +2,7 @@
 #define BITMAP_SIZE 32
 
 __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global uint* chtPayload, __global uint* hashpayload,
-		__global uint* inner, __global uint* result, __global uint* debugger) {
+		__global uint* inner, __global uint* result) {
 	int index = get_global_id(0);
 	uint key = inner[index];
 	uint bitmapSize = meta[0] * 32;
