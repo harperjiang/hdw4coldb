@@ -25,12 +25,19 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 			return;
 		} else {
 			// Search in Hash
+
 			uint bucket_size = meta[1];
 			if(0 == bucket_size) {
 				result[index] = 0xffffffff;
 				return;
 			}
 			uint counter = (key * ((uint)2654435761)) % bucket_size;
+
+			if(key == (uint)199954612) {
+				debugger[0] = (key * (uint)2654435761);
+				debugger[1] = counter;
+			}
+
 			while(hashpayload[counter]!= key && hashpayload[counter] != 0) {
 				counter = (counter + 1) % bucket_size;
 			}
@@ -39,6 +46,10 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 				debugger[index] = 4;
 			} else {
 				result[index] = 0xffffffff;
+			}
+			if(key == (uint)199954612) {
+				debugger[2] = counter;
+				debugger[3] = hashpayload[counter];
 			}
 		}
 	} else {

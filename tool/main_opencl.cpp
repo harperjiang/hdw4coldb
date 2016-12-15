@@ -283,12 +283,6 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
-	for (uint hi = 0; hi < inner->size; hi++) {
-		if (cht->getOverflow()->has(innerkey[hi])) {
-			logger->info("Host hash %lu\n", innerkey[hi]);
-		}
-	}
-
 	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* scanChtFull = new CLProgram(env, "scan_cht_full");
@@ -354,13 +348,10 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 		resultBuffer->unmap();
 
-		uint debugSummary[5] = { 0, 0, 0, 0, 0 };
 		uint32_t* debug = (uint32_t*) debugBuffer->map(CL_MAP_READ);
-		for (uint di = 0; di < length; di++) {
-			if (debug[di] == 4) {
-				logger->info("Device hash found: %lu\n", innerkey[di]);
-			}
-		}
+
+		logger->info("%lu,%lu,%lu,%lu\n", debug[0], debug[1], debug[2],
+				debug[3]);
 
 		debugBuffer->unmap();
 
