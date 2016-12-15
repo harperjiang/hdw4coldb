@@ -283,10 +283,11 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
+	uint hashPass[80];
 	uint hashCounter = 0;
 	for (uint hi = 0; hi < inner->size; hi++) {
 		if (cht->getOverflow()->has(innerkey[hi])) {
-			hashCounter++;
+			hashPass[hashCounter++] = innerkey[hi];
 		}
 	}
 	logger->info("Hash counter:%d\n", hashCounter);
@@ -362,10 +363,24 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 			if (debug[di] >= 1 && debug[di] <= 5) {
 				debugSummary[debug[di] - 1] += 1;
 			}
+			if (debug[di] == 4) {
+				for (uint ki = 0; ki < 80; ki++) {
+					if (hashPass[ki] == innerkey[di]) {
+						hashPass[ki] = 0;
+					}
+				}
+			}
 		}
 		for (uint di = 0; di < 5; di++) {
 			logger->info("%d:%d\n", di + 1, debugSummary[di]);
 		}
+
+		for (uint di = 0; di < 80; di++) {
+			if (hashPass[di] != 0) {
+				logger->info("%d\n", innerkey[di]);
+			}
+		}
+
 		debugBuffer->unmap();
 
 		delete innerkeyBuffer;
