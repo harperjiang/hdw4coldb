@@ -350,12 +350,14 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 		uint32_t* debug = (uint32_t*) debugBuffer->map(CL_MAP_READ);
 
-		logger->info("%lu,%lu,%lu,%lu,%lu\n", debug[0], debug[1], debug[2],
-				debug[3],debug[4]);
+		for (uint i = 0; i < cht->overflow->bucket_size; i++) {
+			if (debug[i] != hash_payload[i]) {
+				logger->warn("Unmatched found: %d, %lu, %lu\n", i, debug[i],
+						hash_payload[i]);
+			}
+		}
 
 		debugBuffer->unmap();
-
-		logger->info("Hash payload : %lu\n",hash_payload[1802]);
 
 		delete innerkeyBuffer;
 		delete resultBuffer;

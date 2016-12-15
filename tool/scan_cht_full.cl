@@ -12,6 +12,10 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 	uint bitmapIndex = hash / BITMAP_SIZE;
 	uint bitmapOffset = hash % BITMAP_SIZE;
 
+	if(index < meta[1]) {
+		debugger[index] = hashpayload[index];
+	}
+	
 	if(bitmap[bitmapIndex] & (1 << bitmapOffset) & 0xffffffff) {
 		ulong bitmapMask = ~(0xffffffffffffffff << bitmapOffset);
 		uint offset = (uint)(bitmap[bitmapIndex] >> 32) + popcount((uint)(bitmap[bitmapIndex] & bitmapMask));
@@ -25,19 +29,12 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 			return;
 		} else {
 			// Search in Hash
-
 			uint bucket_size = meta[1];
 			if(0 == bucket_size) {
 				result[index] = 0xffffffff;
 				return;
 			}
 			uint counter = (key * ((uint)2654435761)) % bucket_size;
-
-			if(key == (uint)199954612) {
-				debugger[0] = (key * (uint)2654435761);
-				debugger[1] = counter;
-				debugger[4] = bucket_size;
-			}
 
 			while(hashpayload[counter]!= key && hashpayload[counter] != 0) {
 				counter = (counter + 1) % bucket_size;
@@ -46,10 +43,6 @@ __kernel void scan_cht_full(__global uint* meta, __global ulong* bitmap,__global
 				result[index] = counter;
 			} else {
 				result[index] = 0xffffffff;
-			}
-			if(key == (uint)199954612) {
-				debugger[2] = counter;
-				debugger[3] = hashpayload[counter];
 			}
 		}
 	} else {
