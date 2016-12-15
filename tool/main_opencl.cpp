@@ -335,7 +335,7 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 	}
 	uint localCounter = 0;
 	for (uint i = 0; i < inner->size; i++) {
-		if (result != 0xffffffff)
+		if (result[i] != 0xffffffff)
 			localCounter++;
 	}
 	logger->info("Local Counter:%u\n", localCounter);
