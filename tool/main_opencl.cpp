@@ -16,6 +16,7 @@
 #include "../src/util.h"
 
 #define THRESHOLD 5
+#define BITMAP_SIZE		32
 #define BITMAP_EXT 		32
 #define BITMAP_UNIT 	32
 #define BITMAP_EXTMASK 	0xffffffff00000000
@@ -27,6 +28,51 @@
 using namespace std;
 
 Logger* logger = Logger::getLogger("main_opencl");
+
+void scan_cht_full(uint* meta, ulong* bitmap, uint* chtPayload,
+		uint* hashpayload, uint* inner, uint* result, uint index) {
+	uint key = inner[index];
+	uint bitmapSize = meta[0] * 32;
+	uint payloadSize = meta[2];
+	uint hash = (key * ((uint) 2654435761)) % bitmapSize;
+
+	uint bitmapIndex = hash / BITMAP_SIZE;
+	uint bitmapOffset = hash % BITMAP_SIZE;
+
+	if (bitmap[bitmapIndex] & (1 << bitmapOffset) & 0xffffffff) {
+		ulong bitmapMask = ~(0xffffffffffffffff << bitmapOffset);
+		uint offset = (uint) (bitmap[bitmapIndex] >> 32)
+				+ popcount((uint) (bitmap[bitmapIndex] & bitmapMask));
+
+		uint i = 0;
+		while (i < THRESHOLD && offset + i < payloadSize
+				&& chtPayload[offset + i] != key) {
+			i++;
+		}
+		if (offset + i < payloadSize && chtPayload[offset + i] == key) {
+			result[index] = offset + i;
+			return;
+		} else {
+			// Search in Hash
+			uint bucket_size = meta[1];
+			if (0 == bucket_size) {
+				result[index] = 0xffffffff;
+				return;
+			}
+			uint counter = (key * ((uint) 2654435761)) % bucket_size;
+			while (hashpayload[counter] != key && hashpayload[counter] != 0) {
+				counter = (counter + 1) % bucket_size;
+			}
+			if (hashpayload[counter] == key) {
+				result[index] = counter;
+			} else {
+				result[index] = 0xffffffff;
+			}
+		}
+	} else {
+		result[index] = 0xffffffff;
+	}
+}
 
 void runHash(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		false) {
@@ -281,6 +327,18 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 	for (uint32_t i = 0; i < cht->overflow->bucket_size; i++) {
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
+
+	uint* result = new uint[inner->size];
+	for (uint i = 0; i < inner->size; i++) {
+		scan_cht_full(meta, cht->bitmap, cht_payload, hash_payload, innerkey,
+				result, i);
+	}
+	uint localCounter = 0;
+	for (uint i = 0; i < inner->size; i++) {
+		if (result != 0xffffffff)
+			localCounter++;
+	}
+	logger->info("Local Counter:%u\n", localCounter);
 
 	CLEnv* env = new CLEnv(enableProfiling);
 
