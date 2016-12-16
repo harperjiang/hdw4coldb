@@ -126,7 +126,7 @@ void CLProgram::setOutput(unsigned int index, unsigned int size) {
 }
 
 bool CLProgram::execute(uint workSize) {
-	this->execute(workSize, 0);
+	return this->execute(workSize, 0);
 }
 
 bool CLProgram::execute(unsigned int workSize, uint groupSize) {

@@ -8,7 +8,8 @@
 #include <cstring>
 
 #include "Hash.h"
-#include "util.h"
+
+#include "LookupHelper.h"
 
 Hash::Hash() :
 		Lookup("Hash") {

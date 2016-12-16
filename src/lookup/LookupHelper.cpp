@@ -5,7 +5,7 @@
  *      Author: harper
  */
 
-#include "util.h"
+#include "LookupHelper.h"
 
 void loadkey(const char* filename, kvlist* result) {
 	FILE* f = fopen(filename, "r");

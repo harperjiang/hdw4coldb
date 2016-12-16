@@ -9,7 +9,7 @@
 #define SRC_OPENCL_CLENV_H_
 
 #include <CL/opencl.h>
-#include "../Logger.h"
+#include "../util/Logger.h"
 
 class CLProgram;
 class CLBuffer;

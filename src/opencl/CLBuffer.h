@@ -10,7 +10,7 @@
 
 #include <CL/opencl.h>
 #include "CLEnv.h"
-#include "../Logger.h"
+#include "../util/Logger.h"
 
 class CLProgram;
 

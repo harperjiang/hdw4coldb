@@ -8,12 +8,12 @@
 #include <fstream>
 #include <getopt.h>
 
-#include "../src/Timer.h"
-#include "../src/CHT.h"
-#include "../src/Logger.h"
-#include "../src/opencl/CLEnv.h"
-#include "../src/opencl/CLProgram.h"
-#include "../src/util.h"
+#include "util/Timer.h"
+#include "lookup/CHT.h"
+#include "util/Logger.h"
+#include "opencl/CLEnv.h"
+#include "opencl/CLProgram.h"
+#include "lookup/LookupHelper.h"
 
 #define THRESHOLD 5
 #define BITMAP_SIZE		32
@@ -27,7 +27,7 @@
 
 using namespace std;
 
-Logger* logger = Logger::getLogger("main_opencl");
+Logger* logger = Logger::getLogger("opencl");
 
 void runHash(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		false) {
@@ -161,6 +161,10 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	meta[3] = bitmapResultSize;
 	meta[4] = workSize;
 
+	uint groupSize = 1024;
+	uint workItemSize = (workSize / groupSize + (workSize % groupSize ? 1 : 0))
+			* groupSize;
+
 	timer.start();
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 5,
@@ -180,10 +184,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey,
 			sizeof(uint32_t) * workSize,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-
-	uint groupSize = 1024;
-	uint workItemSize = (workSize / groupSize + (workSize % groupSize ? 1 : 0))
-			* groupSize;
 
 	CLBuffer* bitmapResultBuffer = new CLBuffer(env, NULL,
 			sizeof(uint) * bitmapResultSize, CL_MEM_READ_WRITE);
@@ -402,7 +402,7 @@ void runExperiment() {
 }
 
 void print_help() {
-	fprintf(stdout, "Usage: main_opencl [options]\n");
+	fprintf(stdout, "Usage: opencl [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -o --outer=FILE \tfile for outer table\n");

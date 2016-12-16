@@ -15,12 +15,13 @@
 #include <assert.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include "../src/Lookup.h"
-#include "../src/Hash.h"
-#include "../src/CHT.h"
-#include "../src/util.h"
-#include "../src/Logger.h"
-#include "../src/Timer.h"
+
+#include "lookup/Lookup.h"
+#include "lookup/Hash.h"
+#include "lookup/CHT.h"
+#include "lookup/LookupHelper.h"
+#include "util/Logger.h"
+#include "util/Timer.h"
 
 typedef struct _thread_arg {
 	Lookup* lookup;
@@ -32,7 +33,7 @@ typedef struct _thread_arg {
 	sem_t* sema;
 } thread_arg;
 
-Logger* logger = Logger::getLogger("main_mt");
+Logger* logger = Logger::getLogger("mthread");
 
 // Join and print num matched
 void scan_func(uint32_t key, uint8_t* outer, uint8_t* inner, void* params) {
@@ -43,6 +44,9 @@ void process(uint32_t key, uint8_t* outer, uint8_t* inner, uint32_t* result) {
 	(*result)++;
 }
 
+/**
+ * Partition the key to <pnum> strides
+ */
 void partition(kvlist* key, uint32_t pnum, thread_arg* partitions) {
 	// Direct split to pnum pieces
 	for (uint32_t i = 0; i < pnum; i++) {
@@ -68,7 +72,7 @@ void run_thread(pthread_t* threads, thread_arg* args, uint32_t numthread,
 		pthread_create(threads + i, NULL, thread_func, (void*) (args + i));
 	}
 
-// Wait for end
+	// Wait for end
 	for (uint32_t i = 0; i < numthread; i++) {
 		sem_wait(&semaphore);
 	}
@@ -112,7 +116,7 @@ void xm_access(Lookup* lookup, kvlist* outer, kvlist* inner, uint32_t numthread,
 	lookup->build(outer->entries, outer->size);
 	logger->info("Building outer table done\n");
 
-// Run
+	// Run
 
 	Timer timer;
 	timer.start();
@@ -122,7 +126,7 @@ void xm_access(Lookup* lookup, kvlist* outer, kvlist* inner, uint32_t numthread,
 
 	run_thread(threads, args, numthread, lookup, inner, uniq, xm_thread_access);
 
-// Collect result
+	// Collect result
 	uint32_t match_counter = 0;
 	for (uint32_t i = 0; i < numthread; i++) {
 		match_counter += args[i].result;
@@ -130,12 +134,12 @@ void xm_access(Lookup* lookup, kvlist* outer, kvlist* inner, uint32_t numthread,
 
 	timer.stop();
 
-	logger->info("Running time: %u, matched row %u\n", timer.wallclockms(),
+	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
 			match_counter);
 }
 
 void print_help() {
-	fprintf(stdout, "Usage: main_mt [options]\n");
+	fprintf(stdout, "Usage: mthread [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -t --thread=NUM\tnumber of threads\n");

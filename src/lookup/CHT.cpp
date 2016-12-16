@@ -9,7 +9,8 @@
 #include <iostream>
 #include <cstdio>
 #include "CHT.h"
-#include "util.h"
+
+#include "LookupHelper.h"
 
 #define THRESHOLD 5
 #define BITMAP_FACTOR 	8

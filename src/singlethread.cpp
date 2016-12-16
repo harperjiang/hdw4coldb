@@ -11,17 +11,17 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
-#include "../src/Lookup.h"
-#include "../src/Hash.h"
-#include "../src/CHT.h"
-#include "../src/util.h"
-#include "../src/Logger.h"
-#include "../src/Timer.h"
+#include "lookup/Lookup.h"
+#include "lookup/Hash.h"
+#include "lookup/CHT.h"
+#include "lookup/LookupHelper.h"
+#include "util/Logger.h"
+#include "util/Timer.h"
 
 // Join and print num matched
 uint32_t match_counter;
 
-Logger* logger = Logger::getLogger("main_single");
+Logger* logger = Logger::getLogger("singlethread");
 
 void scan_dummy(uint32_t key, uint8_t* outer, uint8_t* inner, void*params) {
 	match_counter++;
@@ -66,7 +66,7 @@ void xs_access(Lookup* lookup, kvlist* outerfile, kvlist* innerfile,
 }
 
 void print_help() {
-	fprintf(stdout, "Usage: main_single [options]\n");
+	fprintf(stdout, "Usage: singlethread [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -u --unique	\touter is unique\n");

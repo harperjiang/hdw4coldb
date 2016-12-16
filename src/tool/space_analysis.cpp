@@ -9,10 +9,11 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
-#include "../src/Hash.h"
-#include "../src/CHT.h"
-#include "../src/util.h"
-#include "../src/Logger.h"
+#include "../lookup/Hash.h"
+#include "../lookup/CHT.h"
+#include "../lookup/LookupHelper.h"
+
+#include "../util/Logger.h"
 
 Logger* logger = Logger::getLogger("space_analysis");
 

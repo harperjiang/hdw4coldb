@@ -11,7 +11,7 @@
 #include <CL/opencl.h>
 #include "CLEnv.h"
 #include "CLBuffer.h"
-#include "../Logger.h"
+#include "../util/Logger.h"
 
 class CLProgram {
 	friend class CLBuffer;
