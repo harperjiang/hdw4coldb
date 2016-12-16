@@ -5,30 +5,12 @@
  *      Author: harper
  */
 
-#include <CL/cl.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
-
-#include "util/Timer.h"
-#include "lookup/CHT.h"
-#include "util/Logger.h"
-#include "opencl/CLEnv.h"
-#include "opencl/CLProgram.h"
-#include "lookup/LookupHelper.h"
-
-#define THRESHOLD 5
-#define BITMAP_SIZE		32
-#define BITMAP_EXT 		32
-#define BITMAP_UNIT 	32
-#define BITMAP_EXTMASK 	0xffffffff00000000
-#define BITMAP_MASK		0xffffffff
+#include "ocljoin.h"
 
 void runChtStep(kvlist* outer, kvlist* inner, uint split,
 		bool enableProfiling) {
 	Timer timer;
-	Logger* logger = Logger::getLogger("opencl");
+	Logger* logger = Logger::getLogger("ocljoin-chtstep");
 
 	logger->info("Running CHT Step Join\n");
 	logger->info("Building Outer Table\n");

@@ -139,7 +139,7 @@ void xm_access(Lookup* lookup, kvlist* outer, kvlist* inner, uint32_t numthread,
 }
 
 void print_help() {
-	fprintf(stdout, "Usage: mthread [options]\n");
+	fprintf(stdout, "Usage: mtjoin [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -t --thread=NUM\tnumber of threads\n");

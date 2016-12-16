@@ -47,12 +47,14 @@ COMMON_OBJS = \
 ./src/opencl/CLBuffer.o \
 ./src/opencl/CLEnv.o \
 ./src/opencl/CLProgram.o \
-./src/chtstep.o \
+./src/ocl_chtstep.o \
+./src/ocl_cht.o \
+./src/ocl_hash.o \
 
 MAIN = \
-opencl \
-singlethread \
-mthread
+ocljoin \
+stjoin \
+mtjoin
 
 #MAIN_OBJS = \
 ./src/opencl.o \
