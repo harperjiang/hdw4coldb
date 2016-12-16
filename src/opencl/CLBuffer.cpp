@@ -112,12 +112,12 @@ void* CLBuffer::map(cl_map_flags flags, bool blocking, bool waitProgram) {
 		numEvent = 1;
 		events = &(this->program->event);
 	}
-	cl_int status;
+	cl_int status = 0;
 	mapData = clEnqueueMapBuffer(env->commandQueue, mem_obj,
 			blocking ? CL_TRUE : CL_FALSE, flags, 0, _size, numEvent, events,
 			&event, &status);
 	if (status != CL_SUCCESS) {
-		logger->error("%x failed to map buffer: %d\n", status);
+		logger->error("%x failed to map buffer: %d\n", mem_obj, status);
 		return NULL;
 	}
 	profiling("map", event);
