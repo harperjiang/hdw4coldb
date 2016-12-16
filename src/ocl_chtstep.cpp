@@ -42,8 +42,8 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	CLEnv* env = new CLEnv(enableProfiling);
 
-	CLProgram* scanBitmap = new CLProgram(env, "scan_bitmap_bb");
-	scanBitmap->fromFile("scan_bitmap.cl", 4);
+	CLProgram* scanBitmap = new CLProgram(env, "scan_bitmap");
+	scanBitmap->fromFile("scan_bitmap_bb.cl", 4);
 	CLProgram* scanCht = new CLProgram(env, "scan_chthash");
 	scanCht->fromFile("scan_chthash.cl", 6);
 
