@@ -123,12 +123,11 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	cht->build(outer->entries, outer->size);
 	logger->info("Building Outer Table Done\n");
 
-	uint32_t meta[4];
+	uint32_t meta[5];
 
 	meta[0] = cht->bitmap_size;
 	meta[1] = cht->overflow->bucket_size;
 	meta[2] = cht->payload_size;
-	meta[3] = inner->size;
 
 	uint32_t* innerkey = new uint32_t[inner->size];
 	for (uint32_t i = 0; i < inner->size; i++) {
@@ -158,7 +157,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	timer.start();
 
-	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 4,
+	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 5,
 	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
@@ -179,6 +178,13 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	uint bitmapResultSize = workSize / BITMAP_UNIT
 			+ (workSize % BITMAP_UNIT ? 1 : 0);
 
+	meta[3] = bitmapResultSize;
+	meta[4] = workSize;
+
+	uint groupSize = 1024;
+	uint workItemSize = (workSize / groupSize + (workSize % groupSize ? 1 : 0))
+			* groupSize;
+
 	CLBuffer* bitmapResultBuffer = new CLBuffer(env, NULL,
 			sizeof(uint) * bitmapResultSize, CL_MEM_READ_WRITE);
 
@@ -187,17 +193,15 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	scanBitmap->setBuffer(2, innerkeyBuffer);
 	scanBitmap->setBuffer(3, bitmapResultBuffer);
 
-	uint wgSize = workSize / BITMAP_UNIT + (workSize % BITMAP_UNIT ? 1 : 0);
-	uint workItemSize = wgSize * BITMAP_UNIT;
-	scanBitmap->execute(workItemSize, wgSize);
+	scanBitmap->execute(workItemSize, groupSize);
 
 	uint* bitmapResult = (uint*) bitmapResultBuffer->map(CL_MAP_READ);
 
 	// Gather
 	uint32_t counter = 0;
 	for (uint32_t i = 0; i < workSize; i++) {
-		uint index = i % wgSize;
-		uint offset = i / wgSize;
+		uint index = i % bitmapResultSize;
+		uint offset = i / bitmapResultSize;
 		if (bitmapResult[index] & 1 << offset) {
 			passedkey[counter++] = innerkey[i];
 		}
