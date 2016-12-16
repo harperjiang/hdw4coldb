@@ -7,9 +7,22 @@
 
 #include "ocljoin.h"
 
+void gather(uint* innerkey, uint* bitmapResult, uint* passedkey, uint workSize,
+		uint* counter) {
+	*counter = 0;
+	for (uint32_t i = 0; i < workSize; i++) {
+		uint index = i / BITMAP_UNIT;
+		uint offset = i % BITMAP_UNIT;
+		if (bitmapResult[index] & 1 << offset) {
+			passedkey[*counter++] = innerkey[i];
+		}
+	}
+}
+
 void runChtStep(kvlist* outer, kvlist* inner, uint split,
 		bool enableProfiling) {
 	Timer timer;
+	Timer timer2;
 	Logger* logger = Logger::getLogger("ocljoin-chtstep");
 
 	logger->info("Running CHT Step Join\n");
@@ -21,7 +34,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	uint32_t meta[5];
 
-	meta[0] = cht->bitmap_size;
+	meta[0] = cht->bitmap_size * 32;
 	meta[1] = cht->overflow->bucket_size;
 	meta[2] = cht->payload_size;
 
@@ -40,10 +53,12 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
+	uint32_t* passedkey = new uint32_t[workSize];
+
 	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* scanBitmap = new CLProgram(env, "scan_bitmap");
-	scanBitmap->fromFile("scan_bitmap_bb.cl", 4);
+	scanBitmap->fromFile("scan_bitmap.cl", 4);
 	CLProgram* scanCht = new CLProgram(env, "scan_chthash");
 	scanCht->fromFile("scan_chthash.cl", 6);
 
@@ -71,8 +86,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 			sizeof(uint32_t) * (meta[1] == 0 ? 1 : meta[1]),
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
-	uint32_t* passedkey = new uint32_t[workSize];
-
 	CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey,
 			sizeof(uint32_t) * workSize,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -91,18 +104,16 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	// Gather
 	timer.pause();
+	timer2.start();
 	uint32_t counter = 0;
-	for (uint32_t i = 0; i < workSize; i++) {
-//		uint index = i % bitmapResultSize;
-//		uint offset = i / bitmapResultSize;
-		uint index = i / BITMAP_UNIT;
-		uint offset = i % BITMAP_UNIT;
-		if (bitmapResult[index] & 1 << offset) {
-			passedkey[counter++] = innerkey[i];
-		}
-	}
-	uint numPassBitmap = counter;
+
+	gather(inner, bitmapResult, passedkey, workSize, &counter);
+
 	bitmapResultBuffer->unmap();
+
+	uint numPassBitmap = counter;
+
+	timer2.stop();
 	timer.resume();
 
 	delete innerkeyBuffer;

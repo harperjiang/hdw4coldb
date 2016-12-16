@@ -5,7 +5,7 @@ __kernel void scan_chthash(__global uint* meta, __global ulong* bitmap,__global 
 		__global uint* inner, __global uint* result) {
 	int index = get_global_id(0);
 	uint key = inner[index];
-	uint bitmapSize = meta[0] * 32;
+	uint bitmapSize = meta[0];
 	uint payloadSize = meta[2];
 	uint hash = (key * ((uint)2654435761)) % bitmapSize;
 

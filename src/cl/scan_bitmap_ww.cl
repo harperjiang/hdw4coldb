@@ -1,16 +1,18 @@
-// Scan Bitmap and store the result word by word
 
 #define INPUT_UNIT 32
 
 __kernel void scan_bitmap(__global uint* meta, __global ulong* bitmap,
 		__global uint* inner, __global uint* result) {
-	// Prefetch the bitmap result used to cache
-	prefetch(get_group_id()*get_local_size()/INPUT_UNIT, get_local_size()/INPUT_UNIT);
 
 	uint index = get_global_id(0);
 
-	uint bitIndex = index % INPUT_UNIT;
-	uint wordIndex = index / INPUT_UNIT;
+/*
+	if(index >= meta[4]) {
+		return;
+	}
+*/
+	uint bitIndex = index / meta[3];
+	uint wordIndex = index % meta[3];
 
 	uint bitmapSize = meta[0] * 32;
 
