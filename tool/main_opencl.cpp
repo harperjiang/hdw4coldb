@@ -128,7 +128,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	meta[0] = cht->bitmap_size;
 	meta[1] = cht->overflow->bucket_size;
 	meta[2] = cht->payload_size;
-	meta[3] = inner->size;
 
 	uint32_t* innerkey = new uint32_t[inner->size];
 	for (uint32_t i = 0; i < inner->size; i++) {
@@ -156,10 +155,16 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	uint matched = 0;
 
+	uint bitmapResultSize = workSize / BITMAP_UNIT
+			+ (workSize % BITMAP_UNIT ? 1 : 0);
+
+	meta[3] = bitmapResultSize;
+	meta[4] = workSize;
+
 	timer.start();
 
 	CLBuffer* metaBuffer = new CLBuffer(env, meta, sizeof(uint32_t) * 5,
-			CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+	CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
 	CLBuffer* bitmapBuffer = new CLBuffer(env, cht->bitmap,
 			sizeof(uint64_t) * cht->bitmap_size,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
@@ -175,13 +180,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	CLBuffer* innerkeyBuffer = new CLBuffer(env, innerkey,
 			sizeof(uint32_t) * workSize,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
-
-
-	uint bitmapResultSize = workSize / BITMAP_UNIT
-			+ (workSize % BITMAP_UNIT ? 1 : 0);
-
-	meta[3] = bitmapResultSize;
-	meta[4] = workSize;
 
 	uint groupSize = 1024;
 	uint workItemSize = (workSize / groupSize + (workSize % groupSize ? 1 : 0))
