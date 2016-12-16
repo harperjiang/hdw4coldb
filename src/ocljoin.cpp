@@ -2,7 +2,7 @@
 
 using namespace std;
 
-Logger* logger = Logger::getLogger("opencl");
+Logger* logger = Logger::getLogger("ocljoin");
 
 extern void runChtStep(kvlist* outer, kvlist* inner, uint split,
 		bool enableProfiling);

@@ -1,17 +1,14 @@
+// Scan Bitmap and store the result word by word
 
 #define INPUT_UNIT 32
 
 __kernel void scan_bitmap(__global uint* meta, __global ulong* bitmap,
 		__global uint* inner, __global uint* result) {
-
 	uint index = get_global_id(0);
 
-	if(index >= meta[4]) {
-		return;
-	}
-
-	uint bitIndex = index / meta[3];
-	uint wordIndex = index % meta[3];
+	
+	uint bitIndex = index % INPUT_UNIT;
+	uint wordIndex = index / INPUT_UNIT;
 
 	uint bitmapSize = meta[0] * 32;
 
