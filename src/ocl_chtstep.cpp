@@ -43,7 +43,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* scanBitmap = new CLProgram(env, "scan_bitmap");
-	scanBitmap->fromFile("scan_bitmap_bb.cl", 4);
+	scanBitmap->fromFile("scan_bitmap.cl", 4);
 	CLProgram* scanCht = new CLProgram(env, "scan_chthash");
 	scanCht->fromFile("scan_chthash.cl", 6);
 
@@ -56,10 +56,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	meta[3] = bitmapResultSize;
 	meta[4] = workSize;
-
-	uint groupSize = 1024;
-	uint workItemSize = (workSize / groupSize + (workSize % groupSize ? 1 : 0))
-			* groupSize;
 
 	timer.start();
 
@@ -89,7 +85,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	scanBitmap->setBuffer(2, innerkeyBuffer);
 	scanBitmap->setBuffer(3, bitmapResultBuffer);
 
-//	scanBitmap->execute(workItemSize, groupSize);
 	scanBitmap->execute(workSize);
 
 	uint* bitmapResult = (uint*) bitmapResultBuffer->map(CL_MAP_READ);
@@ -98,10 +93,10 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	timer.pause();
 	uint32_t counter = 0;
 	for (uint32_t i = 0; i < workSize; i++) {
-//		uint index = i % bitmapResultSize;
-//		uint offset = i / bitmapResultSize;
-		uint index = i / BITMAP_UNIT;
-		uint offset = i % BITMAP_UNIT;
+		uint index = i % bitmapResultSize;
+		uint offset = i / bitmapResultSize;
+//		uint index = i / BITMAP_UNIT;
+//		uint offset = i % BITMAP_UNIT;
 		if (bitmapResult[index] & 1 << offset) {
 			passedkey[counter++] = innerkey[i];
 		}
