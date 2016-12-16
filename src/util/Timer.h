@@ -22,6 +22,8 @@ public:
 	virtual ~Timer();
 
 	void start();
+	void pause();
+	void resume();
 	void stop();
 
 	uint64_t wallclockms();

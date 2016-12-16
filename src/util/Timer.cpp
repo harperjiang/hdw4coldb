@@ -16,6 +16,7 @@ Timer::~Timer() {
 }
 
 void Timer::start() {
+	_wallclockms = 0;
 	gettimeofday(&_start, NULL);
 }
 
@@ -23,8 +24,16 @@ void Timer::stop() {
 	struct timeval stoptime;
 	gettimeofday(&stoptime, NULL);
 
-	_wallclockms = 1000 * (stoptime.tv_sec - _start.tv_sec)
+	_wallclockms += 1000 * (stoptime.tv_sec - _start.tv_sec)
 			+ (stoptime.tv_usec - _start.tv_usec) / 1000;
+}
+
+void Timer::pause() {
+	this->stop();
+}
+
+void Timer::resume() {
+	gettimeofday(&_start, NULL);
 }
 
 uint64_t Timer::wallclockms() {
