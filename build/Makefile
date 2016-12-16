@@ -20,7 +20,7 @@ else
 	EXE_SUFFIX=	
 endif
 
-CPP_SRCS += \
+#CPP_SRCS += \
 ../src/lookup/CHT.cpp \
 ../src/lookup/Hash.cpp \
 ../src/lookup/Lookup.cpp \
@@ -46,14 +46,15 @@ COMMON_OBJS = \
 ./src/util/Timer.o \
 ./src/opencl/CLBuffer.o \
 ./src/opencl/CLEnv.o \
-./src/opencl/CLProgram.o 
+./src/opencl/CLProgram.o \
+./src/chtstep.o \
 
 MAIN = \
 opencl \
 singlethread \
 mthread
 
-MAIN_OBJS = \
+#MAIN_OBJS = \
 ./src/opencl.o \
 ./src/singlethread.o \
 ./src/mthread.o \
@@ -63,12 +64,12 @@ gendata \
 mergedata \
 space_analysis \
 
-TOOL_OBJS = \
+#TOOL_OBJS = \
 ./tool/space_analysis.o \
 ./tool/gendata.o \
 ./tool/mergedata.o \
 
-C_DEPS = \
+#C_DEPS = \
 ./src/lookup/CHT.d \
 ./src/lookup/Hash.d \
 ./src/util/Logger.d \
