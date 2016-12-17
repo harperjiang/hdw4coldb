@@ -34,14 +34,14 @@ void gather(uint* innerkey, uint* bitmapResult, uint bitmapSize,
 	timer->resume();
 
 	uint sum = 0;
-	for (uint i = 0; i < bitmapResult; i++) {
+	for (uint i = 0; i < bitmapSize; i++) {
 		sum += popcount(bitmapResult[i]);
 	}
 	timer->pause();
 	timer->resume();
 	sum = 0;
-	for (uint i = 0; i < bitmapResult / 2; i++) {
-		sum += popcount64((uint64_t*) bitmapResult)[i];
+	for (uint i = 0; i < bitmapSize / 2; i++) {
+		sum += popcount64(((uint64_t*) bitmapResult)[i]);
 	}
 }
 
