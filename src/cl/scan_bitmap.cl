@@ -1,9 +1,9 @@
 // Scan Bitmap and store the result word by word
 
-#define INPUT_UNIT 32
+#define INPUT_UNIT 64
 
 __kernel void scan_bitmap(__global uint* meta, __global ulong* bitmap,
-		__global uint* inner, __global uint* result) {
+		__global uint* inner, __global ulong* result) {
 
 	uint index = get_global_id(0);
 
@@ -19,5 +19,5 @@ __kernel void scan_bitmap(__global uint* meta, __global ulong* bitmap,
 
 	uint bittest = bitmap[bitmapIndex] & (1 << bitmapOffset) & 0xffffffff;
 
-	atomic_or(result+wordIndex, isnotequal((float)bittest,(float)0) << bitIndex);
+	atomic_or(result+wordIndex, ((ulong)isnotequal((float)bittest,(float)0)) << bitIndex);
 }

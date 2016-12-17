@@ -27,9 +27,10 @@
 #define THRESHOLD 5
 #define BITMAP_SIZE		32
 #define BITMAP_EXT 		32
-#define BITMAP_UNIT 	32
 #define BITMAP_EXTMASK 	0xffffffff00000000
 #define BITMAP_MASK		0xffffffff
+
+#define RET_BITMAP_UNIT 	64
 
 #define OVERFLOW_INIT   10000
 #define MIN_SIZE 	1000

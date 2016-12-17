@@ -6,43 +6,85 @@
  */
 
 #include "ocljoin.h"
+#include "util/Thread.h"
 
-class GatherThread {
-
+class GatherThread: public Thread {
+private:
+	uint64_t* bitmapResult;
+	uint* innerkey;
+	uint* dest;
+	uint keystart;
+	uint keystop;
+	uint dstart;
 public:
-	GatherThread(uint* innerkey, uint* bitmapResult, uint start, uint stop) {
-
+	GatherThread(uint64_t* bitmapResult, uint* innerkey, uint* dest,
+			uint keystart, uint keystop, uint dstart) {
+		this->bitmapResult = bitmapResult;
+		this->innerkey = innerkey;
+		this->dest = dest;
+		this->keystart = keystart;
+		this->keystop = keystop;
+		this->dstart = dstart;
 	}
 
 	void run() {
-
+		uint dindex = dstart;
+		for (uint32_t i = keystart; i < keystop; i++) {
+			uint index = i / RET_BITMAP_UNIT;
+			uint offset = i % RET_BITMAP_UNIT;
+			if (bitmapResult[index] & ((ulong) 1) << offset) {
+				dest[dindex++] = innerkey[i];
+			}
+		}
 	}
 };
 
-void gather(uint* innerkey, uint* bitmapResult, uint bitmapSize,
+void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 		uint* passedkey, uint workSize, uint* counter, Timer* timer) {
-	*counter = 0;
-	for (uint32_t i = 0; i < workSize; i++) {
-		uint index = i / BITMAP_UNIT;
-		uint offset = i % BITMAP_UNIT;
-		if (bitmapResult[index] & 1 << offset) {
-			passedkey[*counter++] = innerkey[i];
+
+	uint threadNum = 30;
+	Thread** gatherThreads = new Thread*[threadNum];
+	uint destStart[threadNum];
+	uint destStop[threadNum];
+
+	uint threadAlloc[threadNum];
+	::memset(threadAlloc, 0, sizeof(uint) * threadNum);
+
+	uint threadBitmapSize = bitmapSize / threadNum;
+
+	for (uint i = 0; i < threadBitmapSize; i++) {
+		for (uint t = 0; t < threadNum; t++) {
+			threadAlloc[t] += popcount64(
+					bitmapResult[t * threadBitmapSize + i]);
 		}
 	}
-
-	timer->pause();
-	timer->resume();
+	for (uint i = 0; i < bitmapSize % threadNum; i++) {
+		threadAlloc[threadNum - 1] += popcount64(
+				bitmapResult[threadBitmapSize * threadNum + i]);
+	}
 
 	uint sum = 0;
-	for (uint i = 0; i < bitmapSize; i++) {
-		sum += popcount(bitmapResult[i]);
+	for (uint i = 0; i < threadNum; i++) {
+		destStart[i] = sum;
+		sum += threadAlloc[i];
 	}
+	*counter = sum;
+
+	uint keyPerThread = workSize / threadNum;
+
+	for (uint i = 0; i < threadNum; i++) {
+		uint keyStart = i * keyPerThread;
+		uint keyEnd = i == threadNum - 1 ? workSize : keyPerThread * (i + 1);
+		gatherThreads[i] = new GatherThread(bitmapResult, innerkey, passedkey,
+				keyStart, keyEnd, destStart[i]);
+		gatherThreads[i]->start();
+	}
+	for (uint i = 0; i < threadNum; i++) {
+		gatherThreads[i]->wait();
+	}
+
 	timer->pause();
 	timer->resume();
-	sum = 0;
-	for (uint i = 0; i < bitmapSize / 2; i++) {
-		sum += popcount64(((uint64_t*) bitmapResult)[i]);
-	}
 }
 
 void runChtStep(kvlist* outer, kvlist* inner, uint split,
@@ -82,17 +124,18 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	uint workSize = inner->size;
 	uint32_t* passedkey = new uint32_t[workSize];
 
+	uint matched = 0;
+
+	uint bitmapResultSize = workSize / RET_BITMAP_UNIT
+			+ (workSize % RET_BITMAP_UNIT ? 1 : 0);
+	bitmapResultSize += bitmapResultSize % 2 ? 0 : 1;
+
 	CLEnv* env = new CLEnv(enableProfiling);
 
 	CLProgram* scanBitmap = new CLProgram(env, "scan_bitmap");
 	scanBitmap->fromFile("scan_bitmap.cl", 4);
 	CLProgram* scanCht = new CLProgram(env, "scan_chthash");
 	scanCht->fromFile("scan_chthash.cl", 6);
-
-	uint matched = 0;
-
-	uint bitmapResultSize = workSize / BITMAP_UNIT
-			+ (workSize % BITMAP_UNIT ? 1 : 0);
 
 	meta[3] = bitmapResultSize;
 	meta[4] = workSize;
@@ -116,7 +159,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 
 	CLBuffer* bitmapResultBuffer = new CLBuffer(env, NULL,
-			sizeof(uint) * bitmapResultSize, CL_MEM_READ_WRITE);
+			sizeof(uint64_t) * bitmapResultSize, CL_MEM_READ_WRITE);
 
 	scanBitmap->setBuffer(0, metaBuffer);
 	scanBitmap->setBuffer(1, bitmapBuffer);
@@ -125,15 +168,15 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	scanBitmap->execute(workSize);
 
-	uint* bitmapResult = (uint*) bitmapResultBuffer->map(CL_MAP_READ);
+	uint64_t* bitmapResult = (uint64_t*) bitmapResultBuffer->map(CL_MAP_READ);
 
-// Gather
+	// Gather
 	timer.pause();
 	timer2.start();
 	uint32_t counter = 0;
 
 	gather(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize,
-			&counter, &timer);
+			&counter, &timer2);
 
 	bitmapResultBuffer->unmap();
 
