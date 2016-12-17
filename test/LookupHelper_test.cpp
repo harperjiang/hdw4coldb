@@ -6,7 +6,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "../src/util.h"
+#include "../src/lookup/LookupHelper.h"
 
 TEST( Util, Popcnt) {
 	uint64_t a = 0x00000000ffffffff;

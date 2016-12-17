@@ -16,7 +16,9 @@ class Timer {
 private:
 	struct timeval _start;
 	uint64_t _wallclockms = 0;
-
+	uint32_t intervalCounter = 0;
+	uint32_t intervalLimit;
+	uint64_t* intervals;
 public:
 	Timer();
 	virtual ~Timer();
@@ -27,6 +29,8 @@ public:
 	void stop();
 
 	uint64_t wallclockms();
+	uint32_t numInterval();
+	uint64_t interval(uint32_t index);
 };
 
 #endif /* SRC_TIMER_H_ */

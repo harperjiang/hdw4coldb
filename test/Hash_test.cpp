@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 #include <stdlib.h>
-#include "../src/Hash.h"
+#include "../src/lookup/Hash.h"
 
 TEST( Hash, Build) {
 	kv* entries = new kv[32]();

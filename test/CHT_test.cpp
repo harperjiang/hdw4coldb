@@ -9,9 +9,9 @@
 #include <time.h>
 #include <stdlib.h>
 #include <iostream>
-#include "../src/cht.h"
+#include "../src/lookup/cht.h"
 
-#define BITMAP_FACTOR 4
+#define BITMAP_FACTOR 8
 
 using namespace std;
 

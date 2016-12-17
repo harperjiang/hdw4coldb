@@ -7,8 +7,20 @@
 
 #include "ocljoin.h"
 
-void gather(uint* innerkey, uint* bitmapResult, uint* passedkey, uint workSize,
-		uint* counter) {
+class GatherThread {
+
+public:
+	GatherThread(uint* innerkey, uint* bitmapResult, uint start, uint stop) {
+
+	}
+
+	void run() {
+
+	}
+};
+
+void gather(uint* innerkey, uint* bitmapResult, uint bitmapSize,
+		uint* passedkey, uint workSize, uint* counter, Timer* timer) {
 	*counter = 0;
 	for (uint32_t i = 0; i < workSize; i++) {
 		uint index = i / BITMAP_UNIT;
@@ -16,6 +28,20 @@ void gather(uint* innerkey, uint* bitmapResult, uint* passedkey, uint workSize,
 		if (bitmapResult[index] & 1 << offset) {
 			passedkey[*counter++] = innerkey[i];
 		}
+	}
+
+	timer->pause();
+	timer->resume();
+
+	uint sum = 0;
+	for (uint i = 0; i < bitmapResult; i++) {
+		sum += popcount(bitmapResult[i]);
+	}
+	timer->pause();
+	timer->resume();
+	sum = 0;
+	for (uint i = 0; i < bitmapResult / 2; i++) {
+		sum += popcount64((uint64_t*) bitmapResult)[i];
 	}
 }
 
@@ -53,6 +79,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 		hash_payload[i] = cht->overflow->buckets[i].key;
 	}
 
+	uint workSize = inner->size;
 	uint32_t* passedkey = new uint32_t[workSize];
 
 	CLEnv* env = new CLEnv(enableProfiling);
@@ -61,8 +88,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	scanBitmap->fromFile("scan_bitmap.cl", 4);
 	CLProgram* scanCht = new CLProgram(env, "scan_chthash");
 	scanCht->fromFile("scan_chthash.cl", 6);
-
-	uint workSize = inner->size;
 
 	uint matched = 0;
 
@@ -102,12 +127,13 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	uint* bitmapResult = (uint*) bitmapResultBuffer->map(CL_MAP_READ);
 
-	// Gather
+// Gather
 	timer.pause();
 	timer2.start();
 	uint32_t counter = 0;
 
-	gather(inner, bitmapResult, passedkey, workSize, &counter);
+	gather(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize,
+			&counter, &timer);
 
 	bitmapResultBuffer->unmap();
 
@@ -150,7 +176,9 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
 			matched);
-
+	for (uint i = 0; i < timer2.numInterval(); i++) {
+		logger->info("Gather time %d: %u ms\n", i, timer2.interval(i));
+	}
 	delete[] passedkey;
 	delete[] hash_payload;
 	delete[] cht_payload;
