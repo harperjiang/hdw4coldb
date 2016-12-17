@@ -1,6 +1,7 @@
 // Scan Bitmap and store the result word by word
 
 #define INPUT_UNIT 64
+#pragma OPENCL EXTENSION cl_khr_int64_extended_atomics: enable
 
 __kernel void scan_bitmap(__global uint* meta, __global ulong* bitmap,
 		__global uint* inner, __global ulong* result) {
