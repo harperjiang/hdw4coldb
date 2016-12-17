@@ -45,7 +45,6 @@ void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 	uint threadNum = 30;
 	Thread** gatherThreads = new Thread*[threadNum];
 	uint destStart[threadNum];
-	uint destStop[threadNum];
 
 	uint threadAlloc[threadNum];
 	::memset(threadAlloc, 0, sizeof(uint) * threadNum);
@@ -85,6 +84,24 @@ void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 
 	timer->pause();
 	timer->resume();
+}
+
+void gather2(uint* innerkey, ulong* bitmapResult, uint bitmapResultSize,
+		uint* passedkey, uint workSize) {
+	uint counter = 0;
+	Logger* logger = Logger::getLogger("ocljoin-chtstep");
+	for (uint i = 0; i < workSize; i++) {
+		uint index = i / RET_BITMAP_UNIT;
+		uint offset = i % RET_BITMAP_UNIT;
+
+		if (bitmapResult[index] & ((ulong) 1) << offset) {
+			if (passedkey[counter] != innerkey[i]) {
+				logger->info("Incorrect value at %d\n", i);
+
+			}
+			counter++;
+		}
+	}
 }
 
 void runChtStep(kvlist* outer, kvlist* inner, uint split,
@@ -177,6 +194,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	gather(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize,
 			&counter, &timer2);
+	gather2(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize);
 
 	bitmapResultBuffer->unmap();
 
