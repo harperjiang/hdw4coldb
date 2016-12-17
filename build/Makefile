@@ -20,23 +20,6 @@ else
 	EXE_SUFFIX=	
 endif
 
-#CPP_SRCS += \
-../src/lookup/CHT.cpp \
-../src/lookup/Hash.cpp \
-../src/lookup/Lookup.cpp \
-../src/lookup/LookupHelper.cpp \
-../src/util/Logger.cpp \
-../src/util/Timer.cpp \
-../src/opencl/CLBuffer.cpp \
-../src/opencl/CLEnv.cpp \
-../src/opencl/CLProgram.cpp \
-../src/tool/gentestdata.cpp \
-../src/tool/mergedata.cpp \
-../src/tool/space_analysis.cpp \
-../src/singlethread.cpp \
-../src/mthread.cpp \
-../src/opencl.cpp \
-
 COMMON_OBJS = \
 ./src/lookup/Lookup.o \
 ./src/lookup/CHT.o \
@@ -44,6 +27,7 @@ COMMON_OBJS = \
 ./src/lookup/LookupHelper.o \
 ./src/util/Logger.o \
 ./src/util/Timer.o \
+./src/util/Thread.o \
 ./src/opencl/CLBuffer.o \
 ./src/opencl/CLEnv.o \
 ./src/opencl/CLProgram.o \
@@ -56,20 +40,12 @@ ocljoin \
 stjoin \
 mtjoin
 
-#MAIN_OBJS = \
-./src/opencl.o \
-./src/singlethread.o \
-./src/mthread.o \
 
 TOOL = \
 gendata \
 mergedata \
 space_analysis \
 
-#TOOL_OBJS = \
-./tool/space_analysis.o \
-./tool/gendata.o \
-./tool/mergedata.o \
 
 #C_DEPS = \
 ./src/lookup/CHT.d \
