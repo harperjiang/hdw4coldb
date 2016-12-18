@@ -89,31 +89,6 @@ void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 	timer->resume();
 }
 
-void gather2(uint* innerkey, ulong* bitmapResult, uint bitmapResultSize,
-		uint* passedkey, uint workSize) {
-	uint counter = 0;
-	uint* mypassedkey = new uint[workSize];
-	Logger* logger = Logger::getLogger("ocljoin-chtstep-gather2");
-	for (uint i = 0; i < workSize; i++) {
-		uint index = i / RET_BITMAP_UNIT;
-		uint offset = i % RET_BITMAP_UNIT;
-
-		if (bitmapResult[index] & ((ulong) 1) << offset) {
-			mypassedkey[counter++] = innerkey[i];
-		}
-	}
-	for (uint i = 0; i < workSize; i++) {
-		if (mypassedkey[i] != passedkey[i]) {
-			for (uint j = i; j < i + 10; j++) {
-				logger->info("my %d, %u <-> %u\n", j, mypassedkey[j],
-						passedkey[j]);
-			}
-			break;
-		}
-	}
-	delete[] mypassedkey;
-}
-
 void runChtStep(kvlist* outer, kvlist* inner, uint split,
 		bool enableProfiling) {
 	Timer timer;
@@ -199,18 +174,26 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	// Gather
 	timer.pause();
-	timer2.start();
-	uint32_t counter = 0;
-
-	gather(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize,
-			&counter, &timer2);
-	gather2(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize);
-
-	bitmapResultBuffer->unmap();
-
+//	timer2.start();
+//	uint32_t counter = 0;
+//
+//	gather(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize,
+//			&counter, &timer2);
+//	gather2(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize);
+//
+//	bitmapResultBuffer->unmap();
+//
+//
+//	timer2.stop();
+	uint counter = 0;
+	for (uint32_t i = 0; i < workSize; i++) {
+		uint index = i / RET_BITMAP_UNIT;
+		uint offset = i % RET_BITMAP_UNIT;
+		if (bitmapResult[index] & ((ulong) 1) << offset) {
+			passedkey[counter++] = innerkey[i];
+		}
+	}
 	uint numPassBitmap = counter;
-
-	timer2.stop();
 	timer.resume();
 
 	delete innerkeyBuffer;
