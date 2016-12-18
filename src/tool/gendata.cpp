@@ -21,7 +21,7 @@ void gen_unique(uint32_t size, FILE* f, int ceiling) {
 	assert(size != 0);
 	srand(time(NULL));
 	uint32_t max = (uint32_t) 0xffffffff;
-	if (size * DEFAULT_RANGE < max) {
+	if (((uint64_t) size) * DEFAULT_RANGE < (uint64_t) max) {
 		max = size * DEFAULT_RANGE;
 	}
 	uint32_t fold = max / size;
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
 		exit(0);
 	}
 
-	FILE* file = (outFile == NULL ) ? stdout : fopen(outFile, "w");
+	FILE* file = (outFile == NULL) ? stdout : fopen(outFile, "w");
 	if (uniq)
 		gen_unique(size, file, ceiling);
 	else

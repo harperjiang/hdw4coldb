@@ -28,7 +28,9 @@ public:
 	}
 
 	void run() {
+//		Logger* logger = Logger::getLogger("ocljoin-chtstep-gather");
 		uint dindex = dstart;
+//		logger->info("key %u Writing start : %u\n", keystart, dindex);
 		for (uint32_t i = keystart; i < keystop; i++) {
 			uint index = i / RET_BITMAP_UNIT;
 			uint offset = i % RET_BITMAP_UNIT;
@@ -36,12 +38,13 @@ public:
 				dest[dindex++] = innerkey[i];
 			}
 		}
+//		logger->info("key %u Writing end : %u\n", keystart, dindex);
 	}
 };
 
 void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 		uint* passedkey, uint workSize, uint* counter, Timer* timer) {
-
+	Logger *logger = Logger::getLogger("ocljoin-chtstep-gather");
 	uint threadNum = 30;
 	Thread** gatherThreads = new Thread*[threadNum];
 	uint destStart[threadNum];
@@ -69,7 +72,7 @@ void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 	}
 	*counter = sum;
 
-	uint keyPerThread = workSize / threadNum;
+	uint keyPerThread = threadBitmapSize * RES_BITMAP_UNIT;
 
 	for (uint i = 0; i < threadNum; i++) {
 		uint keyStart = i * keyPerThread;
@@ -89,19 +92,26 @@ void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 void gather2(uint* innerkey, ulong* bitmapResult, uint bitmapResultSize,
 		uint* passedkey, uint workSize) {
 	uint counter = 0;
-	Logger* logger = Logger::getLogger("ocljoin-chtstep");
+	uint* mypassedkey = new uint[workSize];
+	Logger* logger = Logger::getLogger("ocljoin-chtstep-gather2");
 	for (uint i = 0; i < workSize; i++) {
 		uint index = i / RET_BITMAP_UNIT;
 		uint offset = i % RET_BITMAP_UNIT;
 
 		if (bitmapResult[index] & ((ulong) 1) << offset) {
-			if (passedkey[counter] != innerkey[i]) {
-				logger->info("Incorrect value at %d\n", i);
-
-			}
-			counter++;
+			mypassedkey[counter++] = innerkey[i];
 		}
 	}
+	for (uint i = 0; i < workSize; i++) {
+		if (mypassedkey[i] != passedkey[i]) {
+			for (uint j = i; j < i + 10; j++) {
+				logger->info("my %d, %u <-> %u\n", j, mypassedkey[j],
+						passedkey[j]);
+			}
+			break;
+		}
+	}
+	delete[] mypassedkey;
 }
 
 void runChtStep(kvlist* outer, kvlist* inner, uint split,

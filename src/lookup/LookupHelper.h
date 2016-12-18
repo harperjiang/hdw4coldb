@@ -35,7 +35,7 @@ inline uint32_t popcount(uint32_t input) {
 inline uint64_t popcount64(uint64_t data);
 
 inline uint64_t popcount64(uint64_t input) {
-	uint32_t result = 0;
+	uint64_t result = 0;
 	asm("popcnt %1, %0": "=r"(result) : "rm"(input):"cc");
 	return result;
 }
