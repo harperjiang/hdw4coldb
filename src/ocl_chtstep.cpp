@@ -44,7 +44,6 @@ public:
 
 void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 		uint* passedkey, uint workSize, uint* counter, Timer* timer) {
-	Logger *logger = Logger::getLogger("ocljoin-chtstep-gather");
 	uint threadNum = 30;
 	Thread** gatherThreads = new Thread*[threadNum];
 	uint destStart[threadNum];
