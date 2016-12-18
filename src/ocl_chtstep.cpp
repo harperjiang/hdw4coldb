@@ -72,7 +72,7 @@ void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 	}
 	*counter = sum;
 
-	uint keyPerThread = threadBitmapSize * RES_BITMAP_UNIT;
+	uint keyPerThread = threadBitmapSize * RET_BITMAP_UNIT;
 
 	for (uint i = 0; i < threadNum; i++) {
 		uint keyStart = i * keyPerThread;
