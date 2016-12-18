@@ -173,25 +173,16 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	// Gather
 	timer.pause();
-//	timer2.start();
-//	uint32_t counter = 0;
-//
-//	gather(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize,
-//			&counter, &timer2);
-//	gather2(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize);
-//
-//	bitmapResultBuffer->unmap();
-//
-//
-//	timer2.stop();
-	uint counter = 0;
-	for (uint32_t i = 0; i < workSize; i++) {
-		uint index = i / RET_BITMAP_UNIT;
-		uint offset = i % RET_BITMAP_UNIT;
-		if (bitmapResult[index] & ((ulong) 1) << offset) {
-			passedkey[counter++] = innerkey[i];
-		}
-	}
+	timer2.start();
+	uint32_t counter = 0;
+
+	gather(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize,
+			&counter, &timer2);
+
+	bitmapResultBuffer->unmap();
+
+	timer2.stop();
+
 	uint numPassBitmap = counter;
 	timer.resume();
 
