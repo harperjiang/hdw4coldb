@@ -28,9 +28,7 @@ public:
 	}
 
 	void run() {
-//		Logger* logger = Logger::getLogger("ocljoin-chtstep-gather");
 		uint dindex = dstart;
-//		logger->info("key %u Writing start : %u\n", keystart, dindex);
 		for (uint32_t i = keystart; i < keystop; i++) {
 			uint index = i / RET_BITMAP_UNIT;
 			uint offset = i % RET_BITMAP_UNIT;
@@ -38,7 +36,6 @@ public:
 				dest[dindex++] = innerkey[i];
 			}
 		}
-//		logger->info("key %u Writing end : %u\n", keystart, dindex);
 	}
 };
 
@@ -172,7 +169,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	uint64_t* bitmapResult = (uint64_t*) bitmapResultBuffer->map(CL_MAP_READ);
 
 	// Gather
-	timer.pause();
 	timer2.start();
 	uint32_t counter = 0;
 
@@ -184,7 +180,6 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	timer2.stop();
 
 	uint numPassBitmap = counter;
-	timer.resume();
 
 	delete innerkeyBuffer;
 	delete bitmapResultBuffer;
