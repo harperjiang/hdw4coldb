@@ -14,14 +14,15 @@
 #include "../../opencl/CLBuffer.h"
 
 class CStepOcl: public CStep {
-private:
+protected:
 	uint meta[5];
-	uint* cht_payload;
-	uint* hash_payload;
+	uint* cht_payload = NULL;
+	uint* hash_payload = NULL;
+	uint bitmapResultSize = 0;
 
-	CLEnv* env;
-	CLProgram* scanBitmap;
-	CLProgram* scanCht;
+	CLEnv* env = NULL;
+	CLProgram* scanBitmap = NULL;
+	CLProgram* scanCht = NULL;
 
 	CLBuffer* metaBuffer = NULL;
 	CLBuffer* bitmapBuffer = NULL;
@@ -32,13 +33,10 @@ public:
 	CStepOcl();
 	virtual ~CStepOcl();
 
-	void init(CHT* lookup, uint* key, uint keylength);
-
-	virtual uint filter(uint* key, uint keylength, ulong* bitmap,
-			uint bitmapSize, uint* gathered);
-	uint gather(ulong* resultBitmap, uint resultBitmapSize, uint* key,
-			uint keylength, uint* gathered);
-	uint lookup(CHT* lookup, uint* key, uint keylength);
+	virtual void init();
+	virtual uint filter(uint* gathered);
+	virtual uint lookup(uint* key, uint keylength);
+	virtual uint gather(ulong* bitmapResult, uint* gathered);
 
 };
 

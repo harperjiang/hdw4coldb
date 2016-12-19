@@ -2,8 +2,6 @@
 
 using namespace std;
 
-Logger* logger = Logger::getLogger("ocljoin");
-
 extern void runHash(kvlist* outer, kvlist* inner, uint split,
 		bool enableProfiling = false);
 
@@ -32,6 +30,7 @@ void display_device() {
 }
 
 int main(int argc, char** argv) {
+	Logger* logger = Logger::getLogger("ocljoin");
 	char* alg = NULL;
 	char* outerfile = NULL;
 	char* innerfile = NULL;

@@ -6,15 +6,19 @@
  */
 
 #include "CStep.h"
-#include "../../util/Logger.h"
 #include "../../util/Timer.h"
 
 CStep::CStep() {
 	enableProfiling = false;
+	_lookup = NULL;
+	probe = NULL;
 }
 
 CStep::~CStep() {
-
+	if (NULL != _lookup)
+		delete _lookup;
+	if (NULL != probe)
+		delete probe;
 }
 
 void CStep::join(kvlist* outer, kvlist* inner, uint split,
@@ -22,36 +26,45 @@ void CStep::join(kvlist* outer, kvlist* inner, uint split,
 	this->enableProfiling = enableProfiling;
 
 	Timer timer;
-	Logger* logger = Logger::getLogger("CStep");
 
 	logger->info("Running CHT Step Join\n");
-	logger->info("Building Outer Table\n");
 
-	CHT* cht = new CHT();
-	cht->build(outer->entries, outer->size);
-	logger->info("Building Outer Table Done\n");
-
-	uint* innerkey = new uint[inner->size];
-	for (uint i = 0; i < inner->size; i++) {
-		innerkey[i] = inner->entries[i].key;
-	}
+	buildLookup(outer);
+	buildProbe(inner);
 
 	uint workSize = inner->size;
 	// OpenCL program compilation takes a long time
-	this->init(cht, innerkey, inner->size);
+	this->init();
 
 	timer.start();
+
 	uint gatheredSize = workSize;
 	uint* gatheredkey = new uint[gatheredSize];
-	uint gatheredKeyLength = this->filter(innerkey, workSize, cht->bitmap,
-			cht->bitmap_size, gatheredkey);
-	uint result = this->lookup(cht, gatheredkey, gatheredKeyLength);
+
+	uint gatheredKeyLength = this->filter(gatheredkey);
+
+	timer.pause();
+	timer.resume();
+	uint result = this->lookup(gatheredkey, gatheredKeyLength);
 
 	timer.stop();
 	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
 			result);
 
-	delete[] innerkey;
 	delete[] gatheredkey;
-	delete cht;
+}
+
+void CStep::buildLookup(kvlist* outer) {
+	logger->info("Building Outer Table\n");
+	_lookup = new CHT();
+	_lookup->build(outer->entries, outer->size);
+	logger->info("Building Outer Table Done\n");
+}
+
+void CStep::buildProbe(kvlist* inner) {
+	this->probeSize = inner->size;
+	this->probe = new uint[probeSize];
+	for(uint i = 0 ; i < probeSize;i++) {
+		probe[i] = inner->entries[i].key;
+	}
 }

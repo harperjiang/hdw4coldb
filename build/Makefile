@@ -4,7 +4,7 @@ CXX=g++
 
 INCLUDE_OPENCL= -I $(AMDAPPSDKROOT)/include
 
-CXX_FLAG= -O3 -Wall -std=gnu++11 -c -fmessage-length=0 -pthread $(INCLUDE_OPENCL)
+CXX_FLAG= -O3 -Wall -std=gnu++11 -mavx2 -march=native -c -fmessage-length=0 -pthread $(INCLUDE_OPENCL)
 
 BIN = ../bin
 
@@ -32,7 +32,8 @@ COMMON_OBJS = \
 ./src/opencl/CLEnv.o \
 ./src/opencl/CLProgram.o \
 ./src/join/cstep/CStep.o \
-./src/join/cstep/CStepOco.o \
+./src/join/cstep/CStepOcl.o \
+./src/join/cstep/CStepSimd.o \
 ./src/join/cstep/GatherThread.o \
 ./src/join/ocl/ocl_cht.o \
 ./src/join/ocl/ocl_hash.o \

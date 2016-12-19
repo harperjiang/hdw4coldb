@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include "../../lookup/Lookup.h"
 #include "../../lookup/CHT.h"
+#include "../../util/Logger.h"
 
 #define THRESHOLD 5
 #define BITMAP_SIZE		32
@@ -29,18 +30,24 @@ class CStep {
 
 protected:
 	bool enableProfiling;
+	CHT* _lookup;
+	uint* probe;
+	uint probeSize;
+
+	Logger* logger = Logger::getLogger("CStep");
 public:
 	CStep();
 	virtual ~CStep();
 
 	virtual void join(kvlist* outer, kvlist* inner, uint split,
 			bool enableProfiling);
-	virtual void init(CHT* lookup, uint* key, uint keylength) = 0;
 
-	virtual uint filter(uint* key, uint keylength, ulong* bitmap,
-			uint bitmapSize, uint* gathered) = 0;
+	virtual void buildLookup(kvlist* outer);
+	virtual void buildProbe(kvlist* inner);
 
-	virtual uint lookup(CHT* lookup, uint* key, uint keylength) = 0;
+	virtual void init() = 0;
+	virtual uint filter(uint* gathered) = 0;
+	virtual uint lookup(uint* key, uint keylength) = 0;
 };
 
 #endif /* SRC_JOIN_CSTEP_CSTEP_H_ */

@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 	}
 	CStep *cstep;
 	if (!strcmp("oco", alg)) {
-		cstep = new CStepOco();
+		cstep = new CStepOcl();
 	} else if (!strcmp("sco", alg)) {
 		cstep = NULL;
 	}
