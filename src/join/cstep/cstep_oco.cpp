@@ -5,41 +5,10 @@
  *      Author: harper
  */
 
-#include "ocljoin.h"
-#include "util/Thread.h"
+#include "../../cstepjoin.h"
+#include "GatherThread.h"
 
-class GatherThread: public Thread {
-private:
-	uint64_t* bitmapResult;
-	uint* innerkey;
-	uint* dest;
-	uint keystart;
-	uint keystop;
-	uint dstart;
-public:
-	GatherThread(uint64_t* bitmapResult, uint* innerkey, uint* dest,
-			uint keystart, uint keystop, uint dstart) {
-		this->bitmapResult = bitmapResult;
-		this->innerkey = innerkey;
-		this->dest = dest;
-		this->keystart = keystart;
-		this->keystop = keystop;
-		this->dstart = dstart;
-	}
-
-	void run() {
-		uint dindex = dstart;
-		for (uint32_t i = keystart; i < keystop; i++) {
-			uint index = i / RET_BITMAP_UNIT;
-			uint offset = i % RET_BITMAP_UNIT;
-			if (bitmapResult[index] & ((ulong) 1) << offset) {
-				dest[dindex++] = innerkey[i];
-			}
-		}
-	}
-};
-
-void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
+void ocogather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 		uint* passedkey, uint workSize, uint* counter, Timer* timer) {
 	uint threadNum = 30;
 	Thread** gatherThreads = new Thread*[threadNum];
@@ -85,8 +54,7 @@ void gather(uint* innerkey, uint64_t* bitmapResult, uint bitmapSize,
 	timer->resume();
 }
 
-void runChtStep(kvlist* outer, kvlist* inner, uint split,
-		bool enableProfiling) {
+void ocojoin(kvlist* outer, kvlist* inner, uint split, bool enableProfiling) {
 	Timer timer;
 	Timer timer2;
 	Logger* logger = Logger::getLogger("ocljoin-chtstep");
@@ -172,7 +140,7 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 	timer2.start();
 	uint32_t counter = 0;
 
-	gather(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize,
+	ocogather(innerkey, bitmapResult, bitmapResultSize, passedkey, workSize,
 			&counter, &timer2);
 
 	bitmapResultBuffer->unmap();
@@ -234,4 +202,3 @@ void runChtStep(kvlist* outer, kvlist* inner, uint split,
 
 	delete cht;
 }
-

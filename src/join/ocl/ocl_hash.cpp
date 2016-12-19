@@ -5,7 +5,7 @@
  *      Author: harper
  */
 
-#include "ocljoin.h"
+#include "../../ocljoin.h"
 
 void runHash(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		false) {

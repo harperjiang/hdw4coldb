@@ -31,14 +31,17 @@ COMMON_OBJS = \
 ./src/opencl/CLBuffer.o \
 ./src/opencl/CLEnv.o \
 ./src/opencl/CLProgram.o \
-./src/ocl_chtstep.o \
-./src/ocl_cht.o \
-./src/ocl_hash.o \
+./src/join/cstep/CStep.o \
+./src/join/cstep/CStepOco.o \
+./src/join/cstep/GatherThread.o \
+./src/join/ocl/ocl_cht.o \
+./src/join/ocl/ocl_hash.o \
 
 MAIN = \
 ocljoin \
 stjoin \
-mtjoin
+mtjoin \
+cstepjoin \
 
 
 TOOL = \
