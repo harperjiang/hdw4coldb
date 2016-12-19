@@ -100,6 +100,8 @@ mkfolder:
 	mkdir src/tool
 	mkdir src/opencl
 	mkdir src/util
+	mkdir -p src/join/cstep
+	mkdir -p src/join/ocl
 
 clean:
 	-$(RM) -f $(MAIN) $(TOOL) $(COMMON_OBJS) $(EXE_OBJS) $(C_DEPS)
