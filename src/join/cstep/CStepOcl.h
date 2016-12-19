@@ -5,15 +5,15 @@
  *      Author: Cathy
  */
 
-#ifndef SRC_JOIN_CSTEP_CSTEPOCO_H_
-#define SRC_JOIN_CSTEP_CSTEPOCO_H_
+#ifndef SRC_JOIN_CSTEP_CSTEPOCL_H_
+#define SRC_JOIN_CSTEP_CSTEPOCL_H_
 
 #include "CStep.h"
 #include "../../opencl/CLEnv.h"
 #include "../../opencl/CLProgram.h"
 #include "../../opencl/CLBuffer.h"
 
-class CStepOco: public CStep {
+class CStepOcl: public CStep {
 private:
 	uint meta[5];
 	uint* cht_payload;
@@ -29,17 +29,17 @@ private:
 	CLBuffer* hashpayloadBuffer = NULL;
 
 public:
-	CStepOco();
-	virtual ~CStepOco();
+	CStepOcl();
+	virtual ~CStepOcl();
 
 	void init(CHT* lookup, uint* key, uint keylength);
 
-	uint filter(uint* key, uint keylength, ulong* bitmap, uint bitmapSize,
-			uint* gathered);
-	uint lookup(CHT* lookup, uint* key, uint keylength);
-
+	virtual uint filter(uint* key, uint keylength, ulong* bitmap,
+			uint bitmapSize, uint* gathered);
 	uint gather(ulong* resultBitmap, uint resultBitmapSize, uint* key,
 			uint keylength, uint* gathered);
+	uint lookup(CHT* lookup, uint* key, uint keylength);
+
 };
 
-#endif /* SRC_JOIN_CSTEP_CSTEPOCO_H_ */
+#endif /* SRC_JOIN_CSTEP_CSTEPOCL_H_ */

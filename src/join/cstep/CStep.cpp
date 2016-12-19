@@ -37,10 +37,10 @@ void CStep::join(kvlist* outer, kvlist* inner, uint split,
 	}
 
 	uint workSize = inner->size;
+	// OpenCL program compilation takes a long time
+	this->init(cht, innerkey, inner->size);
 
 	timer.start();
-
-	this->init(cht, innerkey, inner->size);
 	uint gatheredSize = workSize;
 	uint* gatheredkey = new uint[gatheredSize];
 	uint gatheredKeyLength = this->filter(innerkey, workSize, cht->bitmap,

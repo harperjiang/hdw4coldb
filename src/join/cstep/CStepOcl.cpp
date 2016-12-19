@@ -5,11 +5,12 @@
  *      Author: Cathy
  */
 
-#include "CStepOco.h"
+#include "CStepOcl.h"
+
 #include "../../util/Thread.h"
 #include "GatherThread.h"
 
-CStepOco::CStepOco() {
+CStepOcl::CStepOcl() {
 	cht_payload = NULL;
 	hash_payload = NULL;
 	env = NULL;
@@ -17,7 +18,7 @@ CStepOco::CStepOco() {
 	scanCht = NULL;
 }
 
-CStepOco::~CStepOco() {
+CStepOcl::~CStepOcl() {
 	if (NULL != cht_payload)
 		delete[] cht_payload;
 	if (NULL != hash_payload)
@@ -33,7 +34,7 @@ CStepOco::~CStepOco() {
 	delete env;
 }
 
-void CStepOco::init(CHT* cht, uint* key, uint keylength) {
+void CStepOcl::init(CHT* cht, uint* key, uint keylength) {
 	meta[0] = cht->bitmap_size * 32;
 	meta[1] = cht->overflow->bucket_size;
 	meta[2] = cht->payload_size;
@@ -66,7 +67,7 @@ void CStepOco::init(CHT* cht, uint* key, uint keylength) {
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
 }
 
-uint CStepOco::filter(uint* key, uint workSize, ulong* bitmap, uint bitmapSize,
+uint CStepOcl::filter(uint* key, uint workSize, ulong* bitmap, uint bitmapSize,
 		uint* gathered) {
 	uint bitmapResultSize = workSize / RET_BITMAP_UNIT
 			+ (workSize % RET_BITMAP_UNIT ? 1 : 0);
@@ -105,7 +106,7 @@ uint CStepOco::filter(uint* key, uint workSize, ulong* bitmap, uint bitmapSize,
 	return numPassBitmap;
 }
 
-uint CStepOco::gather(ulong* bitmap, uint bitmapSize, uint* key, uint workSize,
+uint CStepOcl::gather(ulong* bitmap, uint bitmapSize, uint* key, uint workSize,
 		uint* gathered) {
 	uint threadNum = 30;
 	Thread** gatherThreads = new Thread*[threadNum];
@@ -149,7 +150,7 @@ uint CStepOco::gather(ulong* bitmap, uint bitmapSize, uint* key, uint workSize,
 	return sum;
 }
 
-uint CStepOco::lookup(CHT* lookup, uint* key, uint keylength) {
+uint CStepOcl::lookup(CHT* lookup, uint* key, uint keylength) {
 	CLBuffer* passbitmapKeyBuffer = new CLBuffer(env, key,
 			keylength * sizeof(uint32_t),
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);
