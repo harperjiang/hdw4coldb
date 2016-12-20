@@ -16,6 +16,7 @@ protected:
 
 private:
 	__m256i hashFactor;
+	__m256i ONE;
 
 	__m256i check_bitmap(__m256i input);
 

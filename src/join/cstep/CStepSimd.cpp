@@ -44,9 +44,8 @@ void CStepSimd::buildProbe(kvlist* inner) {
 }
 
 void CStepSimd::init() {
-
 	hashFactor = _mm256_set1_epi32((int) UINT32_C(2654435761));
-
+	ONE = _mm256_set1_epi32(1);
 	// Initialize pattern
 	pattern = new uint[32];
 	for (uint i = 0; i < 32; i++) {
@@ -65,11 +64,14 @@ __m256i CStepSimd::check_bitmap(__m256i input) {
 
 	// Use index to load from bitmap
 	__m256i byte = _mm256_i32gather_epi32((int* )_lookup->bitmap, index, 2);
-	// Use offset to load from pattern
-	__m256i ptn = _mm256_i32gather_epi32(pattern, offset, 1);
+	// Use offset to create pattern
+	// Load operation is slower than a shift
+	//	__m256i ptn = _mm256_i32gather_epi32(pattern, offset, 1);
+	__m256i ptn = _mm256_sllv_epi32(ONE, offset);
+	// 1 for selected key, zero for abandoned key
+	__m256i selector = _mm256_srav_epi32(_mm256_and_si256(byte, ptn),
+			_mm256_sub_epi32(offset, 1));
 
-	// non-zero for selected key, zero for abandoned key
-	__m256i selector = _mm256_and_si256(byte, ptn);
 }
 
 uint CStepSimd::filter(uint* gathered) {
