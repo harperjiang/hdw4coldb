@@ -45,13 +45,15 @@ void CStep::join(kvlist* outer, kvlist* inner, uint split,
 
 	timer.pause();
 	timer.resume();
-	uint result = this->lookup(gatheredkey, gatheredKeyLength);
+	uint* result = new uint[gatheredKeyLength];
+	uint resultSize = this->lookup(gatheredkey, gatheredKeyLength, result);
 
 	timer.stop();
 	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
 			result);
 
 	delete[] gatheredkey;
+	delete[] result;
 }
 
 void CStep::buildLookup(kvlist* outer) {
@@ -64,7 +66,7 @@ void CStep::buildLookup(kvlist* outer) {
 void CStep::buildProbe(kvlist* inner) {
 	this->probeSize = inner->size;
 	this->probe = new uint[probeSize];
-	for(uint i = 0 ; i < probeSize;i++) {
+	for (uint i = 0; i < probeSize; i++) {
 		probe[i] = inner->entries[i].key;
 	}
 }

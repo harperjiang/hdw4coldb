@@ -104,7 +104,7 @@ uint CStepOcl::filter(uint* gathered) {
 	return numPassBitmap;
 }
 
-uint CStepOcl::lookup(uint* key, uint keylength) {
+uint CStepOcl::lookup(uint* key, uint keylength, uint* result) {
 	CLBuffer* passbitmapKeyBuffer = new CLBuffer(env, key,
 			keylength * sizeof(uint),
 			CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR);

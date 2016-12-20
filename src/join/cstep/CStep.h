@@ -41,13 +41,13 @@ public:
 
 	virtual void join(kvlist* outer, kvlist* inner, uint split,
 			bool enableProfiling);
-
+protected:
 	virtual void buildLookup(kvlist* outer);
 	virtual void buildProbe(kvlist* inner);
 
 	virtual void init() = 0;
 	virtual uint filter(uint* gathered) = 0;
-	virtual uint lookup(uint* key, uint keylength) = 0;
+	virtual uint lookup(uint* key, uint keylength, uint* result) = 0;
 };
 
 #endif /* SRC_JOIN_CSTEP_CSTEP_H_ */

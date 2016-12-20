@@ -6,6 +6,7 @@
  */
 
 #include "../../ocljoin.h"
+#include "../CounterThread.h"
 
 void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		false) {
@@ -97,10 +98,11 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 		uint32_t* result = (uint32_t*) resultBuffer->map(CL_MAP_READ);
 
-		for (uint32_t i = 0; i < length; i++) {
-			if (result[i] != 0xffffffff)
-				matched++;
-		}
+//		for (uint32_t i = 0; i < length; i++) {
+//			if (result[i] != 0xffffffff)
+//				matched++;
+//		}
+		matched += CounterThread::count(result, length, 50, 0xffffffff, false);
 
 		resultBuffer->unmap();
 

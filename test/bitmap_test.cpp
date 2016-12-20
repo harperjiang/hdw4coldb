@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "../src/lookup/cht.h"
+#include "../src/lookup/CHT.h"
 
 extern bool bitmap_testset(uint64_t* bitmap, uint32_t offset);
 extern void bitmap_setpopcnt(uint64_t* bitmap, uint32_t offset, uint32_t value);

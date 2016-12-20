@@ -31,6 +31,7 @@ COMMON_OBJS = \
 ./src/opencl/CLBuffer.o \
 ./src/opencl/CLEnv.o \
 ./src/opencl/CLProgram.o \
+./src/join/CounterThread.o \
 ./src/join/cstep/CStep.o \
 ./src/join/cstep/CStepOcl.o \
 ./src/join/cstep/CStepSimd.o \

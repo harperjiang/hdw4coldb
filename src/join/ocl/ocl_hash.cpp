@@ -6,6 +6,7 @@
  */
 
 #include "../../ocljoin.h"
+#include "../CounterThread.h"
 
 void runHash(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		false) {
@@ -72,9 +73,11 @@ void runHash(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 		hashScan->execute(length);
 
 		uint32_t* result = (uint32_t*) resultBuffer->map(CL_MAP_READ);
-		for (uint32_t i = 0; i < length; i++) {
-			matched += result[i] == 0xffffffff ? 0 : 1;
-		}
+//		for (uint32_t i = 0; i < length; i++) {
+//			matched += result[i] == 0xffffffff ? 0 : 1;
+//		}
+		matched += CounterThread::count(result, length, 50, 0xffffffff, false);
+
 		resultBuffer->unmap();
 
 		delete innerKeyBuffer;

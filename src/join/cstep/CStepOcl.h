@@ -32,10 +32,10 @@ protected:
 public:
 	CStepOcl();
 	virtual ~CStepOcl();
-
+protected:
 	virtual void init();
 	virtual uint filter(uint* gathered);
-	virtual uint lookup(uint* key, uint keylength);
+	virtual uint lookup(uint* key, uint keylength, uint* result);
 	virtual uint gather(ulong* bitmapResult, uint* gathered);
 
 };

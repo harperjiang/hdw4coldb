@@ -9,7 +9,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <iostream>
-#include "../src/lookup/cht.h"
+#include "../src/lookup/CHT.h"
 
 #define BITMAP_FACTOR 8
 
