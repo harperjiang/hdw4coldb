@@ -59,7 +59,7 @@ __m256i testz_epi32(__m256i input) {
 				:"cc"
 		);
 	}
-	return _mm256_sub_epi32(ZERO, result);
+	return _mm256_sub_epi32(_mm256_setzero_si256(), result);
 }
 
 __m256i CStepSimd::HASH_FACTOR = _mm256_set1_epi32((int) UINT32_C(2654435761));
