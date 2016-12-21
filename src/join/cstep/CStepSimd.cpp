@@ -23,7 +23,7 @@ __m256i divrem_epu32(__m256i* remainder, __m256i a, uint b) {
 	uint* as = (uint*)&a;
 	for(uint i = 0; i < 8;i++) {
 		asm volatile(
-		"movl 0, %%edx\n\t"
+		"movl $0, %%edx\n\t"
 		"movl %2,%%eax\n\t"
 		"divl %3\n\t"
 		"movl %%eax,%0\n\t"
@@ -47,13 +47,13 @@ __m256i popcnt_epi32(__m256i input) {
 // Use test and setz assembly
 __m256i testz_epi32(__m256i input) {
 	__m256i result;
-	__m256i ZERO = _mm256_setzero_si256();
 	int* intinput = (int*) &input;
 	int* intresult = (int*) &result;
 	for (int i = 0; i < 8; i++) {
 		asm volatile(
-				"testl %1,%1\n\t"
-				"setz  %0\n\t"
+				"testl\t%1,%1\n\t"
+				"setz\t%0\n\t"
+				"andl\t$1,%0\n\t"
 				: "=m"(intresult[i])
 				: "r"(intinput[i])
 				:"cc"
