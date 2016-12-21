@@ -1,18 +1,23 @@
 # Makefile for generating programs for performance test
 
 CXX=g++
+RM=rm
 
 INCLUDE_OPENCL= -I $(AMDAPPSDKROOT)/include
+INCLUDE=$(INCLUDE_OPENCL)
 
-CXX_FLAG= -O3 -Wall -std=gnu++11 -mavx2 -c -fmessage-length=0 -pthread $(INCLUDE_OPENCL)
+LIB_OPENCL= -L $(AMDAPPSDKROOT)/lib/x86_64 -lOpenCL
+LIBS = -pthread $(LIB_OPENCL)
+
+CXX_FLAG= -O0 -g3 -Wall -std=gnu++11 -mavx2 -c -fmessage-length=0 -pthread $(INCLUDE)
 
 BIN = ../bin
 
-LIB_OPENCL= -L $(AMDAPPSDKROOT)/lib/x86_64 -lOpenCL
+INCLUDE_GTEST= -I $(GTEST)/include
+LIB_GTEST= $(LIBS) -L $(GTEST)/make -l:gtest_main.a
+CXX_TESTFLAG = $(CXX_FLAG) $(INCLUDE_GTEST)
 
-LIBS = -pthread $(LIB_OPENCL)
 
-RM=rm
 
 ifeq ($(OS),Windows_NT)
 	EXE_SUFFIX=.exe
@@ -38,6 +43,14 @@ COMMON_OBJS = \
 ./src/join/cstep/GatherThread.o \
 ./src/join/ocl/ocl_cht.o \
 ./src/join/ocl/ocl_hash.o \
+
+TEST_OBJS = \
+./test/bitmap_test.o \
+./test/CHT_test.o \
+./test/Hash_test.o \
+./test/LookupHelper_test.o \
+./test/simd_test.o \
+./test/Timer_test.o \
 
 MAIN = \
 ocljoin \
@@ -94,18 +107,33 @@ src/%.o: ../src/%.cpp mkfolder
 	$(CXX) $(CXX_FLAG) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
+	
+
+test/%.o: ../test/%.cpp mktestfolder
+	@echo 'Building file: $<'
+	$(CXX) $(CXX_FLAG) $(CXX_TESTFLAG) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
 
 mkfolder:
-	mkdir $(BIN)
-	mkdir src
-	mkdir src/lookup
-	mkdir src/tool
-	mkdir src/opencl
-	mkdir src/util
+	mkdir -p $(BIN)
+	mkdir -p src
+	mkdir -p src/lookup
+	mkdir -p src/tool
+	mkdir -p src/opencl
+	mkdir -p src/util
 	mkdir -p src/join/cstep
 	mkdir -p src/join/ocl
+
+mktestfolder: mkfolder
+	mkdir -p test
 
 clean:
 	-$(RM) -f $(MAIN) $(TOOL) $(COMMON_OBJS) $(EXE_OBJS) $(C_DEPS)
 	-$(RM) -rf $(BIN) src
 	-@echo ' '
+	
+unittest: $(COMMON_OBJS) $(TEST_OBJS)
+	@echo 'Generating Unit Test'
+	$(CXX) -o $(BIN)/unittest $(COMMON_OBJS) $(TEST_OBJS) $(LIB_GTEST)
+	@echo 'Unit Test generated'

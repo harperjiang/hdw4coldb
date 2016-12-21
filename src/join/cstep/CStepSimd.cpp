@@ -141,8 +141,9 @@ __m256i CStepSimd::lookup_cht(__m256i input) {
 	__m256i index = divrem_epu32(&offset, input, bitmapSize);
 	__m256i index2n1 = _mm256_add_epi32(_mm256_mullo_epi32(index, TWO), ONE);
 
-	__m256i loadIndex = _mm256_i32gather_epi32(alignedBitmap, index2n1, 1);
-	__m256i loadOffset = _mm256_i32gather_epi32(alignedBitmap, index, 2);
+	__m256i loadIndex = _mm256_i32gather_epi32((int* )alignedBitmap, index2n1,
+			1);
+	__m256i loadOffset = _mm256_i32gather_epi32((int* )alignedBitmap, index, 2);
 
 	__m256i popcount = popcnt_epi32(loadIndex);
 
