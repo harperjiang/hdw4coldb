@@ -32,12 +32,11 @@ protected:
 public:
 	CStepOcl();
 	virtual ~CStepOcl();
-protected:
-	virtual void init();
-	virtual uint filter(uint* gathered);
-	virtual uint lookup(uint* key, uint keylength, uint* result);
-	virtual uint gather(ulong* bitmapResult, uint* gathered);
 
+	void init();
+	uint filter(uint* gathered);
+	uint lookup(uint* key, uint keylength, uint* result);
+	uint gather(ulong* bitmapResult, uint* gathered);
 };
 
 #endif /* SRC_JOIN_CSTEP_CSTEPOCL_H_ */

@@ -84,15 +84,17 @@ int main(int argc, char** argv) {
 		Logger::getLogger("CLBuffer")->setLevel(DEBUG);
 		Logger::getLogger("CLProgram")->setLevel(DEBUG);
 	}
-	CStep *cstep;
-	if (!strcmp("oco", alg)) {
+	CStep *cstep = NULL;
+	if (!strcmp("ocl", alg)) {
 		cstep = new CStepOcl();
-	} else if (!strcmp("sco", alg)) {
+	} else if (!strcmp("simd", alg)) {
 		cstep = NULL;
 		testSimd();
 	}
-	if (cstep != NULL)
+	if (cstep != NULL) {
 		cstep->join(&outerkeys, &innerkeys, split, enableProfiling);
+		delete cstep;
+	}
 
 	delete[] outerkeys.entries;
 	delete[] innerkeys.entries;

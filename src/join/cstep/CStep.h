@@ -41,7 +41,7 @@ public:
 
 	virtual void join(kvlist* outer, kvlist* inner, uint split,
 			bool enableProfiling);
-protected:
+
 	virtual void buildLookup(kvlist* outer);
 	virtual void buildProbe(kvlist* inner);
 

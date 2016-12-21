@@ -50,6 +50,7 @@ TEST_OBJS = \
 ./test/Hash_test.o \
 ./test/LookupHelper_test.o \
 ./test/simd_test.o \
+./test/CStepSimd_test.o \
 ./test/Timer_test.o \
 
 MAIN = \
@@ -64,23 +65,6 @@ gendata \
 mergedata \
 space_analysis \
 
-
-#C_DEPS = \
-./src/lookup/CHT.d \
-./src/lookup/Hash.d \
-./src/util/Logger.d \
-./src/lookup/Lookup.d \
-./src/util/Timer.d \
-./src/lookup/LookupHelper.d \
-./src/opencl/CLBuffer.d \
-./src/opencl/CLEnv.d \
-./src/opencl/CLProgram.d \
-./src/tool/gentestdata.d \
-./src/tool/mergedata.d \
-./src/tool/space_analysis.d \
-./src/single.d \
-./src/mthread.d \
-./src/opencl.d \
 
 default: $(MAIN) $(TOOL)
 
@@ -130,7 +114,7 @@ mktestfolder: mkfolder
 
 clean:
 	-$(RM) -f $(MAIN) $(TOOL) $(COMMON_OBJS) $(EXE_OBJS) $(C_DEPS)
-	-$(RM) -rf $(BIN) src
+	-$(RM) -rf $(BIN) src test
 	-@echo ' '
 	
 unittest: $(COMMON_OBJS) $(TEST_OBJS)

@@ -15,25 +15,27 @@ protected:
 	uint* pattern;
 	ulong* alignedBitmap;
 	uint* alignedChtload;
-private:
-	__m256i hashFactor;
-	__m256i ZERO;
-	__m256i ONE;
-	__m256i TWO;
-	__m256i MAX;
 
-	__m256i check_bitmap(__m256i input);
-	__m256i lookup_cht(__m256i input);
+public:
+	static __m256i HASH_FACTOR;
+	static __m256i ZERO;
+	static __m256i ONE;
+	static __m256i TWO;
+	static __m256i MAX;
 
 public:
 	CStepSimd();
 	virtual ~CStepSimd();
-protected:
+
 	void buildProbe(kvlist* inner);
 
 	void init();
 	uint filter(uint* gathered);
 	uint lookup(uint* key, uint keylength, uint* result);
+
+	static __m256i check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input);
+	static __m256i lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
+			uint chtsize, __m256i input);
 };
 
 #endif /* SRC_JOIN_CSTEP_CSTEPSIMD_H_ */
