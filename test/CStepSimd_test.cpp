@@ -11,20 +11,20 @@
 
 TEST(CStepSimd, check_bitmap) {
 
-	ulong data[20] = { 528384, 10737698944, 31205630016, 47280292130,
+	uint bitmapSize = 20;
+	ulong data[bitmapSize] = { 528384, 10737698944, 31205630016, 47280292130,
 			68871520257, 0, 0, 0, 0, 7889, 140408603966328, 140408603966328, 0,
 			0, 0, 0, 0, 0, 0, 0 };
 	ulong* alignedBitmap = (ulong*) aligned_alloc(32,
-			cht->bitmapSize() * sizeof(ulong));
+			bitmapSize * sizeof(ulong));
 
-	for (int i = 0; i < 20; i++) {
+	for (int i = 0; i < bitmapSize; i++) {
 		alignedBitmap[0] = data[i];
 	}
 
 	__m256i input = _mm256_setr_epi32(3, 6, 2, 8, 11, 14, 25, 18);
 
-	__m256i result = CStepSimd::check_bitmap(alignedBitmap, cht->bitmapSize(),
-			input);
+	__m256i result = CStepSimd::check_bitmap(alignedBitmap, bitmapSize, input);
 
 	uint* res = (uint*) &result;
 
@@ -37,9 +37,7 @@ TEST(CStepSimd, check_bitmap) {
 	ASSERT_EQ(0, res[6]);
 	ASSERT_EQ(0, res[7]);
 
-	delete[] list->entries;
-	delete cht;
-	delete list;
+	free(alignedBitmap);
 }
 
 TEST(CStepSimd, lookup_cht) {
