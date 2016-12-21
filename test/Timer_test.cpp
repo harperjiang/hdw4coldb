@@ -13,11 +13,11 @@ TEST( Timer, Run) {
 	for (int i = 0; i < 10; i++) {
 		timer->start();
 
-		usleep(500000);
+		usleep(50000);
 
 		timer->stop();
 
-		ASSERT_TRUE(480 < timer->wallclockms() && timer->wallclockms() < 520);
+		ASSERT_TRUE(48 < timer->wallclockms() && timer->wallclockms() < 52);
 	}
 }
 
@@ -25,7 +25,7 @@ TEST(Timer, Interval) {
 	Timer* timer = new Timer();
 	timer->start();
 	for (int i = 0; i < 30; i++) {
-		usleep(500000);
+		usleep(50000);
 		timer->pause();
 		timer->resume();
 	}
@@ -34,7 +34,7 @@ TEST(Timer, Interval) {
 	ASSERT_EQ(31, timer->numInterval());
 	uint sum = 0;
 	for(uint i = 0; i < 30; i++) {
-		ASSERT_TRUE(480 < timer->interval(i) && timer->interval(i) < 520);
+		ASSERT_TRUE(48 < timer->interval(i) && timer->interval(i) < 52);
 		sum += timer->interval(i);
 	}
 	sum += timer->interval(30);

@@ -1,3 +1,4 @@
+#include <immintrin.h>
 #include "cstepjoin.h"
 #include "join/cstep/CStep.h"
 #include "join/cstep/CStepOcl.h"
@@ -6,11 +7,9 @@ using namespace std;
 
 Logger* logger = Logger::getLogger("cstepjoin");
 
-//extern void cstepOCO(kvlist* outer, kvlist* inner, uint split,
-//		bool enableProfiling = false);
-//
-//extern void cstepSCO(kvlist* outer, kvlist* inner, uint split,
-//		bool enableProfiling = false);
+void testSimd() {
+	__m256i input = _mm256_setr_epi32(1, 2, 3, 4, 5, 6, 7, 8);
+}
 
 void print_help() {
 	fprintf(stdout, "Usage: cstepjoin [options]\n");
@@ -90,9 +89,10 @@ int main(int argc, char** argv) {
 		cstep = new CStepOcl();
 	} else if (!strcmp("sco", alg)) {
 		cstep = NULL;
+		testSimd();
 	}
-
-	cstep->join(&outerkeys, &innerkeys, split, enableProfiling);
+	if (cstep != NULL)
+		cstep->join(&outerkeys, &innerkeys, split, enableProfiling);
 
 	delete[] outerkeys.entries;
 	delete[] innerkeys.entries;

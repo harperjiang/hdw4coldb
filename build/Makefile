@@ -4,7 +4,7 @@ CXX=g++
 
 INCLUDE_OPENCL= -I $(AMDAPPSDKROOT)/include
 
-CXX_FLAG= -O3 -Wall -std=gnu++11 -mavx2 -march=native -c -fmessage-length=0 -pthread $(INCLUDE_OPENCL)
+CXX_FLAG= -O3 -Wall -std=gnu++11 -mavx2 -c -fmessage-length=0 -pthread $(INCLUDE_OPENCL)
 
 BIN = ../bin
 
