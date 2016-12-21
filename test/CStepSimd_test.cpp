@@ -31,8 +31,14 @@ TEST(CStepSimd, check_bitmap) {
 
 	uint* res = (uint*) &result;
 
-	for (uint i = 0; i < 8; i++)
-		ASSERT_EQ(0, res[i]);
+	ASSERT_EQ(0, res[0]);
+	ASSERT_EQ(0, res[1]);
+	ASSERT_EQ(0, res[2]);
+	ASSERT_EQ(1, res[3]);
+	ASSERT_EQ(1, res[4]);
+	ASSERT_EQ(1, res[5]);
+	ASSERT_EQ(0, res[6]);
+	ASSERT_EQ(0, res[7]);
 
 	delete[] list->entries;
 	delete cht;
