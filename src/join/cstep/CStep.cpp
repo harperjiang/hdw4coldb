@@ -50,7 +50,7 @@ void CStep::join(kvlist* outer, kvlist* inner, uint split,
 
 	timer.stop();
 	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
-			result);
+			resultSize);
 
 	delete[] gatheredkey;
 	delete[] result;

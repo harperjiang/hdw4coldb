@@ -90,3 +90,20 @@ TEST(SIMD, Testz) {
 	ASSERT_EQ(0xffffffff, res[6]);
 	ASSERT_EQ(0, res[7]);
 }
+
+TEST(SIMD, TestNz) {
+	__m256i input = _mm256_setr_epi32(32, 12, -1, 0, 5, 2, 0, -431);
+
+	__m256i result = testz_epi32(input);
+
+	uint* res = (uint*) &result;
+
+	ASSERT_EQ(0xffffffff, res[0]);
+	ASSERT_EQ(0xffffffff, res[1]);
+	ASSERT_EQ(0xffffffff, res[2]);
+	ASSERT_EQ(0, res[3]);
+	ASSERT_EQ(0xffffffff, res[4]);
+	ASSERT_EQ(0xffffffff, res[5]);
+	ASSERT_EQ(0, res[6]);
+	ASSERT_EQ(0xffffffff, res[7]);
+}

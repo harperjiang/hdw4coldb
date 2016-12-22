@@ -11,7 +11,7 @@
 
 #define BITMAP_UNIT 32
 
-__m256i print_epu32(__m256i a) {
+void print_epu32(__m256i a) {
 	uint* data = (uint*) &a;
 	printf("%x,%x,%x,%x,%x,%x,%x,%x\n", data[0], data[1], data[2], data[3],
 			data[4], data[5], data[6], data[7]);
@@ -69,6 +69,29 @@ __m256i testz_epi32(__m256i input) {
 	return _mm256_sub_epi32(_mm256_setzero_si256(), result);
 }
 
+// set -1 for nz, 0 for zero
+// Use test and setz assembly
+__m256i testnz_epi32(__m256i input) {
+	__m256i result;
+	int* intinput = (int*) &input;
+	int* intresult = (int*) &result;
+	for (int i = 0; i < 8; i++) {
+		asm volatile(
+				"testl\t%1,%1\n\t"
+				"setnz\t%0\n\t"
+				"andl\t$1,%0\n\t"
+				: "=m"(intresult[i])
+				: "r"(intinput[i])
+				:"cc"
+		);
+	}
+	return _mm256_sub_epi32(_mm256_setzero_si256(), result);
+}
+
+void store_epi32(int* base, int offset, __m256i input) {
+	::memcpy(base + offset, &input, 256);
+}
+
 __m256i CStepSimd::HASH_FACTOR = _mm256_set1_epi32((int) UINT32_C(2654435761));
 __m256i CStepSimd::ZERO = _mm256_setzero_si256();
 __m256i CStepSimd::ONE = _mm256_set1_epi32(1);
@@ -102,28 +125,27 @@ __m256i CStepSimd::check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input) {
  */
 __m256i CStepSimd::lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
 		uint chtsize, __m256i input) {
+	__m256i hashed = remainder_epu32(_mm256_mullo_epi32(input, HASH_FACTOR),
+			bitmapSize * BITMAP_UNIT);
 	__m256i offset;
-	__m256i index = divrem_epu32(&offset, input, bitmapSize);
+	__m256i index = divrem_epu32(&offset, hashed, BITMAP_UNIT);
 	__m256i index2n = _mm256_add_epi32(index, index);
 	__m256i index2n1 = _mm256_add_epi32(index2n, ONE);
 
-	__m256i loadIndex = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
+	__m256i basePop = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
 	__m256i loadOffset = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
 
-	__m256i popcount = popcnt_epi32(loadIndex);
-
 	__m256i mask = _mm256_xor_si256(_mm256_srav_epi32(MAX, offset), MAX);
-	__m256i partialPop = _mm256_and_si256(loadOffset, mask);
+	__m256i partialPop = popcnt_epi32(_mm256_and_si256(loadOffset, mask));
 
-	__m256i location = _mm256_add_epi32(popcount, partialPop);
+	__m256i location = _mm256_add_epi32(basePop, partialPop);
 
-	__m256i chtval[THRESHOLD];
 	__m256i result = ZERO;
 
 	for (int i = 0; i < THRESHOLD; i++) {
-		chtval[i] = _mm256_i32gather_epi32((int* )chtpayload, location, 1);
+		__m256i chtval = _mm256_i32gather_epi32((int* )chtpayload, location, 4);
 		// a value of 0 means found
-		__m256i compare = _mm256_xor_si256(input, chtval[i]);
+		__m256i compare = _mm256_xor_si256(input, chtval);
 		// Test function is not available in AVX2, write my own
 		__m256i locmask = testz_epi32(compare);
 		// Store location + 1 in result, 0 for not found
@@ -176,8 +198,11 @@ void CStepSimd::init() {
 
 uint CStepSimd::filter(uint* gathered) {
 	for (uint i = 0; i < probeSize / 8; i++) {
-		__m256i loadkey = _mm256_load_si256((__m256i *) (probe + i * 8));
-		check_bitmap(this->alignedBitmap, this->_lookup->bitmapSize(), loadkey);
+		uint index = probe + i * 8;
+		__m256i loadkey = _mm256_load_si256((__m256i *) index);
+		__m256i check = check_bitmap(this->alignedBitmap,
+				this->_lookup->bitmapSize(), loadkey);
+		store_epi32(probe, i * 8, check);
 	}
 	if (probeSize % 8) {
 		uint psize = probeSize % 8;
@@ -186,11 +211,12 @@ uint CStepSimd::filter(uint* gathered) {
 				psize >= 2 ? start[1] : 0, psize >= 3 ? start[2] : 0,
 				psize >= 4 ? start[3] : 0, psize >= 5 ? start[4] : 0,
 				psize >= 6 ? start[5] : 0, psize >= 7 ? start[6] : 0, 0);
-		check_bitmap(this->alignedBitmap, this->_lookup->bitmapSize(),
-				loadpartial);
+		__m256i checkpartial = check_bitmap(this->alignedBitmap,
+				this->_lookup->bitmapSize(), loadpartial);
 	}
 
-	return 0;
+	// Do not filter
+	return probeSize;
 }
 
 uint CStepSimd::lookup(uint* key, uint keylength, uint* result) {

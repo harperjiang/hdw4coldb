@@ -77,8 +77,8 @@ TEST(CStepSimd, lookup_cht) {
 	ASSERT_EQ(0xffffffff, res[1]);
 	ASSERT_EQ(0xffffffff, res[2]);
 	ASSERT_EQ(13, res[3]);
-	ASSERT_EQ(11, res[4]);
-	ASSERT_EQ(17, res[5]);
+	ASSERT_EQ(19, res[4]);
+	ASSERT_EQ(4, res[5]);
 	ASSERT_EQ(0xffffffff, res[6]);
 	ASSERT_EQ(0xffffffff, res[7]);
 

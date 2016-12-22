@@ -14,6 +14,7 @@
 #include "../../lookup/Lookup.h"
 #include "../../lookup/CHT.h"
 #include "../../util/Logger.h"
+#include "../Join.h"
 
 #define THRESHOLD 5
 #define BITMAP_SIZE		32
@@ -26,7 +27,7 @@
 #define OVERFLOW_INIT   10000
 #define MIN_SIZE 	1000
 
-class CStep {
+class CStep: public Join {
 
 protected:
 	bool enableProfiling;
