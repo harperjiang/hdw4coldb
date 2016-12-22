@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 		testSimd();
 	}
 	if (cstep != NULL) {
-		cstep->join(&outerkeys, &innerkeys, split, enableProfiling);
+		cstep->join(&outerkeys, &innerkeys, enableProfiling);
 		delete cstep;
 	}
 

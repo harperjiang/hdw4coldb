@@ -77,15 +77,9 @@ void ocojoin(kvlist* outer, kvlist* inner, uint split, bool enableProfiling) {
 		innerkey[i] = inner->entries[i].key;
 	}
 
-	uint32_t* cht_payload = new uint32_t[cht->payload_size];
-	for (uint32_t i = 0; i < cht->payload_size; i++) {
-		cht_payload[i] = cht->payloads[i].key;
-	}
+	uint32_t* cht_payload = cht->keys;
 
-	uint32_t* hash_payload = new uint32_t[cht->overflow->bucket_size];
-	for (uint32_t i = 0; i < cht->overflow->bucket_size; i++) {
-		hash_payload[i] = cht->overflow->buckets[i].key;
-	}
+	uint32_t* hash_payload = cht->overflow->buckets;
 
 	uint workSize = inner->size;
 	uint32_t* passedkey = new uint32_t[workSize];

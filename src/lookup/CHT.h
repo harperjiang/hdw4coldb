@@ -15,7 +15,8 @@ class CHT: public Lookup {
 public:
 	uint64_t* bitmap;
 	uint32_t bitmap_size;
-	kv* payloads;
+	uint32_t* keys;
+	uint8_t* payloads;
 	uint32_t payload_size;
 	Hash* overflow;
 public:
@@ -27,7 +28,7 @@ public:
 	uint8_t* access(uint32_t key);
 	void scan(uint32_t key, ScanContext* context);
 
-	kv* findUnique(uint32_t key);
+	uint8_t* findUnique(uint32_t key);
 	uint32_t payloadSize();
 	uint32_t bitmapSize();
 	Hash* getOverflow();

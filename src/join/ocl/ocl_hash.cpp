@@ -23,10 +23,7 @@ void runHash(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 
 	uint32_t meta[2];
 	meta[1] = hash->bucket_size;
-	uint32_t* payload = new uint32_t[hash->bucket_size];
-	for (uint32_t i = 0; i < hash->bucket_size; i++) {
-		payload[i] = hash->buckets[i].key;
-	}
+	uint32_t* payload = hash->buckets;
 
 	uint32_t* innerkey = new uint32_t[inner->size];
 	for (uint32_t i = 0; i < inner->size; i++) {

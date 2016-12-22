@@ -12,6 +12,9 @@ CStep::CStep() {
 	enableProfiling = false;
 	_lookup = NULL;
 	probe = NULL;
+	probeSize = 0;
+
+	_logger = Logger::getLogger("CStep");
 }
 
 CStep::~CStep() {
@@ -21,46 +24,45 @@ CStep::~CStep() {
 		delete probe;
 }
 
-void CStep::join(kvlist* outer, kvlist* inner, uint split,
-		bool enableProfiling) {
+void CStep::join(kvlist* outer, kvlist* inner, bool enableProfiling) {
 	this->enableProfiling = enableProfiling;
 
-	Timer timer;
 
-	logger->info("Running CHT Step Join\n");
+	_logger->info("Running CHT Step Join\n");
 
 	buildLookup(outer);
 	buildProbe(inner);
 
 	uint workSize = inner->size;
-	// OpenCL program compilation takes a long time
+	// Initialization may take a long time
 	this->init();
 
-	timer.start();
+	_timer.start();
 
 	uint gatheredSize = workSize;
 	uint* gatheredkey = new uint[gatheredSize];
-
 	uint gatheredKeyLength = this->filter(gatheredkey);
+	_timer.interval("filter");
 
-	timer.pause();
-	timer.resume();
 	uint* result = new uint[gatheredKeyLength];
 	uint resultSize = this->lookup(gatheredkey, gatheredKeyLength, result);
+	_timer.interval("lookup");
+	_timer.stop();
 
-	timer.stop();
-	logger->info("Running time: %u ms, matched row %u\n", timer.wallclockms(),
+	_logger->info("Running time: %u ms, matched row %u\n", _timer.wallclockms(),
 			resultSize);
-
+	for (int i = 0; i < _timer.numInterval(); i++) {
+		_logger->info("Phase %s: %u ms\n", _timer.name(i), _timer.interval(i));
+	}
 	delete[] gatheredkey;
 	delete[] result;
 }
 
 void CStep::buildLookup(kvlist* outer) {
-	logger->info("Building Outer Table\n");
+	_logger->info("Building Outer Table\n");
 	_lookup = new CHT();
 	_lookup->build(outer->entries, outer->size);
-	logger->info("Building Outer Table Done\n");
+	_logger->info("Building Outer Table Done\n");
 }
 
 void CStep::buildProbe(kvlist* inner) {

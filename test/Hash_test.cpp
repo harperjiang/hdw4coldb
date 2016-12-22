@@ -55,10 +55,10 @@ TEST( Hash, Get) {
 	ASSERT_EQ(ht->bucketSize(), 32 * RATIO);
 
 	for (int i = 0; i < 32; i++) {
-		kv* entry = ht->get(i + 1);
+		uint8_t* plds = ht->get(i + 1);
 
-		ASSERT_EQ(i, entry->payload[0]);
-		ASSERT_EQ(3, entry->payload[2]);
+		ASSERT_EQ(i, plds[0]);
+		ASSERT_EQ(3, plds[2]);
 	}
 
 	delete ht;
@@ -146,10 +146,10 @@ TEST( Hash, Organize) {
 	ASSERT_TRUE(ht->bucketSize() >= 132 * RATIO);
 
 	for (int i = 0; i < 100; i++) {
-		kv* entry = ht->get(i + 100);
+		uint8_t* plds = ht->get(i + 100);
 
-		ASSERT_EQ(i, entry->payload[0]);
-		ASSERT_EQ(3, entry->payload[2]);
+		ASSERT_EQ(i, plds[0]);
+		ASSERT_EQ(3, plds[2]);
 	}
 
 	delete ht;

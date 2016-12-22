@@ -10,13 +10,14 @@
 
 #include <immintrin.h>
 #include "CStep.h"
-
+#include "../../simd/SimdHelper.h"
 
 class CStepSimd: public CStep {
+	friend class CheckBitmapTransform;
+	friend class LookupChtTransform;
 protected:
-	uint* pattern;
-	ulong* alignedBitmap;
-	uint* alignedChtload;
+	ulong* alignedBitmap = NULL;
+	uint* alignedChtload = NULL;
 
 public:
 	static __m256i HASH_FACTOR;
@@ -38,6 +39,31 @@ public:
 	static __m256i check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input);
 	static __m256i lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
 			uint chtsize, __m256i input);
+};
+
+class CheckBitmapTransform: public SimdTransform {
+private:
+	CStepSimd* owner;
+public:
+	CheckBitmapTransform(CStepSimd* css) {
+		owner = css;
+	}
+	virtual ~CheckBitmapTransform() {
+	}
+
+	__m256i transform(__m256i);
+};
+
+class LookupChtTransform: public SimdTransform {
+private:
+	CStepSimd* owner;
+public:
+	LookupChtTransform(CStepSimd* css) {
+		owner = css;
+	}
+	virtual ~LookupChtTransform() {
+	}
+	__m256i transform(__m256i);
 };
 
 #endif /* SRC_JOIN_CSTEP_CSTEPSIMD_H_ */

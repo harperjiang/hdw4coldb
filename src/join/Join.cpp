@@ -9,12 +9,21 @@
 #include "../util/Logger.h"
 
 Join::Join() {
-	// TODO Auto-generated constructor stub
-
+	_logger = NULL;
+	_matched = new Matched();
 }
 
 Join::~Join() {
-	// TODO Auto-generated destructor stub
 }
 
+void Join::join(kvlist* outer, kvlist* inner, bool enableProfiling) {
 
+}
+
+void Join::setMatched(Matched* m) {
+	this->_matched = m;
+}
+
+Matched* Join::getMatched() {
+	return this->_matched;
+}

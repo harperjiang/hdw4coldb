@@ -19,18 +19,22 @@ private:
 	uint32_t intervalCounter = 0;
 	uint32_t intervalLimit;
 	uint64_t* intervals;
+	char** names;
 public:
 	Timer();
 	virtual ~Timer();
 
 	void start();
-	void pause();
+	uint64_t pause();
 	void resume();
+
+	void interval(const char* name);
 	void stop();
 
 	uint64_t wallclockms();
 	uint32_t numInterval();
 	uint64_t interval(uint32_t index);
+	char* name(uint32_t index);
 };
 
 #endif /* SRC_TIMER_H_ */

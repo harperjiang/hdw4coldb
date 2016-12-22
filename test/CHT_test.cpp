@@ -58,10 +58,10 @@ TEST( CHT, FindUnique) {
 	table->build(entries, 125000);
 
 	for (int i = 0; i < 125000; i++) {
-		kv* entry = table->findUnique(entries[i].key);
-		ASSERT_TRUE(entry != NULL);
+		uint8_t* plds = table->findUnique(entries[i].key);
+		ASSERT_TRUE(plds != NULL);
 		for (int j = 0; j < 4; j++) {
-			ASSERT_EQ(entries[i].payload[j], entry->payload[j]);
+			ASSERT_EQ(entries[i].payload[j], plds[j]);
 		}
 	}
 	delete[] entries;

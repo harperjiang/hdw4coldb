@@ -80,6 +80,7 @@ CHT::CHT() :
 		Lookup("CHT") {
 	bitmap = NULL;
 	bitmap_size = 0;
+	keys = NULL;
 	payloads = NULL;
 	payload_size = 0;
 	overflow = NULL;
@@ -88,6 +89,8 @@ CHT::CHT() :
 CHT::~CHT() {
 	if (NULL != bitmap)
 		delete[] bitmap;
+	if (NULL != keys)
+		delete[] keys;
 	if (NULL != payloads)
 		delete[] payloads;
 	if (NULL != overflow)
@@ -129,16 +132,17 @@ void CHT::build(kv* entries, uint32_t size) {
 	this->payload_size = sum;
 
 	// The second pass, allocate space and place items
-	this->payloads = new kv[sum];
+	this->keys = new uint32_t[sum]();
+	this->payloads = new uint8_t[sum * PAYLOAD_SIZE];
 	for (uint32_t i = 0; i < size; i++) {
 		uint32_t hval = mut_hash(entries[i].key) % bitsize;
 		uint32_t item_offset = bitmap_popcnt(this->bitmap, hval);
 
 		for (uint32_t counter = 0; counter < THRESHOLD; counter++) {
-			kv* place = this->payloads + item_offset + counter;
-			if (place->key == 0) {
-				::memcpy(place, entries + i, sizeof(kv));
-				break;
+			if (keys[item_offset + counter] == 0) {
+				keys[item_offset + counter] = entries[i].key;
+				::memcpy(payloads + i * PAYLOAD_SIZE, entries[i].payload,
+						sizeof(uint8_t) * PAYLOAD_SIZE);
 			}
 		}
 	}
@@ -161,7 +165,7 @@ uint32_t CHT::bitmapSize() {
 	return this->bitmap_size;
 }
 
-kv* CHT::findUnique(uint32_t key) {
+uint8_t* CHT::findUnique(uint32_t key) {
 	uint32_t hval = mut_hash(key) % (bitmap_size * BITMAP_UNIT);
 	if (!bitmap_test(bitmap, hval)) {
 		return NULL;
@@ -170,18 +174,17 @@ kv* CHT::findUnique(uint32_t key) {
 
 	uint32_t counter = 0;
 	while (counter < THRESHOLD && offset + counter < payload_size
-			&& this->payloads[offset + counter].key != key) {
+			&& this->keys[offset + counter] != key) {
 		counter++;
 	}
 	if (counter == THRESHOLD || offset + counter >= payload_size) {
 		return this->overflow->get(key);
 	}
-	return this->payloads + offset + counter;
+	return this->payloads + PAYLOAD_SIZE * (offset + counter);
 }
 
 uint8_t* CHT::access(uint32_t key) {
-	kv* entry = this->findUnique(key);
-	return (NULL != entry) ? entry->payload : NULL;
+	return this->findUnique(key);
 }
 
 void CHT::scan(uint32_t key, ScanContext* context) {
@@ -192,9 +195,9 @@ void CHT::scan(uint32_t key, ScanContext* context) {
 
 	uint32_t counter = 0;
 	while (counter < THRESHOLD) {
-		if (this->payloads[offset + counter].key == key) {
-			kv entry = this->payloads[offset + counter];
-			context->execute(entry.key, entry.payload);
+		if (this->keys[offset + counter] == key) {
+			context->execute(key,
+					this->payloads + PAYLOAD_SIZE * (offset + counter));
 		}
 		counter++;
 	}

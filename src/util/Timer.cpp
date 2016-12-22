@@ -11,10 +11,12 @@
 Timer::Timer() {
 	intervalLimit = 10;
 	intervals = new uint64_t[intervalLimit];
+	names = new char*[intervalLimit];
 }
 
 Timer::~Timer() {
 	delete[] intervals;
+	delete[] names;
 }
 
 void Timer::start() {
@@ -27,7 +29,7 @@ void Timer::stop() {
 	this->pause();
 }
 
-void Timer::pause() {
+uint64_t Timer::pause() {
 	struct timeval stoptime;
 	gettimeofday(&stoptime, NULL);
 
@@ -41,12 +43,19 @@ void Timer::pause() {
 
 	uint64_t interval = 1000 * (stoptime.tv_sec - _start.tv_sec)
 			+ (stoptime.tv_usec - _start.tv_usec) / 1000;
-	intervals[intervalCounter++] = interval;
 	_wallclockms += interval;
+	return interval;
 }
 
 void Timer::resume() {
 	gettimeofday(&_start, NULL);
+}
+
+void Timer::interval(const char* name) {
+	uint64_t interval = pause();
+	intervals[intervalCounter] = interval;
+	names[intervalCounter++] = (char*) name;
+	resume();
 }
 
 uint64_t Timer::wallclockms() {
@@ -59,4 +68,8 @@ uint32_t Timer::numInterval() {
 
 uint64_t Timer::interval(uint32_t index) {
 	return this->intervals[index];
+}
+
+char* Timer::name(uint32_t index) {
+	return this->names[index];
 }

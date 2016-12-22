@@ -16,7 +16,8 @@ class Hash: public Lookup {
 public:
 	uint32_t _size;
 	uint32_t bucket_size;
-	kv *buckets;
+	uint32_t *buckets;
+	uint8_t *payloads;
 public:
 	Hash();
 	Hash(uint32_t size);
@@ -27,7 +28,7 @@ public:
 	uint8_t* access(uint32_t key);
 	void scan(uint32_t key, ScanContext* context);
 
-	kv* get(uint32_t key);
+	uint8_t* get(uint32_t key);
 	void put(uint32_t key, uint8_t* payload);
 	uint32_t size();
 	uint32_t bucketSize();

@@ -39,15 +39,9 @@ void CStepOcl::init() {
 	meta[1] = _lookup->overflow->bucket_size;
 	meta[2] = _lookup->payload_size;
 
-	cht_payload = new uint[_lookup->payload_size];
-	for (uint i = 0; i < _lookup->payload_size; i++) {
-		cht_payload[i] = _lookup->payloads[i].key;
-	}
+	cht_payload = _lookup->keys;
 
-	hash_payload = new uint[_lookup->overflow->bucket_size];
-	for (uint i = 0; i < _lookup->overflow->bucket_size; i++) {
-		hash_payload[i] = _lookup->overflow->buckets[i].key;
-	}
+	hash_payload = _lookup->overflow->buckets;
 
 	env = new CLEnv(enableProfiling);
 

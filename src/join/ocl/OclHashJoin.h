@@ -14,8 +14,7 @@ class OclHashJoin: public Join {
 public:
 	OclHashJoin();
 	virtual ~OclHashJoin();
-	virtual void join(kvlist* outer, kvlist* inner, uint split,
-			bool enableProfiling);
+	virtual void join(kvlist* outer, kvlist* inner, bool enableProfiling);
 };
 
 #endif /* SRC_JOIN_OCL_OCLHASHJOIN_H_ */

@@ -35,13 +35,11 @@ protected:
 	uint* probe;
 	uint probeSize;
 
-	Logger* logger = Logger::getLogger("CStep");
 public:
 	CStep();
 	virtual ~CStep();
 
-	virtual void join(kvlist* outer, kvlist* inner, uint split,
-			bool enableProfiling);
+	virtual void join(kvlist* outer, kvlist* inner, bool enableProfiling);
 
 	virtual void buildLookup(kvlist* outer);
 	virtual void buildProbe(kvlist* inner);

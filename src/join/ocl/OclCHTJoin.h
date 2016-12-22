@@ -8,15 +8,13 @@
 #ifndef SRC_JOIN_OCL_OCLCHTJOIN_H_
 #define SRC_JOIN_OCL_OCLCHTJOIN_H_
 
-
 #include "../Join.h"
 
 class OclCHTJoin: public Join {
 public:
 	OclCHTJoin();
 	virtual ~OclCHTJoin();
-	virtual void join(kvlist* outer, kvlist* inner, uint split,
-			bool enableProfiling);
+	virtual void join(kvlist* outer, kvlist* inner, bool enableProfiling);
 };
 
 #endif /* SRC_JOIN_OCL_OCLCHTJOIN_H_ */

@@ -8,14 +8,11 @@
 #include <gtest/gtest.h>
 #include <immintrin.h>
 
-extern __m256i remainder_epu32(__m256i a, uint b);
-extern __m256i divrem_epu32(__m256i* remainder, __m256i a, uint b);
-extern __m256i popcnt_epi32(__m256i input);
-extern __m256i testz_epi32(__m256i input);
+#include "../src/simd/SimdHelper.h"
 
 TEST(SIMD, Remainder) {
 	__m256i input = _mm256_setr_epi32(1, 2, 3, 4, 5, 6, 7, 8);
-	__m256i remainder = remainder_epu32(input, 8);
+	__m256i remainder = SimdHelper::remainder_epu32(input, 8);
 
 	uint* res = (uint*) &remainder;
 
@@ -33,7 +30,7 @@ TEST(SIMD, Divrem) {
 	__m256i input = _mm256_setr_epi32(47, 32, 65, 142, 251, 356, 27, 18);
 	__m256i remainder;
 
-	__m256i quotient = divrem_epu32(&remainder, input, 8);
+	__m256i quotient = SimdHelper::divrem_epu32(&remainder, input, 8);
 	uint* res = (uint*) &remainder;
 
 	ASSERT_EQ(7, res[0]);
@@ -60,7 +57,7 @@ TEST(SIMD, Divrem) {
 TEST(SIMD, Popcnt) {
 	__m256i input = _mm256_setr_epi32(0x3242, 0x3, 0x242, 0x21, 0x19, 0x221,
 			0xffffffff, 0xf2df);
-	__m256i result = popcnt_epi32(input);
+	__m256i result = SimdHelper::popcnt_epi32(input);
 
 	uint* res = (uint*) &result;
 
@@ -77,7 +74,7 @@ TEST(SIMD, Popcnt) {
 TEST(SIMD, Testz) {
 	__m256i input = _mm256_setr_epi32(32, 12, -1, 0, 5, 2, 0, -431);
 
-	__m256i result = testz_epi32(input);
+	__m256i result = SimdHelper::testz_epi32(input);
 
 	uint* res = (uint*) &result;
 
@@ -94,7 +91,7 @@ TEST(SIMD, Testz) {
 TEST(SIMD, TestNz) {
 	__m256i input = _mm256_setr_epi32(32, 12, -1, 0, 5, 2, 0, -431);
 
-	__m256i result = testz_epi32(input);
+	__m256i result = SimdHelper::testz_epi32(input);
 
 	uint* res = (uint*) &result;
 

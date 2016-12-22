@@ -18,16 +18,19 @@ class Join {
 protected:
 	Timer _timer;
 	Logger* _logger;
+	Matched* _matched;
 public:
 	Join();
 	virtual ~Join();
 
-	virtual void join(kvlist* outer, kvlist* inner, uint split,
-			bool enableProfiling) = 0;
+	virtual void join(kvlist* outer, kvlist* inner, bool enableProfiling) = 0;
+
+	Matched* getMatched();
+	void setMatched(Matched*);
 };
 
 /**
- * Context for match
+ * Context for matched records
  */
 class Matched {
 private:
@@ -43,6 +46,9 @@ public:
 	}
 	virtual uint getCounter() {
 		return counter;
+	}
+	virtual void merge(Matched* another) {
+		counter += another->counter;
 	}
 };
 

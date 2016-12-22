@@ -23,5 +23,9 @@ void CounterThread::run() {
 
 uint CounterThread::count(uint* base, uint length, uint numThread, uint value,
 		bool equal) {
-	return 0;
+	uint result = 0;
+	for (uint i = 0; i < length; i++) {
+		result += ((base[i] == value) == equal);
+	}
+	return result;
 }
