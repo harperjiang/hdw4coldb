@@ -6,9 +6,10 @@
  */
 
 #include "CStepSimd.h"
-#include <immintrin.h>
 #include <x86intrin.h>
 #include <stdlib.h>
+
+#define BITMAP_UNIT 32
 
 __m256i print_epu32(__m256i a) {
 	uint* data = (uint*) &a;
@@ -81,14 +82,15 @@ __m256i CStepSimd::check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input) {
 	uint byteSize = 32;
 
 	__m256i hashed = remainder_epu32(_mm256_mullo_epi32(input, HASH_FACTOR),
-			bitmapSize);
+			bitmapSize * BITMAP_UNIT);
 	print_epu32(hashed);
 	__m256i offset;
 	__m256i index = divrem_epu32(&offset, hashed, byteSize);
 	print_epu32(index);
 	print_epu32(offset);
 	// Use index to load from bitmap
-	__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index, 2);
+	__m256i index2n1 = _mm256_add_epi32(_mm256_mullo_epi32(index, TWO), ONE);
+	__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n1, 1);
 	print_epu32(byte);
 	// Use offset to create pattern
 	__m256i ptn = _mm256_sllv_epi32(ONE, offset);

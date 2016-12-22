@@ -8,7 +8,9 @@
 #ifndef SRC_JOIN_CSTEP_CSTEPSIMD_H_
 #define SRC_JOIN_CSTEP_CSTEPSIMD_H_
 
-#include "CStepOcl.h"
+#include <immintrin.h>
+#include "CStep.h"
+
 
 class CStepSimd: public CStep {
 protected:
