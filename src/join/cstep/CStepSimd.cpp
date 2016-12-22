@@ -10,6 +10,12 @@
 #include <x86intrin.h>
 #include <stdlib.h>
 
+__m256i print_epu32(__m256i a) {
+	uint* data = (uint*) &a;
+	printf("%x,%x,%x,%x,%x,%x,%x,%x\n", data[0], data[1], data[2], data[3],
+			data[4], data[5], data[6], data[7]);
+}
+
 __m256i remainder_epu32(__m256i a, uint b) {
 	uint* as = (uint*) &a;
 	return _mm256_setr_epi32(as[0] % b, as[1] % b, as[2] % b, as[3] % b,
@@ -76,18 +82,21 @@ __m256i CStepSimd::check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input) {
 
 	__m256i hashed = remainder_epu32(_mm256_mullo_epi32(input, HASH_FACTOR),
 			bitmapSize);
+	print_epu32(hashed);
 	__m256i offset;
 	__m256i index = divrem_epu32(&offset, hashed, byteSize);
-
+	print_epu32(index);
+	print_epu32(offset);
 	// Use index to load from bitmap
 	__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index, 2);
+	print_epu32(byte);
 	// Use offset to create pattern
-	// Load operation is slower than a shift
-	//	__m256i ptn = _mm256_i32gather_epi32(pattern, offset, 1);
 	__m256i ptn = _mm256_sllv_epi32(ONE, offset);
+	print_epu32(ptn);
 	// 1 for selected key, zero for abandoned key
 	__m256i selector = _mm256_srav_epi32(_mm256_and_si256(byte, ptn),
 			_mm256_sub_epi32(offset, ONE));
+	print_epu32(selector);
 	return selector;
 }
 
