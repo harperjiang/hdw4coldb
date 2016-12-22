@@ -9,32 +9,20 @@
 #include <stdlib.h>
 #include "../src/join/cstep/CStepSimd.h"
 
-TEST(CStepSimd, genBitmap) {
-	CHT* cht = new CHT();
-	kvlist* list = new kvlist();
-	list->entries = new kv[20];
-	for(int i = 0 ; i < 20 ; i++) {
-		list->entries[i].key = 3*i+5;
-	}
-	list->size = 20;
-	cht->build(list->entries,list->size);
-
-	for(int i = 0 ; i < cht->bitmapSize();i++) {
-		printf("%#lx\n",cht->bitmap[i]);
-	}
-}
-
 TEST(CStepSimd, check_bitmap) {
 
-	uint bitmapSize = 20;
-	ulong data[bitmapSize] = {0x81000, 0x‭280044880‬, 0x‭744002040‬, 0x‭B02200122‬,
-		0x‭1009100001‬, 0, 0, 0, 0, 7889, 140408603966328, 140408603966328, 0,
-		0, 0, 0, 0, 0, 0, 0};
+	uint bitmapSize = 5;
+	ulong data[bitmapSize] = {0x81000,
+		0x280044880,
+		0x744002040,
+		0xb02200122,
+		0x1009100001
+	};
 	ulong* alignedBitmap = (ulong*) aligned_alloc(32,
 			bitmapSize * sizeof(ulong));
 
 	for (int i = 0; i < bitmapSize; i++) {
-		alignedBitmap[0] = data[i];
+		alignedBitmap[i] = data[i];
 	}
 
 	__m256i input = _mm256_setr_epi32(3, 6, 2, 8, 11, 14, 25, 18);
