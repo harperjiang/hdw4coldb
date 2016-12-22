@@ -83,23 +83,18 @@ __m256i CStepSimd::check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input) {
 
 	__m256i hashed = remainder_epu32(_mm256_mullo_epi32(input, HASH_FACTOR),
 			bitmapSize * BITMAP_UNIT);
-	print_epu32(hashed);
 	__m256i offset;
 	__m256i index = divrem_epu32(&offset, hashed, byteSize);
-	print_epu32(index);
-	print_epu32(offset);
-	// Use index to load from bitmap
-	__m256i index2n1 = _mm256_add_epi32(_mm256_mullo_epi32(index, TWO), ONE);
-	__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n1, 1);
-	print_epu32(byte);
+	__m256i index2n = _mm256_add_epi32(index, index);
+
+	// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
+	__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
 	// Use offset to create pattern
 	__m256i ptn = _mm256_sllv_epi32(ONE, offset);
-	print_epu32(ptn);
-	// 1 for selected key, zero for abandoned key
-	__m256i selector = _mm256_srav_epi32(_mm256_and_si256(byte, ptn),
-			_mm256_sub_epi32(offset, ONE));
-	print_epu32(selector);
-	return selector;
+	// -1 for selected key, zero for abandoned key
+	__m256i selector = _mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset);
+	selector = _mm256_sign_epi32(selector, MAX);
+	return _mm256_and_si256(selector, input);
 }
 
 /**
@@ -109,10 +104,11 @@ __m256i CStepSimd::lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
 		uint chtsize, __m256i input) {
 	__m256i offset;
 	__m256i index = divrem_epu32(&offset, input, bitmapSize);
-	__m256i index2n1 = _mm256_add_epi32(_mm256_mullo_epi32(index, TWO), ONE);
+	__m256i index2n = _mm256_add_epi32(index, index);
+	__m256i index2n1 = _mm256_add_epi32(index2n, ONE);
 
-	__m256i loadIndex = _mm256_i32gather_epi32((int* )bitmap, index2n1, 1);
-	__m256i loadOffset = _mm256_i32gather_epi32((int* )bitmap, index, 2);
+	__m256i loadIndex = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
+	__m256i loadOffset = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
 
 	__m256i popcount = popcnt_epi32(loadIndex);
 
@@ -124,6 +120,7 @@ __m256i CStepSimd::lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
 	__m256i chtval[THRESHOLD];
 	__m256i result = ZERO;
 
+	// FIXME Use 0 will miss the location of real 0
 	for (int i = 0; i < THRESHOLD; i++) {
 		chtval[i] = _mm256_i32gather_epi32((int* )chtpayload, location, 1);
 		// a value of 0 means found

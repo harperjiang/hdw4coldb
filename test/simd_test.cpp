@@ -90,4 +90,3 @@ TEST(SIMD, Testz) {
 	ASSERT_EQ(0xffffffff, res[6]);
 	ASSERT_EQ(0, res[7]);
 }
-
