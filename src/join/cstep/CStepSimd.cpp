@@ -98,7 +98,7 @@ __m256i CStepSimd::check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input) {
 }
 
 /**
- * Return the location of the given key in cht payload, 0 if not found
+ * Return the location of the given key in cht payload, -1 if not found
  */
 __m256i CStepSimd::lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
 		uint chtsize, __m256i input) {
@@ -120,20 +120,22 @@ __m256i CStepSimd::lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
 	__m256i chtval[THRESHOLD];
 	__m256i result = ZERO;
 
-	// FIXME Use 0 will miss the location of real 0
 	for (int i = 0; i < THRESHOLD; i++) {
 		chtval[i] = _mm256_i32gather_epi32((int* )chtpayload, location, 1);
 		// a value of 0 means found
 		__m256i compare = _mm256_xor_si256(input, chtval[i]);
 		// Test function is not available in AVX2, write my own
 		__m256i locmask = testz_epi32(compare);
-		__m256i locstore = _mm256_and_si256(locmask, location);
+		// Store location + 1 in result, 0 for not found
+		__m256i locstore = _mm256_and_si256(locmask,
+				_mm256_add_epi32(location, ONE));
 		result = _mm256_or_si256(result, locstore);
 		location = _mm256_add_epi32(location, ONE);
 		// If location is greater than boundary, reduce it
 		location = remainder_epu32(location, chtsize);
 	}
-	return result;
+	// Location for found key, and -1 for not found
+	return _mm256_sub_epi32(result, ONE);
 }
 
 CStepSimd::CStepSimd() {
