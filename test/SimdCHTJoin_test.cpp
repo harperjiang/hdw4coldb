@@ -96,8 +96,7 @@ TEST(SimdCHTJoin, lookup_hash) {
 
 	__m256i input = _mm256_setr_epi32(1, 0, 21, 8, 11, 14, 0, 0);
 
-	__m256i result = SimdCHTJoin::lookup_hash(alignedbuckets, hash->bucket_size,
-			input);
+	__m256i result = SimdCHTJoin::lookup_hash(alignedbuckets, datasize, input);
 
 	uint* res = (uint*) &result;
 	ASSERT_EQ(0xffffffff, res[0]);
@@ -109,7 +108,7 @@ TEST(SimdCHTJoin, lookup_hash) {
 	ASSERT_EQ(0xffffffff, res[6]);
 	ASSERT_EQ(0xffffffff, res[7]);
 
-	result = SimdCHTJoin::lookup_hash(alignedbuckets, hash->bucket_size,
+	result = SimdCHTJoin::lookup_hash(alignedbuckets, datasize,
 			SimdHelper::ZERO);
 
 	res = (uint*) &result;
