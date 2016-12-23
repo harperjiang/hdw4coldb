@@ -88,9 +88,13 @@ TEST(SimdCHTJoin, lookup_cht) {
 }
 
 TEST(SimdCHTJoin, lookup_hash) {
+
 	uint datasize = 33;
 	uint data[datasize] = { 8, 0, 44, 35, 0, 5, 53, 62, 0, 23, 14, 0, 0, 32, 41,
 			0, 0, 50, 59, 0, 20, 11, 0, 0, 38, 29, 47, 0, 56, 0, 0, 26, 17 };
+	uint* alignedbuckets = (uint*) aligned_alloc(32, sizeof(uint) * datasize);
+	memcpy(alignedbuckets, data, sizeof(uint) * datasize);
+
 	uint* alignedbuckets = (uint*) aligned_alloc(32, sizeof(uint) * datasize);
 	memcpy(alignedbuckets, data, sizeof(uint) * datasize);
 
@@ -102,9 +106,9 @@ TEST(SimdCHTJoin, lookup_hash) {
 	ASSERT_EQ(0xffffffff, res[0]);
 	ASSERT_EQ(0xffffffff, res[1]);
 	ASSERT_EQ(0xffffffff, res[2]);
-	ASSERT_EQ(13, res[3]);
-	ASSERT_EQ(19, res[4]);
-	ASSERT_EQ(4, res[5]);
+	ASSERT_EQ(0, res[3]);
+	ASSERT_EQ(21, res[4]);
+	ASSERT_EQ(10, res[5]);
 	ASSERT_EQ(0xffffffff, res[6]);
 	ASSERT_EQ(0xffffffff, res[7]);
 

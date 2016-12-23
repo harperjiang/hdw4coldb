@@ -103,18 +103,23 @@ __m256i SimdCHTJoin::lookup_hash(uint* hashbuckets, uint bktsize,
 		__m256i input) {
 	__m256i hashed = SimdHelper::remainder_epu32(
 			_mm256_mullo_epi32(input, HASH_FACTOR), bktsize);
+	__m256i inputnz = SimdHelper::testnz_epi32(input);
 	__m256i flag = input;
 	__m256i result = SimdHelper::ZERO;
 	while (!_mm256_testz_si256(flag, SimdHelper::MAX)) {
 		__m256i load = _mm256_i32gather_epi32(hashbuckets, hashed, 4);
-		// For equal keys, store location
-		__m256i locmask = SimdHelper::testz_epi32(
-				_mm256_xor_si256(load, input));
+		// For key equal to load and nz, store location
+		__m256i locmask = _mm256_and_si256(inputnz,
+				SimdHelper::testz_epi32(_mm256_xor_si256(load, input)));
 		__m256i hashed1 = _mm256_add_epi32(hashed, SimdHelper::ONE);
 		result = _mm256_or_si256(result, _mm256_and_si256(locmask, hashed1));
 		// For 0, store 0 to flag
 		__m256i flagmask = SimdHelper::testnz_epi32(load);
 		flag = _mm256_and_si256(flagmask, flag);
+		// For found, store 0 to flag
+		flag = _mm256_and_si256(flag,
+				_mm256_sub_epi32(SimdHelper::ZERO,
+						_mm256_add_epi32(SimdHelper::ONE, locmask)));
 		// Increase by one
 		hashed = SimdHelper::remainder_epu32(hashed1, bktsize);
 	}
