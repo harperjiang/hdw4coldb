@@ -21,21 +21,21 @@ protected:
 	ulong* alignedBitmap = NULL;
 	uint* alignedChtload = NULL;
 	uint* alignedHashbkt = NULL;
-	uint* probe = NULL;
-	uint probeSize = 0;
-
-	CHT* _lookup = NULL;
 
 	bool collectBitmap;
 	bool collectCht;
+protected:
+	Lookup* createLookup();
+	void buildLookup(kvlist* outer);
 public:
-	static __m256i HASH_FACTOR;
 
-	SimdCHTJoin(bool = false, bool = false);
+	SimdCHTJoin(bool = false, bool = false, bool = false);
 	virtual ~SimdCHTJoin();
 
-	void join(kvlist* outer, kvlist* inner, bool enableProfiling);
+	void join(kvlist* outer, kvlist* inner);
 
+public:
+	static __m256i HASH_FACTOR;
 	static __m256i check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input);
 	static __m256i lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
 			uint chtsize, __m256i input, __m256i * out);

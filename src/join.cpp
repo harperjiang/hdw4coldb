@@ -1,15 +1,15 @@
-#include "ocljoin.h"
-
 using namespace std;
 
-extern void runHash(kvlist* outer, kvlist* inner, uint split,
-		bool enableProfiling = false);
-
-extern void runCht(kvlist* outer, kvlist* inner, uint split,
-		bool enableProfiling = false);
+#include "join/Join.h"
+#include "join/simple/HashJoin.h"
+#include "join/simple/CHTJoin.h"
+#include "join/ocl/OclHashJoin.h"
+#include "join/ocl/OclCHTJoin.h"
+#include "join/simd/SimdCHTJoin.h"
+#include "join/cstep/OclStepCHTJoin.h"
 
 void print_help() {
-	fprintf(stdout, "Usage: ocljoin [options]\n");
+	fprintf(stdout, "Usage: join [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg=NAME	\tchoose algorithm\n");
 	fprintf(stdout, " -o --outer=FILE \tfile for outer table\n");
@@ -17,7 +17,7 @@ void print_help() {
 	fprintf(stdout, " -p --profiling \tenable profiling\n");
 	fprintf(stdout, " -h --help \tdisplay this information\n");
 	fprintf(stdout, " -v --devinfo \tdisplay the detected device info\n");
-	fprintf(stdout, " -s --split \tsplit the probe table\n");
+	fprintf(stdout, " -t --numthread \tnumber of threads to use\n");
 	exit(0);
 }
 
@@ -30,12 +30,12 @@ void display_device() {
 }
 
 int main(int argc, char** argv) {
-	Logger* logger = Logger::getLogger("ocljoin");
+	Logger* logger = Logger::getLogger("join");
 	char* alg = NULL;
 	char* outerfile = NULL;
 	char* innerfile = NULL;
 	bool enableProfiling = false;
-	uint split = 0;
+	uint numThread = 0;
 	if (argc == 1) {
 		print_help();
 		exit(0);
@@ -45,10 +45,9 @@ int main(int argc, char** argv) {
 	static struct option long_options[] = {
 			{ "alg", required_argument, 0, 'a' }, { "outer", required_argument,
 					0, 'o' }, { "inner", required_argument, 0, 'i' }, { "help",
-			no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' }, {
-					"split",
-					optional_argument, 0, 's' }, { "profiling",
-			no_argument, 0, 'p' } };
+					no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' }, {
+					"numthread", required_argument, 0, 't' }, { "profiling",
+					no_argument, 0, 'p' } };
 
 	int c;
 	while ((c = getopt_long(argc, argv, "a:o:i:hvs:p", long_options,
@@ -66,8 +65,8 @@ int main(int argc, char** argv) {
 		case 'i':
 			innerfile = optarg;
 			break;
-		case 's':
-			split = strtoul(optarg, NULL, 10);
+		case 't':
+			numThread = strtoul(optarg, NULL, 10);
 			break;
 		case 'h':
 			print_help();
@@ -95,12 +94,24 @@ int main(int argc, char** argv) {
 		Logger::getLogger("CLBuffer")->setLevel(DEBUG);
 		Logger::getLogger("CLProgram")->setLevel(DEBUG);
 	}
-
+	Join* join = NULL;
 	if (!strcmp("hash", alg)) {
-		runHash(&outerkeys, &innerkeys, split, enableProfiling);
+		join = new HashJoin(numThread, enableProfiling);
 	} else if (!strcmp("cht", alg)) {
-		runCht(&outerkeys, &innerkeys, split, enableProfiling);
+		join = new CHTJoin(numThread, enableProfiling);
+	} else if (!strcmp("oclhash", alg)) {
+		join = new OclHashJoin(enableProfiling);
+	} else if (!strcmp("oclcht", alg)) {
+		join = new OclCHTJoin(enableProfiling);
+	} else if (!strcmp("simdcht", alg)) {
+		join = new SimdCHTJoin(enableProfiling);
+	} else if (!strcmp("oclstepcht", alg)) {
+		join = new OclStepCHTJoin(enableProfiling);
+	} else {
+		join = NULL;
 	}
+	if (NULL != join)
+		join->join(&outerkeys, &innerkeys);
 
 	delete[] outerkeys.entries;
 	delete[] innerkeys.entries;

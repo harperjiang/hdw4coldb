@@ -8,24 +8,28 @@
 #ifndef SRC_JOIN_CSTEP_GATHERTHREAD_H_
 #define SRC_JOIN_CSTEP_GATHERTHREAD_H_
 
+#include <sys/types.h>
+#include <stdlib.h>
+
+#include "../../lookup/CHTConstants.h"
 #include "../../util/Thread.h"
-#include "../../cstepjoin.h"
 
 class GatherThread: public Thread {
 private:
-	uint64_t* bitmapResult;
+	ulong* bitmapResult;
 	uint* innerkey;
 	uint* dest;
 	uint keystart;
 	uint keystop;
 	uint dstart;
 public:
-	GatherThread(uint64_t* bitmapResult, uint* innerkey, uint* dest,
-			uint keystart, uint keystop, uint dstart);
+	GatherThread(ulong* bitmapResult, uint* innerkey, uint* dest, uint keystart,
+			uint keystop, uint dstart);
 	virtual ~GatherThread();
 	void run();
 
-	static void gather(uint* result);
+	static uint gather(ulong* bitmap, uint bitmapSize, uint* probe,
+			uint probeSize, uint* gathered);
 };
 
 #endif /* SRC_JOIN_CSTEP_GATHERTHREAD_H_ */

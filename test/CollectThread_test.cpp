@@ -7,3 +7,23 @@
 
 #include <gtest/gtest.h>
 #include "../src/join/CollectThread.h"
+
+TEST(CollectThread, Collect) {
+	uint input[3227];
+
+	for (int i = 0; i < 3227; i++) {
+		if (i % 10)
+			input[i] = 2403 + i;
+		else
+			input[i] = 0;
+	}
+
+	NotEqual nz(0);
+
+	uint output[3227];
+	ASSERT_EQ(322, CollectThread::collect(input, output, 3227, &nz));
+
+	for (int i = 0; i < 322; i++) {
+		ASSERT_EQ(i * 10 + 2403, output[i]);
+	}
+}

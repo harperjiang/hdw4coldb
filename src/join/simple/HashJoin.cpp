@@ -9,17 +9,14 @@
 
 #include "../../lookup/Hash.h"
 
-HashJoin::HashJoin() {
-	// TODO Auto-generated constructor stub
+HashJoin::HashJoin(bool ep) :
+		LookupJoin(ep) {
 
 }
 
 HashJoin::~HashJoin() {
-	// TODO Auto-generated destructor stub
 }
 
-Lookup* HashJoin::buildLookup(kvlist* outer) {
-	Hash* hash = new Hash();
-	hash->build(outer->entries, outer->size);
-	return hash;
+Lookup* HashJoin::createLookup() {
+	return new Hash();
 }

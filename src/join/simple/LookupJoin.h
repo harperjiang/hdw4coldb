@@ -15,15 +15,16 @@
 
 class LookupJoin: public Join {
 protected:
-	Lookup* _lookup;
+	uint numThread = 0;
+protected:
+	void joinSingleThread();
+	void joinMultiThread();
 public:
-	LookupJoin();
+	LookupJoin(uint = 0, bool = false);
 	virtual ~LookupJoin();
 
-	void join(kvlist* outer, kvlist* inner, bool enableProfiling);
+	void join(kvlist* outer, kvlist* inner);
 
-protected:
-	virtual Lookup* buildLookup(kvlist* outer) = 0;
 };
 
 #endif /* SRC_JOIN_LOOKUPJOIN_H_ */

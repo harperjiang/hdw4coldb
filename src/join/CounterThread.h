@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include "../util/Thread.h"
 #include "Predicate.h"
+#include "Join.h"
 
 class CounterThread: public Thread {
 private:
@@ -22,6 +23,8 @@ private:
 	Predicate* p;
 
 	uint counter;
+
+	Matched* matched;
 public:
 	CounterThread(uint* base, uint begin, uint end, Predicate* p);
 	virtual ~CounterThread();
@@ -30,7 +33,8 @@ public:
 
 	uint getCounter();
 
-	static uint count(uint* base, uint length, Predicate* p);
+	static uint count(uint* base, uint length, Predicate* p, Matched* matched =
+			NULL);
 };
 
 #endif /* SRC_JOIN_COUNTERTHREAD_H_ */

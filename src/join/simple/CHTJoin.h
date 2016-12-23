@@ -12,10 +12,10 @@
 
 class CHTJoin: public LookupJoin {
 public:
-	CHTJoin();
+	CHTJoin(bool = false);
 	virtual ~CHTJoin();
 
-	Lookup* buildLookup(kvlist* outer);
+	Lookup* createLookup();
 };
 
 #endif /* SRC_JOIN_SIMPLE_CHTJOIN_H_ */

@@ -7,13 +7,19 @@
 
 #include "SimdCHTJoin.h"
 
-#include <x86intrin.h>
+#include <avx2intrin.h>
+#include <avxintrin.h>
 #include <stdlib.h>
-#include <memory.h>
+#include <sys/types.h>
+#include <cstdint>
+#include <cstring>
 
-#include "../../simd/SimdHelper.h"
-#include "../CounterThread.h"
+#include "../../lookup/Hash.h"
+#include "../../lookup/Lookup.h"
+#include "../../util/Logger.h"
 #include "../CollectThread.h"
+#include "../CounterThread.h"
+#include "../Predicate.h"
 
 #define BITMAP_UNIT 32
 #define THRESHOLD 5
@@ -115,15 +121,16 @@ __m256i SimdCHTJoin::lookup_hash(uint* hashbuckets, uint bktsize,
 	return _mm256_sub_epi32(result, SimdHelper::ONE);
 }
 
-SimdCHTJoin::SimdCHTJoin(bool c1, bool c2) {
+SimdCHTJoin::SimdCHTJoin(bool c1, bool c2, bool ep) :
+		Join(ep) {
 	this->collectBitmap = c1;
 	this->collectCht = c2;
 }
 
 SimdCHTJoin::~SimdCHTJoin() {
-	if (NULL != probe)
-		::free(probe);
-	probe = NULL;
+	if (NULL != _probe)
+		::free(_probe);
+	_probe = NULL;
 	if (alignedBitmap != NULL)
 		::free(alignedBitmap);
 	if (alignedChtload != NULL)
@@ -132,38 +139,42 @@ SimdCHTJoin::~SimdCHTJoin() {
 		::free(alignedHashbkt);
 }
 
-void SimdCHTJoin::join(kvlist* outer, kvlist* inner, bool enableProfiling) {
-	// Allocate aligned bitmap
-	_lookup = new CHT();
-	_lookup->build(outer->entries, outer->size);
+Lookup* SimdCHTJoin::createLookup() {
+	return new CHT();
+}
+
+void SimdCHTJoin::buildLookup(kvlist* outer) {
+	Join::buildLookup(outer);
+
+	CHT* cht = (CHT*) _lookup;
 	alignedBitmap = (ulong*) ::aligned_alloc(32,
-			sizeof(ulong) * _lookup->bitmap_size);
-	::memcpy(alignedBitmap, _lookup->bitmap,
-			sizeof(ulong) * _lookup->bitmap_size);
+			sizeof(ulong) * cht->bitmap_size);
+	::memcpy(alignedBitmap, cht->bitmap, sizeof(ulong) * cht->bitmap_size);
 
 	alignedChtload = (uint*) ::aligned_alloc(32,
-			sizeof(uint) * _lookup->payload_size);
-	::memcpy(alignedChtload, _lookup->keys,
-			sizeof(uint) * _lookup->payload_size);
+			sizeof(uint) * cht->payload_size);
+	::memcpy(alignedChtload, cht->keys, sizeof(uint) * cht->payload_size);
 
 	alignedHashbkt = (uint*) ::aligned_alloc(32,
-			sizeof(uint) * _lookup->overflow->bucket_size);
-	::memcpy(alignedHashbkt, _lookup->overflow->buckets,
-			sizeof(uint) * _lookup->overflow->bucket_size);
-	probeSize = inner->size;
-	probe = (uint*) ::aligned_alloc(32, sizeof(uint) * probeSize);
-	for (uint i = 0; i < probeSize; i++) {
-		probe[i] = inner->entries[i].key;
-	}
+			sizeof(uint) * cht->overflow->bucket_size);
+	::memcpy(alignedHashbkt, cht->overflow->buckets,
+			sizeof(uint) * cht->overflow->bucket_size);
+}
 
-	uint* bitmapresult = new uint[inner->size];
+void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
+	// Allocate aligned bitmap
+
+	buildLookup(outer);
+	buildProbe(inner);
+
+	uint* bitmapresult = new uint[_probeSize];
 
 	NotEqual nz(0);
 
 	_timer.start();
 
 	CheckBitmapTransform cbt(this);
-	SimdHelper::transform(probe, probeSize, bitmapresult, &cbt);
+	SimdHelper::transform(_probe, _probeSize, bitmapresult, &cbt);
 
 	_timer.interval("filter");
 
@@ -199,14 +210,12 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner, bool enableProfiling) {
 
 	NotEqual nmax(0xffffffff);
 	uint matched = CounterThread::count(chtresult, chtinputsize, &nmax);
-	matched += CounterThread::count(hashresult, hashinputsize, &nmax);
+	matched += CounterThread::count(hashresult, hashinputsize, &nmax, _matched);
 	_timer.interval("count_result");
 
-	_logger->info("Running time: %u, matched row %u\n", _timer.wallclockms(),
-			matched);
-	for (int i = 0; i < _timer.numInterval(); i++) {
-		_logger->info("Phase %s: %u ms\n", _timer.name(i), _timer.interval(i));
-	}
+	_timer.stop();
+
+	printSummary();
 
 	if (collectBitmap) {
 		delete[] chtinput;
@@ -222,19 +231,22 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner, bool enableProfiling) {
 }
 
 __m256i CheckBitmapTransform::transform(__m256i input) {
-	return SimdCHTJoin::check_bitmap(owner->alignedBitmap,
-			owner->_lookup->bitmapSize(), input);
+	CHT* cht = (CHT*) owner->_lookup;
+	return SimdCHTJoin::check_bitmap(owner->alignedBitmap, cht->bitmapSize(),
+			input);
 }
 
 __m256i LookupChtTransform::transform3(__m256i input, __m256i* out) {
+	CHT* cht = (CHT*) owner->_lookup;
 	return SimdCHTJoin::lookup_cht(owner->alignedBitmap,
-	owner->_lookup->bitmapSize(), owner->alignedChtload,
-	owner->_lookup->payload_size, input, out);
+	cht->bitmapSize(), owner->alignedChtload,
+	cht->payload_size, input, out);
 }
 
 __m256i LookupHashTransform::transform(__m256i input) {
+	CHT* cht = (CHT*) owner->_lookup;
 	return SimdCHTJoin::lookup_hash(owner->alignedHashbkt,
-			owner->_lookup->overflow->bucket_size, input);
+			cht->overflow->bucket_size, input);
 }
 
 __m256i AndTransform::transform2(__m256i a, __m256i b) {

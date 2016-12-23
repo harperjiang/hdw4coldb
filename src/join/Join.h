@@ -19,11 +19,25 @@ protected:
 	Timer _timer;
 	Logger* _logger;
 	Matched* _matched;
+	bool enableProfiling;
+
+	Lookup* _lookup;
+	uint* _probe;
+	uint _probeSize;
+protected:
+	virtual Lookup* createLookup() = 0;
+	virtual void buildLookup(kvlist* outer);
+	virtual void buildProbe(kvlist* inner);
+
+	/**
+	 * Output Execution Summary
+	 */
+	virtual void printSummary();
 public:
-	Join();
+	Join(bool enableProfiling = false);
 	virtual ~Join();
 
-	virtual void join(kvlist* outer, kvlist* inner, bool enableProfiling) = 0;
+	virtual void join(kvlist* outer, kvlist* inner) = 0;
 
 	Matched* getMatched();
 	void setMatched(Matched*);
@@ -46,6 +60,9 @@ public:
 	}
 	virtual uint getCounter() {
 		return counter;
+	}
+	virtual void setCounter(uint c) {
+		this->counter = counter;
 	}
 	virtual void merge(Matched* another) {
 		counter += another->counter;

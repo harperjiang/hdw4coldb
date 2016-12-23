@@ -42,14 +42,15 @@ COMMON_OBJS = \
 ./src/join/CollectThread.o \
 ./src/join/Predicate.o \
 ./src/join/cstep/GatherThread.o \
-./src/join/cstep/CStep.o \
-./src/join/cstep/CStepOcl.o \
+./src/join/cstep/StepCHTJoin.o \
+./src/join/cstep/OclStepCHTJoin.o \
 ./src/join/ocl/OclCHTJoin.o \
 ./src/join/ocl/OclHashJoin.o \
 ./src/join/simd/SimdCHTJoin.o \
 ./src/join/simple/CHTJoin.o \
 ./src/join/simple/HashJoin.o \
 ./src/join/simple/LookupJoin.o \
+./src/join/simple/LookupThread.o \
 
 
 TEST_OBJS = \

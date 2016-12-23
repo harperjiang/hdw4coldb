@@ -15,14 +15,20 @@ CounterThread::CounterThread(uint* base, uint begin, uint end, Predicate* p) {
 	this->end = end;
 	this->p = p;
 	this->counter = 0;
+
+	this->matched = new Matched();
 }
 
 CounterThread::~CounterThread() {
+	delete this->matched;
 }
 
 void CounterThread::run() {
 	for (uint i = begin; i < end; i++) {
-		counter += p->test(base[i]);
+		if (p->test(base[i])) {
+			counter++;
+			matched->match(base[i], NULL, NULL);
+		}
 	}
 }
 
@@ -30,7 +36,7 @@ uint CounterThread::getCounter() {
 	return this->counter;
 }
 
-uint CounterThread::count(uint* base, uint length, Predicate* p) {
+uint CounterThread::count(uint* base, uint length, Predicate* p, Matched* m) {
 	CounterThread **threads = new CounterThread*[NUM_THREAD];
 	uint step = length / NUM_THREAD;
 
@@ -46,6 +52,7 @@ uint CounterThread::count(uint* base, uint length, Predicate* p) {
 	uint counter = 0;
 	for (uint i = 0; i < NUM_THREAD; i++) {
 		counter += threads[i]->getCounter();
+		m->merge(threads[i]->matched);
 		delete threads[i];
 	}
 	delete[] threads;

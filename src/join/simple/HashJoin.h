@@ -12,10 +12,10 @@
 
 class HashJoin: public LookupJoin {
 public:
-	HashJoin();
+	HashJoin(bool = false);
 	virtual ~HashJoin();
 
-	Lookup* buildLookup(kvlist* outer);
+	Lookup* createLookup();
 };
 
 #endif /* SRC_JOIN_SIMPLE_HASHJOIN_H_ */

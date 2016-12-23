@@ -9,6 +9,7 @@
 
 #include "../../util/Thread.h"
 #include "GatherThread.h"
+#include "../../lookup/LookupHelper.h"
 
 CStepOcl::CStepOcl() {
 	cht_payload = NULL;

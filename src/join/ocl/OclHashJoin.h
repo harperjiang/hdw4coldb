@@ -9,12 +9,20 @@
 #define SRC_JOIN_OCL_OCLHASHJOIN_H_
 
 #include "../Join.h"
+#include "../../opencl/CLEnv.h"
+#include "../../opencl/CLProgram.h"
 
 class OclHashJoin: public Join {
+protected:
+	CLEnv* env;
+	CLProgram* hashScan;
+
+protected:
+	Lookup* createLookup();
 public:
-	OclHashJoin();
+	OclHashJoin(bool = false);
 	virtual ~OclHashJoin();
-	virtual void join(kvlist* outer, kvlist* inner, bool enableProfiling);
+	void join(kvlist* outer, kvlist* inner);
 };
 
 #endif /* SRC_JOIN_OCL_OCLHASHJOIN_H_ */
