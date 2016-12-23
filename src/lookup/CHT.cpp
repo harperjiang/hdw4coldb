@@ -132,8 +132,9 @@ void CHT::build(kv* entries, uint32_t size) {
 		for (uint32_t counter = 0; counter < THRESHOLD; counter++) {
 			if (keys[item_offset + counter] == 0) {
 				keys[item_offset + counter] = entries[i].key;
-				::memcpy(payloads + i * PAYLOAD_SIZE, entries[i].payload,
-						sizeof(uint8_t) * PAYLOAD_SIZE);
+				::memcpy(payloads + (item_offset + counter) * PAYLOAD_SIZE,
+						entries[i].payload, sizeof(uint8_t) * PAYLOAD_SIZE);
+				break;
 			}
 		}
 	}

@@ -93,7 +93,7 @@ TEST(SimdCHTJoin, lookup_cht) {
 }
 
 TEST(SimdCHTJoin, lookup_hash) {
-	Hash* hash = new Hash();
+	Hash* hash = new Hash(10);
 	uint8_t payload[4];
 	for(uint i = 0; i < 20;i++) {
 		hash->put(3*i+5, payload);
