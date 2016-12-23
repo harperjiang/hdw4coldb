@@ -52,7 +52,7 @@ uint CounterThread::count(uint* base, uint length, Predicate* p, Matched* m) {
 	uint counter = 0;
 	for (uint i = 0; i < NUM_THREAD; i++) {
 		counter += threads[i]->getCounter();
-		if (null != m)
+		if (NULL != m)
 			m->merge(threads[i]->matched);
 		delete threads[i];
 	}
