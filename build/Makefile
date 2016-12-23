@@ -64,11 +64,7 @@ TEST_OBJS = \
 ./test/CounterThread_test.o \
 ./test/CollectThread_test.o \
 
-MAIN = \
-ocljoin \
-stjoin \
-mtjoin \
-cstepjoin \
+MAIN = join
 
 
 TOOL = \
