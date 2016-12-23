@@ -92,7 +92,7 @@ TEST(SimdHelper, Testz) {
 TEST(SimdHelper, TestNz) {
 	__m256i input = _mm256_setr_epi32(32, 12, -1, 0, 5, 2, 0, -431);
 
-	__m256i result = SimdHelper::testz_epi32(input);
+	__m256i result = SimdHelper::testnz_epi32(input);
 
 	uint* res = (uint*) &result;
 
