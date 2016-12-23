@@ -16,10 +16,6 @@ Join::Join() {
 Join::~Join() {
 }
 
-void Join::join(kvlist* outer, kvlist* inner, bool enableProfiling) {
-
-}
-
 void Join::setMatched(Matched* m) {
 	this->_matched = m;
 }

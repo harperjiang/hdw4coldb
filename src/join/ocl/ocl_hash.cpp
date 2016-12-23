@@ -73,7 +73,8 @@ void runHash(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 //		for (uint32_t i = 0; i < length; i++) {
 //			matched += result[i] == 0xffffffff ? 0 : 1;
 //		}
-		matched += CounterThread::count(result, length, 50, 0xffffffff, false);
+		NotEqual nmax(0xffffffff);
+		matched += CounterThread::count(result, length, &nmax);
 
 		resultBuffer->unmap();
 

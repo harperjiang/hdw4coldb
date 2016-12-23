@@ -33,25 +33,35 @@ COMMON_OBJS = \
 ./src/util/Logger.o \
 ./src/util/Timer.o \
 ./src/util/Thread.o \
+./src/simd/SimdHelper.o \
 ./src/opencl/CLBuffer.o \
 ./src/opencl/CLEnv.o \
 ./src/opencl/CLProgram.o \
+./src/join/Join.o \
 ./src/join/CounterThread.o \
+./src/join/CollectThread.o \
+./src/join/Predicate.o \
+./src/join/cstep/GatherThread.o \
 ./src/join/cstep/CStep.o \
 ./src/join/cstep/CStepOcl.o \
-./src/join/cstep/CStepSimd.o \
-./src/join/cstep/GatherThread.o \
-./src/join/ocl/ocl_cht.o \
-./src/join/ocl/ocl_hash.o \
+./src/join/ocl/OclCHTJoin.o \
+./src/join/ocl/OclHashJoin.o \
+./src/join/simd/SimdCHTJoin.o \
+./src/join/simple/CHTJoin.o \
+./src/join/simple/HashJoin.o \
+./src/join/simple/LookupJoin.o \
+
 
 TEST_OBJS = \
 ./test/bitmap_test.o \
 ./test/CHT_test.o \
 ./test/Hash_test.o \
 ./test/LookupHelper_test.o \
-./test/simd_test.o \
-./test/CStepSimd_test.o \
+./test/SimdCHTJoin_test.o \
+./test/SimdHelper_test.o \
 ./test/Timer_test.o \
+./test/CounterThread_test.o \
+./test/CollectThread_test.o \
 
 MAIN = \
 ocljoin \
@@ -106,8 +116,11 @@ mkfolder:
 	mkdir -p src/tool
 	mkdir -p src/opencl
 	mkdir -p src/util
+	mkdir -p src/simd
+	mkdir -p src/join/simd
 	mkdir -p src/join/cstep
 	mkdir -p src/join/ocl
+	mkdir -p src/join/simple
 
 mktestfolder: mkfolder
 	mkdir -p test

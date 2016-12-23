@@ -24,6 +24,8 @@ public:
 			uint keystart, uint keystop, uint dstart);
 	virtual ~GatherThread();
 	void run();
+
+	static void gather(uint* result);
 };
 
 #endif /* SRC_JOIN_CSTEP_GATHERTHREAD_H_ */

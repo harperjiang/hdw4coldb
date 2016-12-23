@@ -96,7 +96,8 @@ void OclCHTJoin::join(kvlist* outer, kvlist* inner, bool enableProfiling) {
 	//			if (result[i] != 0xffffffff)
 	//				matched++;
 	//		}
-	matched += CounterThread::count(result, length, 50, 0xffffffff, false);
+	NotEqual nmax(0xffffffff);
+	matched += CounterThread::count(result, length, &nmax);
 
 	resultBuffer->unmap();
 

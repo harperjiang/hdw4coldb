@@ -18,7 +18,9 @@ public:
 	}
 	virtual ~SimdTransform() {
 	}
-	virtual __m256i transform(__m256i) = 0;
+	virtual __m256i transform(__m256i);
+	virtual __m256i transform2(__m256i, __m256i);
+	virtual __m256i transform3(__m256i, __m256i *);
 };
 
 class SimdHelper {
@@ -26,8 +28,18 @@ public:
 	SimdHelper();
 	virtual ~SimdHelper();
 
+	static __m256i ZERO;
+	static __m256i ONE;
+	static __m256i TWO;
+	static __m256i MAX;
+
 	static void transform(uint* src, uint srclength, uint* dest,
 			SimdTransform* trans);
+	static void transform2(uint* srca, uint* srcb, uint srclength, uint* dest,
+			SimdTransform* trans);
+	static void transform3(uint* src, uint srclength, uint* dest1, uint* dest2,
+			SimdTransform* trans);
+
 	static void print_epu32(__m256i a);
 	static __m256i remainder_epu32(__m256i a, uint b);
 	static __m256i divrem_epu32(__m256i* remainder, __m256i a, uint b);

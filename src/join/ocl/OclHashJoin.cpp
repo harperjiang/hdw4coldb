@@ -74,7 +74,9 @@ void OclHashJoin::join(kvlist* outer, kvlist* inner, bool enableProfiling) {
 	hashScan->execute(length);
 
 	uint32_t* result = (uint32_t*) resultBuffer->map(CL_MAP_READ);
-	matched += CounterThread::count(result, length, 50, 0xffffffff, false);
+
+	NotEqual nmax(0xffffffff);
+	matched += CounterThread::count(result, length, &nmax);
 
 	resultBuffer->unmap();
 

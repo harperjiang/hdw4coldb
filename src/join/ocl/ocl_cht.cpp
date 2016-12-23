@@ -95,7 +95,8 @@ void runCht(kvlist* outer, kvlist* inner, uint split, bool enableProfiling =
 //			if (result[i] != 0xffffffff)
 //				matched++;
 //		}
-		matched += CounterThread::count(result, length, 50, 0xffffffff, false);
+		NotEqual nmax(0xffffffff);
+		matched += CounterThread::count(result, length, &nmax);
 
 		resultBuffer->unmap();
 

@@ -19,6 +19,11 @@ SimdHelper::~SimdHelper() {
 	// TODO Auto-generated destructor stub
 }
 
+__m256i SimdHelper::ZERO = _mm256_setzero_si256();
+__m256i SimdHelper::ONE = _mm256_set1_epi32(1);
+__m256i SimdHelper::TWO = _mm256_set1_epi32(2);
+__m256i SimdHelper::MAX = _mm256_set1_epi32(-1);
+
 void SimdHelper::transform(uint* src, uint srclength, uint* dest,
 		SimdTransform* trans) {
 	for (uint i = 0; i < srclength / 8; i++) {
@@ -37,6 +42,59 @@ void SimdHelper::transform(uint* src, uint srclength, uint* dest,
 				psize >= 6 ? start[5] : 0, psize >= 7 ? start[6] : 0, 0);
 		__m256i partialprocessed = trans->transform(loadpartial);
 		store_epu32(dest, index, partialprocessed, psize);
+	}
+}
+
+void SimdHelper::transform2(uint* srca, uint* srcb, uint srclength, uint* dest,
+		SimdTransform* trans) {
+	for (uint i = 0; i < srclength / 8; i++) {
+		uint index = i * 8;
+		__m256i a = _mm256_load_si256((__m256i *) (srca + index));
+		__m256i b = _mm256_load_si256((__m256i *) (srcb + index));
+		__m256i processed = trans->transform2(a, b);
+		store_epu32(dest, index, processed, 8);
+	}
+	if (srclength % 8) {
+		uint psize = srclength % 8;
+		uint index = (srclength / 8) * 8;
+		uint* starta = srca + index;
+		uint* startb = srcb + index;
+		__m256i partiala = _mm256_setr_epi32(psize >= 1 ? starta[0] : 0,
+				psize >= 2 ? starta[1] : 0, psize >= 3 ? starta[2] : 0,
+				psize >= 4 ? starta[3] : 0, psize >= 5 ? starta[4] : 0,
+				psize >= 6 ? starta[5] : 0, psize >= 7 ? starta[6] : 0, 0);
+
+		__m256i partialb = _mm256_setr_epi32(psize >= 1 ? startb[0] : 0,
+				psize >= 2 ? startb[1] : 0, psize >= 3 ? startb[2] : 0,
+				psize >= 4 ? startb[3] : 0, psize >= 5 ? startb[4] : 0,
+				psize >= 6 ? startb[5] : 0, psize >= 7 ? startb[6] : 0, 0);
+		__m256i partialprocessed = trans->transform2(partiala, partialb);
+		store_epu32(dest, index, partialprocessed, psize);
+	}
+}
+
+void SimdHelper::transform3(uint* src, uint srclength, uint* dest1, uint* dest2,
+		SimdTransform* trans) {
+	__m256i out;
+	for (uint i = 0; i < srclength / 8; i++) {
+		uint index = i * 8;
+		__m256i loadkey = _mm256_load_si256((__m256i *) (src + index));
+
+		__m256i processed = trans->transform3(loadkey, &out);
+		store_epu32(dest1, index, processed, 8);
+		store_epu32(dest2, index, out, 8);
+	}
+	if (srclength % 8) {
+		uint psize = srclength % 8;
+		uint index = (srclength / 8) * 8;
+		uint* start = src + index;
+		__m256i loadpartial = _mm256_setr_epi32(psize >= 1 ? start[0] : 0,
+				psize >= 2 ? start[1] : 0, psize >= 3 ? start[2] : 0,
+				psize >= 4 ? start[3] : 0, psize >= 5 ? start[4] : 0,
+				psize >= 6 ? start[5] : 0, psize >= 7 ? start[6] : 0, 0);
+		__m256i partialprocessed = trans->transform3(loadpartial, &out);
+		store_epu32(dest1, index, partialprocessed, psize);
+		store_epu32(dest2, index, out, psize);
 	}
 }
 
@@ -120,4 +178,16 @@ __m256i SimdHelper::testnz_epi32(__m256i input) {
 void SimdHelper::store_epu32(uint* base, uint offset, __m256i input,
 		uint length) {
 	::memcpy(base + offset, &input, length * sizeof(int));
+}
+
+__m256i SimdTransform::transform(__m256i input) {
+	return input;
+}
+
+__m256i SimdTransform::transform2(__m256i a, __m256i b) {
+	return a;
+}
+
+__m256i SimdTransform::transform3(__m256i a, __m256i* out) {
+	return a;
 }

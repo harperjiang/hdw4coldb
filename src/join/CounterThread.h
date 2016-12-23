@@ -12,16 +12,25 @@
 
 #include <stdlib.h>
 #include "../util/Thread.h"
+#include "Predicate.h"
 
 class CounterThread: public Thread {
+private:
+	uint* base;
+	uint begin;
+	uint end;
+	Predicate* p;
+
+	uint counter;
 public:
-	CounterThread(uint* base, uint begin, uint end, uint value, bool equal);
+	CounterThread(uint* base, uint begin, uint end, Predicate* p);
 	virtual ~CounterThread();
 
 	void run();
 
-	static uint count(uint* base, uint length, uint numThread, uint value,
-			bool equal);
+	uint getCounter();
+
+	static uint count(uint* base, uint length, Predicate* p);
 };
 
 #endif /* SRC_JOIN_COUNTERTHREAD_H_ */
