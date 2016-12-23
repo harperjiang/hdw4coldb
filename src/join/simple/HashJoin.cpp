@@ -9,8 +9,8 @@
 
 #include "../../lookup/Hash.h"
 
-HashJoin::HashJoin(bool ep) :
-		LookupJoin(ep) {
+HashJoin::HashJoin(uint numThread, bool ep) :
+		LookupJoin(numThread, ep) {
 
 }
 

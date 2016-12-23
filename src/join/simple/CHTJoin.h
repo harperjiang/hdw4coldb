@@ -12,7 +12,7 @@
 
 class CHTJoin: public LookupJoin {
 public:
-	CHTJoin(bool = false);
+	CHTJoin(uint = 0, bool = false);
 	virtual ~CHTJoin();
 
 	Lookup* createLookup();

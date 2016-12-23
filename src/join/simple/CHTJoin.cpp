@@ -8,8 +8,8 @@
 #include "CHTJoin.h"
 #include "../../lookup/CHT.h"
 
-CHTJoin::CHTJoin(bool ep) :
-		LookupJoin(ep) {
+CHTJoin::CHTJoin(uint numThread, bool ep) :
+		LookupJoin(numThread, ep) {
 
 }
 

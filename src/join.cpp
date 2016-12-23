@@ -1,5 +1,12 @@
 using namespace std;
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <getopt.h>
+#include <string.h>
+
+#include "lookup/LookupHelper.h"
 #include "join/Join.h"
 #include "join/simple/HashJoin.h"
 #include "join/simple/CHTJoin.h"

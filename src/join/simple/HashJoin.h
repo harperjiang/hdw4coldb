@@ -12,7 +12,7 @@
 
 class HashJoin: public LookupJoin {
 public:
-	HashJoin(bool = false);
+	HashJoin(uint = 0, bool = false);
 	virtual ~HashJoin();
 
 	Lookup* createLookup();
