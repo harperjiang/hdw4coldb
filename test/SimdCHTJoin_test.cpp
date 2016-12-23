@@ -95,9 +95,6 @@ TEST(SimdCHTJoin, lookup_hash) {
 	uint* alignedbuckets = (uint*) aligned_alloc(32, sizeof(uint) * datasize);
 	memcpy(alignedbuckets, data, sizeof(uint) * datasize);
 
-	uint* alignedbuckets = (uint*) aligned_alloc(32, sizeof(uint) * datasize);
-	memcpy(alignedbuckets, data, sizeof(uint) * datasize);
-
 	__m256i input = _mm256_setr_epi32(1, 0, 21, 8, 11, 14, 0, 0);
 
 	__m256i result = SimdCHTJoin::lookup_hash(alignedbuckets, datasize, input);
