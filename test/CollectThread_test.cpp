@@ -24,6 +24,6 @@ TEST(CollectThread, Collect) {
 	ASSERT_EQ(2904, CollectThread::collect(input, output, 3227, &nz));
 
 	for (int i = 0; i < 2904; i++) {
-		ASSERT_EQ(i - (i/10+1) + 2403, output[i]);
+		ASSERT_EQ((output[i]-2403)/10+1, output[i] - 2403 - i);
 	}
 }

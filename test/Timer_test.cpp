@@ -37,7 +37,6 @@ TEST(Timer, Interval) {
 		ASSERT_TRUE(48 < timer->interval(i) && timer->interval(i) < 52);
 		sum += timer->interval(i);
 	}
-	sum += timer->interval(30);
 	ASSERT_EQ(sum, timer->wallclockms());
 	delete timer;
 }
