@@ -20,5 +20,5 @@ TEST(CounterThread, Counter) {
 
 	NotEqual nz(0);
 
-	ASSERT_EQ(322, CounterThread::count(input, 3227, &nz));
+	ASSERT_EQ(2904, CounterThread::count(input, 3227, &nz));
 }

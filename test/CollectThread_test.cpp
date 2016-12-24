@@ -13,17 +13,17 @@ TEST(CollectThread, Collect) {
 
 	for (int i = 0; i < 3227; i++) {
 		if (i % 10)
-			input[i] = 2403 + i;
+		input[i] = 2403 + i;
 		else
-			input[i] = 0;
+		input[i] = 0;
 	}
 
 	NotEqual nz(0);
 
 	uint output[3227];
-	ASSERT_EQ(322, CollectThread::collect(input, output, 3227, &nz));
+	ASSERT_EQ(2904, CollectThread::collect(input, output, 3227, &nz));
 
-	for (int i = 0; i < 322; i++) {
-		ASSERT_EQ(i * 10 + 2403, output[i]);
+	for (int i = 0; i < 2904; i++) {
+		ASSERT_EQ(i - (i/10+1) + 2403, output[i]);
 	}
 }

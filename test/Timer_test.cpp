@@ -31,7 +31,7 @@ TEST(Timer, Interval) {
 	}
 	timer->stop();
 
-	ASSERT_EQ(31, timer->numInterval());
+	ASSERT_EQ(30, timer->numInterval());
 	uint sum = 0;
 	for(uint i = 0; i < 30; i++) {
 		ASSERT_TRUE(48 < timer->interval(i) && timer->interval(i) < 52);
