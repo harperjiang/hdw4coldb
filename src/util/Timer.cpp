@@ -33,14 +33,6 @@ uint64_t Timer::pause() {
 	struct timeval stoptime;
 	gettimeofday(&stoptime, NULL);
 
-	if (intervalCounter == intervalLimit) {
-		intervalLimit *= 2;
-		uint64_t* newIntervals = new uint64_t[intervalLimit];
-		::memcpy(newIntervals, intervals, sizeof(uint64_t) * intervalCounter);
-		delete[] intervals;
-		intervals = newIntervals;
-	}
-
 	uint64_t interval = 1000 * (stoptime.tv_sec - _start.tv_sec)
 			+ (stoptime.tv_usec - _start.tv_usec) / 1000;
 	_wallclockms += interval;
@@ -53,6 +45,19 @@ void Timer::resume() {
 
 void Timer::interval(const char* name) {
 	uint64_t interval = pause();
+
+	if (intervalCounter == intervalLimit) {
+		intervalLimit *= 2;
+		uint64_t* newIntervals = new uint64_t[intervalLimit];
+		::memcpy(newIntervals, intervals, sizeof(uint64_t) * intervalCounter);
+		delete[] intervals;
+		intervals = newIntervals;
+
+		char** newNames = new char*[intervalLimit];
+		::memcpy(newNames, names, sizeof(char*) * intervalCounter);
+		delete[] names;
+		names = newNames;
+	}
 	intervals[intervalCounter] = interval;
 	names[intervalCounter++] = (char*) name;
 	resume();

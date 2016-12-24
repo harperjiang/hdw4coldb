@@ -19,6 +19,7 @@ TEST( Timer, Run) {
 
 		ASSERT_TRUE(48 < timer->wallclockms() && timer->wallclockms() < 52);
 	}
+	delete timer;
 }
 
 TEST(Timer, Interval) {
@@ -26,8 +27,7 @@ TEST(Timer, Interval) {
 	timer->start();
 	for (int i = 0; i < 30; i++) {
 		usleep(50000);
-		timer->pause();
-		timer->resume();
+		timer->interval("t");
 	}
 	timer->stop();
 
@@ -39,4 +39,5 @@ TEST(Timer, Interval) {
 	}
 	sum += timer->interval(30);
 	ASSERT_EQ(sum, timer->wallclockms());
+	delete timer;
 }
