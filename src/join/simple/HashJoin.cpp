@@ -20,3 +20,7 @@ HashJoin::~HashJoin() {
 Lookup* HashJoin::createLookup() {
 	return new Hash();
 }
+
+const char* HashJoin::name() {
+	return "HashJoin";
+}

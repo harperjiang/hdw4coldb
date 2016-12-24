@@ -29,6 +29,7 @@ protected:
 	virtual void buildLookup(kvlist* outer);
 	virtual void buildProbe(kvlist* inner);
 
+	virtual const char* name();
 	/**
 	 * Output Execution Summary
 	 */

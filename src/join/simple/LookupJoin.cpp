@@ -10,7 +10,6 @@
 
 LookupJoin::LookupJoin(uint numThread, bool ep) :
 		Join(ep) {
-	_logger = Logger::getLogger("LookupJoin");
 	this->numThread = numThread;
 }
 
@@ -19,7 +18,6 @@ LookupJoin::~LookupJoin() {
 }
 
 void LookupJoin::join(kvlist* outer, kvlist* inner) {
-
 	_logger->info("Building lookup table\n");
 	buildLookup(outer);
 	buildProbe(inner);

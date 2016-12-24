@@ -9,9 +9,9 @@
 #include "../util/Logger.h"
 
 Join::Join(bool enableProfiling) {
-	_logger = NULL;
 	_matched = new Matched();
 	this->enableProfiling = enableProfiling;
+	this->_logger = Logger::getLogger(name());
 }
 
 Join::~Join() {
@@ -22,6 +22,10 @@ Join::~Join() {
 		delete[] _probe;
 	}
 	_probe = NULL;
+}
+
+const char* Join::name() {
+	return "Join";
 }
 
 void Join::buildLookup(kvlist* outer) {
@@ -39,6 +43,10 @@ void Join::buildProbe(kvlist* inner) {
 }
 
 void Join::printSummary() {
+	if (NULL == _logger) {
+		_logger = Logger::getLogger("Join");
+		_logger->error("Logger not initialized, use default logger\n");
+	}
 	_logger->info("Running time: %ums, matched row %u\n", _timer.wallclockms(),
 			getMatched()->getCounter());
 	for (uint i = 0; i < _timer.numInterval(); i++) {

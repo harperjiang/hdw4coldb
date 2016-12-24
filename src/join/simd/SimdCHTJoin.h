@@ -28,6 +28,8 @@ protected:
 	Lookup* createLookup();
 	void buildLookup(kvlist* outer);
 	void buildProbe(kvlist* input);
+
+	const char* name();
 public:
 
 	SimdCHTJoin(bool = false, bool = false, bool = false);

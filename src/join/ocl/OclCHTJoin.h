@@ -22,6 +22,7 @@ protected:
 
 protected:
 	Lookup* createLookup();
+	const char* name();
 public:
 	OclCHTJoin(bool = false);
 	virtual ~OclCHTJoin();

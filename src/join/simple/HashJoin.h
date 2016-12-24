@@ -14,8 +14,9 @@ class HashJoin: public LookupJoin {
 public:
 	HashJoin(uint = 0, bool = false);
 	virtual ~HashJoin();
-
+protected:
 	Lookup* createLookup();
+	const char* name();
 };
 
 #endif /* SRC_JOIN_SIMPLE_HASHJOIN_H_ */

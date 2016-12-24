@@ -130,6 +130,7 @@ SimdCHTJoin::SimdCHTJoin(bool c1, bool c2, bool ep) :
 		Join(ep) {
 	this->collectBitmap = c1;
 	this->collectCht = c2;
+	this->_logger = Logger::getLogger("SimdCHTJoin");
 }
 
 SimdCHTJoin::~SimdCHTJoin() {
@@ -146,6 +147,10 @@ SimdCHTJoin::~SimdCHTJoin() {
 
 Lookup* SimdCHTJoin::createLookup() {
 	return new CHT();
+}
+
+const char* SimdCHTJoin::name() {
+	return "SimdCHTJoin";
 }
 
 void SimdCHTJoin::buildLookup(kvlist* outer) {

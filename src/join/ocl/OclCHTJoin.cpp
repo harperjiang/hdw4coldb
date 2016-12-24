@@ -17,7 +17,6 @@
 
 OclCHTJoin::OclCHTJoin(bool ep) :
 		Join(ep) {
-	_logger = Logger::getLogger("OclCHTJoin");
 	env = new CLEnv(enableProfiling);
 	scanChtFull = new CLProgram(env, "scan_cht_full");
 	scanChtFull->fromFile("scan_cht_full.cl", 6);
@@ -26,6 +25,10 @@ OclCHTJoin::OclCHTJoin(bool ep) :
 OclCHTJoin::~OclCHTJoin() {
 	delete scanChtFull;
 	delete env;
+}
+
+const char* OclCHTJoin::name() {
+	return "OclCHTJoin";
 }
 
 Lookup* OclCHTJoin::createLookup() {

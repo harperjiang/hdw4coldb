@@ -15,6 +15,8 @@ public:
 	CHTJoin(uint = 0, bool = false);
 	virtual ~CHTJoin();
 
+protected:
+	const char* name();
 	Lookup* createLookup();
 };
 

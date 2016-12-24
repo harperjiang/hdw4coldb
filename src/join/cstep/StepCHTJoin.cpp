@@ -30,6 +30,10 @@ Lookup* StepCHTJoin::createLookup() {
 	return new CHT();
 }
 
+const char* StepCHTJoin::name() {
+	return "StepCHTJoin";
+}
+
 void StepCHTJoin::join(kvlist* outer, kvlist* inner) {
 	_logger->info("Running CHT Join in steps\n");
 

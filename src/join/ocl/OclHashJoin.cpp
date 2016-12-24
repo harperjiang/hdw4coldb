@@ -23,8 +23,6 @@
 
 OclHashJoin::OclHashJoin(bool ep) :
 		Join(ep) {
-	if (NULL == _logger)
-		_logger = Logger::getLogger("OclHashJoin");
 
 	env = new CLEnv(ep);
 	hashScan = new CLProgram(env, "scan_hash");
@@ -38,6 +36,10 @@ OclHashJoin::~OclHashJoin() {
 
 Lookup* OclHashJoin::createLookup() {
 	return new Hash();
+}
+
+const char* OclHashJoin::name() {
+	return "OclHashJoin";
 }
 
 void OclHashJoin::join(kvlist* outer, kvlist* inner) {

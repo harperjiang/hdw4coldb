@@ -20,3 +20,7 @@ CHTJoin::~CHTJoin() {
 Lookup* CHTJoin::createLookup() {
 	return new CHT();
 }
+
+const char* CHTJoin::name() {
+	return "CHTJoin";
+}
