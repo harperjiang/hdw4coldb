@@ -195,7 +195,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	uint chtinputsize = inner->size;
 
 	if (collectBitmap) {
-		chtinput = new uint[inner->size];
+		chtinput = (uint*) aligned_alloc(32, sizeof(uint) * inner->size);
 		chtinputsize = CollectThread::collect(bitmapresult, chtinput,
 				inner->size, &nz);
 		_timer.interval("cht_input_collect");
@@ -210,7 +210,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	uint* cmprshashinput = hashinput;
 	uint hashinputsize = chtinputsize;
 	if (collectCht) {
-		cmprshashinput = new uint[chtinputsize];
+		cmprshashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 		hashinputsize = CollectThread::collect(hashinput, cmprshashinput,
 				chtinputsize, &nz);
 		_timer.interval("hash_input_collect");
@@ -231,10 +231,10 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	printSummary();
 
 	if (collectBitmap) {
-		delete[] chtinput;
+		free(chtinput);
 	}
 	if (collectCht) {
-		delete[] cmprshashinput;
+		free(cmprshashinput);
 	}
 	delete[] bitmapresult;
 	delete[] chtresult;
