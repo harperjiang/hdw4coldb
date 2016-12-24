@@ -18,6 +18,10 @@ Join::~Join() {
 	if (NULL != _lookup)
 		delete _lookup;
 	_lookup = NULL;
+	if ( NULL != _probe) {
+		delete[] _probe;
+	}
+	_probe = NULL;
 }
 
 void Join::buildLookup(kvlist* outer) {
@@ -35,7 +39,7 @@ void Join::buildProbe(kvlist* inner) {
 }
 
 void Join::printSummary() {
-	_logger->info("Running time: %u, matched row %u\n", _timer.wallclockms(),
+	_logger->info("Running time: %ums, matched row %u\n", _timer.wallclockms(),
 			getMatched()->getCounter());
 	for (uint i = 0; i < _timer.numInterval(); i++) {
 		_logger->info("Phase %s: %u ms\n", _timer.name(i), _timer.interval(i));

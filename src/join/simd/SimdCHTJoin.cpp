@@ -166,6 +166,14 @@ void SimdCHTJoin::buildLookup(kvlist* outer) {
 			sizeof(uint) * cht->overflow->bucket_size);
 }
 
+void SimdCHTJoin::buildProbe(kvlist* inner) {
+	_probe = (uint*) aligned_alloc(32, inner->size * sizeof(uint));
+	for (uint i = 0; i < inner->size; i++) {
+		_probe[i] = inner->entries[i].key;
+	}
+	_probeSize = inner->size;
+}
+
 void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	// Allocate aligned bitmap
 
