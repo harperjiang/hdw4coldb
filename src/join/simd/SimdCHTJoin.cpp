@@ -180,7 +180,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	buildLookup(outer);
 	buildProbe(inner);
 
-	uint* bitmapresult = new uint[_probeSize];
+	uint* bitmapresult = aligned_alloc(32, sizeof(uint) * _probeSize);
 
 	NotEqual nz(0);
 
@@ -236,7 +236,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	if (collectCht) {
 		free(cmprshashinput);
 	}
-	delete[] bitmapresult;
+	free(bitmapresult);
 	delete[] chtresult;
 	delete[] hashinput;
 	delete[] hashresult;
