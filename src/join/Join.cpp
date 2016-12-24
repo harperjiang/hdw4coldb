@@ -61,3 +61,7 @@ void Join::setMatched(Matched* m) {
 Matched* Join::getMatched() {
 	return this->_matched;
 }
+
+Logger* Join::getLogger() {
+	return _logger;
+}

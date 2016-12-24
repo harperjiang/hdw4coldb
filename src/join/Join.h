@@ -42,6 +42,8 @@ public:
 
 	Matched* getMatched();
 	void setMatched(Matched*);
+
+	Logger* getLogger();
 };
 
 /**

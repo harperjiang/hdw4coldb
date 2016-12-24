@@ -117,9 +117,10 @@ int main(int argc, char** argv) {
 	} else {
 		join = NULL;
 	}
-	if (NULL != join)
+	if (NULL != join) {
+		join->getLogger()->setLevel(DEBUG);
 		join->join(&outerkeys, &innerkeys);
-
+	}
 	delete[] outerkeys.entries;
 	delete[] innerkeys.entries;
 
