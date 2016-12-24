@@ -201,7 +201,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		_timer.interval("cht_input_collect");
 	}
 	uint* chtresult = new uint[chtinputsize];
-	uint* hashinput = new uint[chtinputsize];
+	uint* hashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 
 	LookupChtTransform lct(this);
 	SimdHelper::transform3(chtinput, chtinputsize, chtresult, hashinput, &lct);
@@ -237,8 +237,8 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		free(cmprshashinput);
 	}
 	free(bitmapresult);
+	free(hashinput);
 	delete[] chtresult;
-	delete[] hashinput;
 	delete[] hashresult;
 	delete _lookup;
 }
