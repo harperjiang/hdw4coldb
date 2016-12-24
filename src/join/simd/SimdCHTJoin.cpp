@@ -229,8 +229,8 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	_timer.interval("hash_lookup");
 
 	NotEqual nmax(0xffffffff);
-	uint matched = CounterThread::count(chtresult, chtinputsize, &nmax);
-	matched += CounterThread::count(hashresult, hashinputsize, &nmax, _matched);
+	CounterThread::count(chtresult, chtinputsize, &nmax, _matched);
+	CounterThread::count(hashresult, hashinputsize, &nmax, _matched);
 	_timer.interval("count_result");
 
 	_timer.stop();
