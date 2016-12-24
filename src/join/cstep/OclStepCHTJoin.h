@@ -24,10 +24,10 @@ protected:
 	CLProgram* _scanCht = NULL;
 
 	uint meta[5];
-	CLBuffer* metaBuffer;
+	CLBuffer* metaBuffer = NULL;
 
-	uint bitmapResultSize;
-	CLBuffer* bitmapBuffer;
+	uint bitmapResultSize = 0;
+	CLBuffer* bitmapBuffer = NULL;
 protected:
 	void init();
 	void filter();

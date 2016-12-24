@@ -51,7 +51,6 @@ void OclStepCHTJoin::init() {
 }
 
 void OclStepCHTJoin::filter() {
-	CHT* cht = (CHT*) _lookup;
 
 	CLBuffer* inputKeyBuffer = new CLBuffer(env, _probe,
 			sizeof(uint) * _probeSize,
@@ -74,6 +73,7 @@ void OclStepCHTJoin::filter() {
 	chtInput = new uint[_probeSize];
 	chtInputSize = GatherThread::gather(bitmapResult, bitmapResultSize, _probe,
 			_probeSize, chtInput);
+	_logger->debug("Records passed bitmap check: %u\n", chtInputSize);
 
 	_timer.interval("filter_gather");
 
