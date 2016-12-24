@@ -27,6 +27,7 @@ protected:
 protected:
 	Lookup* createLookup();
 	void buildLookup(kvlist* outer);
+	void buildProbe(kvlist* input);
 public:
 
 	SimdCHTJoin(bool = false, bool = false, bool = false);

@@ -21,9 +21,9 @@ protected:
 	Matched* _matched;
 	bool enableProfiling;
 
-	Lookup* _lookup;
-	uint* _probe;
-	uint _probeSize;
+	Lookup* _lookup = NULL;
+	uint* _probe = NULL;
+	uint _probeSize = 0;
 protected:
 	virtual Lookup* createLookup() = 0;
 	virtual void buildLookup(kvlist* outer);

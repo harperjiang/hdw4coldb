@@ -166,13 +166,21 @@ void SimdCHTJoin::buildLookup(kvlist* outer) {
 			sizeof(uint) * cht->overflow->bucket_size);
 }
 
+void SimdCHTJoin::buildProbe(kvlist* inner) {
+	_probe = (uint*) aligned_alloc(32, inner->size * sizeof(uint));
+	for (uint i = 0; i < inner->size; i++) {
+		_probe[i] = inner->entries[i].key;
+	}
+	_probeSize = inner->size;
+}
+
 void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	// Allocate aligned bitmap
 
 	buildLookup(outer);
 	buildProbe(inner);
 
-	uint* bitmapresult = new uint[_probeSize];
+	uint* bitmapresult = (uint*) aligned_alloc(32, sizeof(uint) * _probeSize);
 
 	NotEqual nz(0);
 
@@ -187,7 +195,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	uint chtinputsize = inner->size;
 
 	if (collectBitmap) {
-		chtinput = new uint[inner->size];
+		chtinput = (uint*) aligned_alloc(32, sizeof(uint) * inner->size);
 		chtinputsize = CollectThread::collect(bitmapresult, chtinput,
 				inner->size, &nz);
 		_timer.interval("cht_input_collect");
@@ -202,7 +210,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	uint* cmprshashinput = hashinput;
 	uint hashinputsize = chtinputsize;
 	if (collectCht) {
-		cmprshashinput = new uint[chtinputsize];
+		cmprshashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 		hashinputsize = CollectThread::collect(hashinput, cmprshashinput,
 				chtinputsize, &nz);
 		_timer.interval("hash_input_collect");
@@ -223,12 +231,12 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	printSummary();
 
 	if (collectBitmap) {
-		delete[] chtinput;
+		free(chtinput);
 	}
 	if (collectCht) {
-		delete[] cmprshashinput;
+		free(cmprshashinput);
 	}
-	delete[] bitmapresult;
+	free(bitmapresult);
 	delete[] chtresult;
 	delete[] hashinput;
 	delete[] hashresult;
