@@ -17,6 +17,7 @@ class LookupJoin: public Join {
 protected:
 	uint numThread = 0;
 protected:
+	virtual const char* name();
 	void joinSingleThread();
 	void joinMultiThread();
 public:

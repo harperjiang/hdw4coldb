@@ -46,7 +46,7 @@ void Logger::info(const char* format, ...) {
 	if (level > INFO) {
 		return;
 	}
-	sprintf(log_buffer, "%c[32m%s%s%c[0m - %s", 27, "[INFO ]", name, 27,
+	sprintf(log_buffer, "%c[32m%s%c[0m%s - %s", 27, "[INFO ]", 27, name,
 			format);
 
 	va_list arg;
@@ -59,7 +59,7 @@ void Logger::warn(const char* format, ...) {
 	if (level > WARN) {
 		return;
 	}
-	sprintf(log_buffer, "%c[33m%s%s%c[0m - %s", 27, "[WARN ]", name, 27,
+	sprintf(log_buffer, "%c[33m%s%c[0m%s - %s", 27, "[WARN ]", 27, name,
 			format);
 
 	va_list arg;
@@ -72,7 +72,7 @@ void Logger::error(const char* format, ...) {
 	if (level > ERROR) {
 		return;
 	}
-	sprintf(log_buffer, "%c[31m%s%s%c[0m - %s", 27, "[ERROR ]", name, 27,
+	sprintf(log_buffer, "%c[31m%s%c[0m%s - %s", 27, "[ERROR ]", 27, name,
 			format);
 
 	va_list arg;
@@ -85,7 +85,7 @@ void Logger::debug(const char* format, ...) {
 	if (level > DEBUG) {
 		return;
 	}
-	sprintf(log_buffer, "%c[36m[%s%s%c[0m - %s", 27, "[DEBUG ]", name, 27,
+	sprintf(log_buffer, "%c[36m[%s%c[0m%s - %s", 27, "[DEBUG ]", 27, name,
 			format);
 
 	va_list arg;

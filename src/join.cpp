@@ -52,9 +52,9 @@ int main(int argc, char** argv) {
 	static struct option long_options[] = {
 			{ "alg", required_argument, 0, 'a' }, { "outer", required_argument,
 					0, 'o' }, { "inner", required_argument, 0, 'i' }, { "help",
-					no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' }, {
+			no_argument, 0, 'h' }, { "devinfo", no_argument, 0, 'v' }, {
 					"numthread", required_argument, 0, 't' }, { "profiling",
-					no_argument, 0, 'p' } };
+			no_argument, 0, 'p' } };
 
 	int c;
 	while ((c = getopt_long(argc, argv, "a:o:i:hvs:pt:", long_options,
@@ -111,9 +111,9 @@ int main(int argc, char** argv) {
 	} else if (!strcmp("oclcht", alg)) {
 		join = new OclCHTJoin(enableProfiling);
 	} else if (!strcmp("simdcht", alg)) {
-		join = new SimdCHTJoin(enableProfiling);
+		join = new SimdCHTJoin(true, true, enableProfiling);
 	} else if (!strcmp("oclstepcht", alg)) {
-		join = new OclStepCHTJoin(enableProfiling);
+		join = new OclStepCHTJoin(true, true, enableProfiling);
 	} else {
 		join = NULL;
 	}

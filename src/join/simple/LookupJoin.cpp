@@ -17,6 +17,10 @@ LookupJoin::~LookupJoin() {
 
 }
 
+const char* LookupJoin::name() {
+	return "LookupJoin";
+}
+
 void LookupJoin::join(kvlist* outer, kvlist* inner) {
 	_logger->info("Building lookup table\n");
 	buildLookup(outer);

@@ -203,6 +203,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		chtinput = (uint*) aligned_alloc(32, sizeof(uint) * inner->size);
 		chtinputsize = CollectThread::collect(bitmapresult, chtinput,
 				inner->size, &nz);
+		_logger->debug("Records passed bitmap check: %u\n", chtinputsize);
 		_timer.interval("cht_input_collect");
 	}
 	uint* chtresult = new uint[chtinputsize];
@@ -218,6 +219,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		cmprshashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 		hashinputsize = CollectThread::collect(hashinput, cmprshashinput,
 				chtinputsize, &nz);
+		_logger->debug("Records to check in hash: %u\n", hashinputsize);
 		_timer.interval("hash_input_collect");
 	}
 	uint* hashresult = new uint[hashinputsize];
