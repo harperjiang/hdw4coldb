@@ -239,6 +239,14 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	uint* chtinput = bitmapresult;
 	uint chtinputsize = inner->size;
 
+	// FIXME Debug
+	for (uint i = 0; i < _probeSize; i++) {
+		if (bitmapresult[i] != 0 && bitmapresult[i] != _probe[i]) {
+			_logger->warn("Mismatched bitmap filter %u<->%u\n", bitmapresult[i],
+					_probe[i]);
+		}
+	}
+
 	if (collectBitmap) {
 		chtinput = (uint*) aligned_alloc(32, sizeof(uint) * inner->size);
 		chtinputsize = CollectThread::collect(bitmapresult, chtinput,
@@ -276,20 +284,20 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	// FIX ME Debug info
 	uint sumcht = 0;
 	for (uint i = 0; i < chtinputsize; i++) {
-		if (chtinput[i] != 0xffffffff)
+		if (chtresult[i] != 0xffffffff)
 			sumcht++;
 	}
 	uint sumhash = 0;
 	for (uint i = 0; i < hashinputsize; i++) {
-		if (hashinput[i] != 0xffffffff)
+		if (hashresult[i] != 0xffffffff)
 			sumhash++;
 	}
 	_logger->debug("Found in CHT: %u,%u\n", foundInCht, sumcht);
 	_logger->debug("Found in Hash: %u,%u\n", foundInHash, sumhash);
 	CHT* cht = (CHT*) _lookup;
 
-	for (uint i = 0; i < chtinputsize; i++) {
-		if (cht->has(chtinput[i]) && chtresult[i] == 0xffffffff
+	for (uint i = 0; i < _probeSize; i++) {
+		if (cht->has(_probe[i]) && chtresult[i] == 0xffffffff
 				&& hashresult[i] == 0xffffffff) {
 			_logger->warn("Key mismatch %u,%u,%u,%u\n", chtinput[i],
 					chtresult[i], hashresult[i],
