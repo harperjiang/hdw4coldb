@@ -229,8 +229,29 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	_timer.interval("hash_lookup");
 
 	NotEqual nmax(0xffffffff);
-	CounterThread::count(chtresult, chtinputsize, &nmax, _matched);
-	CounterThread::count(hashresult, hashinputsize, &nmax, _matched);
+	uint foundInCht = CounterThread::count(chtresult, chtinputsize, &nmax,
+			_matched);
+	uint foundInHash = CounterThread::count(hashresult, hashinputsize, &nmax,
+			_matched);
+	_logger->debug("Found in CHT: %u\n", foundInCht);
+	_logger->debug("Found in Hash: %u\n", foundInHash);
+	// Debug info
+	CHT* cht = (CHT*) _lookup;
+
+	uint incht = 0;
+	uint inhash = 0;
+	for (uint i = 0; i < _probeSize; i++) {
+		if (cht->has(_probe[i])) {
+			if (cht->overflow->has(_probe[i])) {
+				inhash++;
+			} else {
+				incht++;
+			}
+		}
+	}
+	_logger->debug("Real in CHT: %u\n", incht);
+	_logger->debug("Real in Hash: %u\n", inhash);
+
 	_timer.interval("count_result");
 
 	_timer.stop();
