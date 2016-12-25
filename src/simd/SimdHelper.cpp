@@ -25,12 +25,13 @@ __m256i SimdHelper::TWO = _mm256_set1_epi32(2);
 __m256i SimdHelper::MAX = _mm256_set1_epi32(-1);
 
 void SimdHelper::transform(uint* src, uint srclength, uint* dest,
-		SimdTransform* trans) {
+		SimdTransform* trans, bool enableProfiling) {
 	for (uint i = 0; i < srclength / 8; i++) {
 		uint index = i * 8;
 		__m256i loadkey = _mm256_load_si256((__m256i *) (src + index));
-		__m256i processed = trans->transform(loadkey);
-		store_epu32(dest, index, processed, 8);
+		__m256i* dest = (__m256i*)(dest+index);
+		trans->transformv2(loadkey, dest);
+//		store_epu32(dest, index, processed, 8);
 	}
 	if (srclength % 8) {
 		uint psize = srclength % 8;
@@ -46,7 +47,7 @@ void SimdHelper::transform(uint* src, uint srclength, uint* dest,
 }
 
 void SimdHelper::transform2(uint* srca, uint* srcb, uint srclength, uint* dest,
-		SimdTransform* trans) {
+		SimdTransform* trans, bool enableProfiling) {
 	for (uint i = 0; i < srclength / 8; i++) {
 		uint index = i * 8;
 		__m256i a = _mm256_load_si256((__m256i *) (srca + index));
@@ -74,7 +75,7 @@ void SimdHelper::transform2(uint* srca, uint* srcb, uint srclength, uint* dest,
 }
 
 void SimdHelper::transform3(uint* src, uint srclength, uint* dest1, uint* dest2,
-		SimdTransform* trans) {
+		SimdTransform* trans, bool enableProfiling) {
 	__m256i out;
 	for (uint i = 0; i < srclength / 8; i++) {
 		uint index = i * 8;
@@ -182,6 +183,9 @@ void SimdHelper::store_epu32(uint* base, uint offset, __m256i input,
 
 __m256i SimdTransform::transform(__m256i input) {
 	return input;
+}
+
+void SimdTransform::transformv2(__m256i input, __m256i* output) {
 }
 
 __m256i SimdTransform::transform2(__m256i a, __m256i b) {

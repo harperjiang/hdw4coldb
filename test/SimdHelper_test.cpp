@@ -124,7 +124,7 @@ TEST(SimdHelper, Transform) {
 	}
 	int* dest = new int[20];
 	TestTransform bt;
-	SimdHelper::transform((uint*) src, 20, (uint*) dest, &bt);
+	SimdHelper::transform((uint*) src, 20, (uint*) dest, &bt,false);
 
 	for (uint i = 0; i < 20; i++) {
 		ASSERT_FALSE(src[i] + dest[i]);

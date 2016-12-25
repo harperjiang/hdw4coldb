@@ -19,6 +19,7 @@ public:
 	virtual ~SimdTransform() {
 	}
 	virtual __m256i transform(__m256i);
+	virtual void transformv2(__m256i, __m256i *);
 	virtual __m256i transform2(__m256i, __m256i);
 	virtual __m256i transform3(__m256i, __m256i *);
 };
@@ -34,11 +35,11 @@ public:
 	static __m256i MAX;
 
 	static void transform(uint* src, uint srclength, uint* dest,
-			SimdTransform* trans);
+			SimdTransform* trans, bool enableProfiling = false);
 	static void transform2(uint* srca, uint* srcb, uint srclength, uint* dest,
-			SimdTransform* trans);
+			SimdTransform* trans, bool enableProfiling = false);
 	static void transform3(uint* src, uint srclength, uint* dest1, uint* dest2,
-			SimdTransform* trans);
+			SimdTransform* trans, bool enableProfiling = false);
 
 	static void print_epu32(__m256i a);
 	static __m256i remainder_epu32(__m256i a, uint b);

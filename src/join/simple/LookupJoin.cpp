@@ -43,6 +43,7 @@ void LookupJoin::join(kvlist* outer, kvlist* inner) {
 }
 
 void LookupJoin::joinSingleThread() {
+	_logger->info("Running with single thread\n");
 	Matched* match = getMatched();
 	for (uint32_t i = 0; i < _probeSize; i++) {
 		uint8_t* outerpl = _lookup->access(_probe[i]);
@@ -53,6 +54,7 @@ void LookupJoin::joinSingleThread() {
 }
 
 void LookupJoin::joinMultiThread() {
+	_logger->info("Running with %u threads\n", numThread);
 	LookupThread** threads = new LookupThread*[numThread];
 
 	uint step = _probeSize / numThread;

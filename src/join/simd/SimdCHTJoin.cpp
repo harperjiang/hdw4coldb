@@ -31,12 +31,12 @@ __m256i SimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 /**
  * Check 64-bit bitmap to see if the given key exists in the bitmap
  */
-__m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
-		__m256i input) {
+__m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input,
+		__m256i* output) {
 	uint byteSize = 32;
 
 	__m256i hashed = SimdHelper::remainder_epu32(
-			_mm256_mullo_epi32(input, HASH_FACTOR), bitmapSize * BITMAP_UNIT);
+	_mm256_mullo_epi32(input, HASH_FACTOR), bitmapSize * BITMAP_UNIT);
 	__m256i offset;
 	__m256i index = SimdHelper::divrem_epu32(&offset, hashed, byteSize);
 	__m256i index2n = _mm256_add_epi32(index, index);
@@ -47,10 +47,14 @@ __m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
 	__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
 	// -1 for selected key, zero for abandoned key
 	__m256i selector = _mm256_and_si256(
-			_mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset),
-			SimdHelper::ONE);
+	_mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset),
+	SimdHelper::ONE);
 	selector = _mm256_sign_epi32(selector, SimdHelper::MAX);
-	return _mm256_and_si256(selector, input);
+	__m256i result = _mm256_and_si256(selector, input);
+	if(NULL != output) {
+		*output = result;
+	}
+	return result;
 }
 
 /**
@@ -195,7 +199,8 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	_timer.start();
 
 	CheckBitmapTransform cbt(this);
-	SimdHelper::transform(_probe, _probeSize, bitmapresult, &cbt);
+	SimdHelper::transform(_probe, _probeSize, bitmapresult, &cbt,
+			this->enableProfiling);
 
 	_timer.interval("filter");
 
@@ -208,11 +213,12 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 				inner->size, &nz);
 		_timer.interval("cht_input_collect");
 	}
-	uint* chtresult = new uint[chtinputsize];
+	uint* chtresult = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 	uint* hashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 
 	LookupChtTransform lct(this);
-	SimdHelper::transform3(chtinput, chtinputsize, chtresult, hashinput, &lct);
+	SimdHelper::transform3(chtinput, chtinputsize, chtresult, hashinput, &lct,
+			this->enableProfiling);
 	_timer.interval("cht_lookup");
 
 	uint* cmprshashinput = hashinput;
@@ -223,10 +229,11 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 				chtinputsize, &nz);
 		_timer.interval("hash_input_collect");
 	}
-	uint* hashresult = new uint[hashinputsize];
+	uint* hashresult = (uint*) aligned_alloc(32, sizeof(uint) * hashinputsize);
 
 	LookupHashTransform lht(this);
-	SimdHelper::transform(cmprshashinput, hashinputsize, hashresult, &lht);
+	SimdHelper::transform(cmprshashinput, hashinputsize, hashresult, &lht,
+			this->enableProfiling);
 	_timer.interval("hash_lookup");
 
 	NotEqual nmax(0xffffffff);
@@ -246,15 +253,19 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	}
 	free(bitmapresult);
 	free(hashinput);
-	delete[] chtresult;
-	delete[] hashresult;
-	delete _lookup;
+	free(chtresult);
+	free(hashresult);
 }
 
 __m256i CheckBitmapTransform::transform(__m256i input) {
 	CHT* cht = (CHT*) owner->_lookup;
 	return SimdCHTJoin::check_bitmap(owner->alignedBitmap, cht->bitmapSize(),
 			input);
+}
+
+void CheckBitmapTransform::transformv2(__m256i input, __m256i* output) {
+	CHT* cht = (CHT*) owner->_lookup;
+	SimdCHTJoin::check_bitmap(owner->alignedBitmap, cht->bitmapSize(), input, output);
 }
 
 __m256i LookupChtTransform::transform3(__m256i input, __m256i* out) {

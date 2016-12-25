@@ -39,9 +39,10 @@ public:
 
 public:
 	static __m256i HASH_FACTOR;
-	static __m256i check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input);
+	static __m256i check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input,
+			__m256i* output = NULL);
 	static __m256i lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
-			uint chtsize, __m256i input, __m256i * out);
+	uint chtsize, __m256i input, __m256i * out);
 	static __m256i lookup_hash(uint* hashbuckets, uint bktsize, __m256i input);
 };
 
@@ -56,6 +57,7 @@ public:
 	}
 
 	__m256i transform(__m256i);
+	void transformv2(__m256i, __m256i *);
 };
 
 class LookupChtTransform: public SimdTransform {
