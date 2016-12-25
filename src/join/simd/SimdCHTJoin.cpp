@@ -274,8 +274,18 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	uint foundInHash = CounterThread::count(hashresult, hashinputsize, &nmax,
 			_matched);
 	// FIX ME Debug info
-	_logger->debug("Found in CHT: %u\n", foundInCht);
-	_logger->debug("Found in Hash: %u\n", foundInHash);
+	uint sumcht = 0;
+	for (uint i = 0; i < chtinputsize; i++) {
+		if (chtinput[i] != 0xffffffff)
+			sumcht++;
+	}
+	uint sumhash = 0;
+	for (uint i = 0; i < hashinputsize; i++) {
+		if (hashinput[i] != 0xffffffff)
+			sumhash++;
+	}
+	_logger->debug("Found in CHT: %u,%u\n", foundInCht, sumcht);
+	_logger->debug("Found in Hash: %u,%u\n", foundInHash, sumhash);
 	CHT* cht = (CHT*) _lookup;
 
 	for (uint i = 0; i < chtinputsize; i++) {
@@ -283,7 +293,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 				&& hashresult[i] == 0xffffffff) {
 			_logger->warn("Key mismatch %u,%u,%u,%u\n", chtinput[i],
 					chtresult[i], hashresult[i],
-					cht->overflow->hash(chtinput[i]));
+					cht->overflow->has(chtinput[i]));
 		}
 	}
 
