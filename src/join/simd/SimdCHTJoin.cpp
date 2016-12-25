@@ -281,7 +281,9 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	for (uint i = 0; i < chtinputsize; i++) {
 		if (cht->has(chtinput[i]) && chtresult[i] == 0xffffffff
 				&& hashresult[i] == 0xffffffff) {
-			_logger->warn("Key mismatch %u\n", chtinput[i]);
+			_logger->warn("Key mismatch %u,%u,%u,%u\n", chtinput[i],
+					chtresult[i], hashresult[i],
+					cht->overflow->hash(chtinput[i]));
 		}
 	}
 
