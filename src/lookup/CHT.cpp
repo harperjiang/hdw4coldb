@@ -162,7 +162,7 @@ uint8_t* CHT::findUnique(uint32_t key) {
 	bool debug = false;
 	// FIXME Debug Remove
 	if (key == 4104995369) {
-		debug = true;
+		debug = false;
 	}
 	if (debug) {
 		printf("CHT: hval %u\n", hval);
