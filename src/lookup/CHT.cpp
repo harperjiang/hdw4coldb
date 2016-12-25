@@ -159,15 +159,6 @@ uint8_t* CHT::findUnique(uint32_t key) {
 		return NULL;
 	}
 	uint32_t offset = bitmap_popcnt(this->bitmap, hval);
-	bool debug = false;
-	// FIXME Debug Remove
-	if (key == 4104995369) {
-		debug = false;
-	}
-	if (debug) {
-		printf("CHT: hval %u\n", hval);
-		printf("CHT: location for key %u\n", offset);
-	}
 
 	uint32_t counter = 0;
 	while (counter < THRESHOLD && offset + counter < payload_size
@@ -177,9 +168,7 @@ uint8_t* CHT::findUnique(uint32_t key) {
 	if (counter == THRESHOLD || offset + counter >= payload_size) {
 		return this->overflow->get(key);
 	}
-	if (debug) {
-		printf("CHT: found at %u\n", offset + counter);
-	}
+
 	return this->payloads + PAYLOAD_SIZE * (offset + counter);
 }
 

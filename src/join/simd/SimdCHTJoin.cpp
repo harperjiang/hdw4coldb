@@ -58,13 +58,6 @@ __m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
  */
 __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 		uint* chtpayload, uint chtsize, __m256i input, __m256i* remain) {
-	bool debug = false;
-	uint* inputdata = (uint*)&input;
-	for(int i = 0; i < 8; i++) {
-//		if(inputdata[i] == 4104995369) {
-//			debug = true;
-//		}
-	}
 	__m256i hashed = SimdHelper::remainder_epu32(_mm256_mullo_epi32(input, HASH_FACTOR),
 	bitmapSize * BITMAP_UNIT);
 	__m256i offset;
@@ -83,20 +76,7 @@ __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 	__m256i result = SimdHelper::ZERO;
 
 	__m256i notzero = SimdHelper::testnz_epi32(input);
-	if(debug) {
-		printf("input:\t");
-		SimdHelper::print_epu32(input);
-		printf("hashed \t");
-		SimdHelper::print_epu32(hashed);
-		printf("base pop\t");
-		SimdHelper::print_epu32(basePop);
-		printf("load offset\t");
-		SimdHelper::print_epu32(loadOffset);
-		printf("partial pop\t");
-		SimdHelper::print_epu32(partialPop);
-		printf("location:\t");
-		SimdHelper::print_epu32(location);
-	}
+
 	for (int i = 0; i < THRESHOLD; i++) {
 		__m256i chtval = _mm256_i32gather_epi32((int* )chtpayload, location, 4);
 		// a value of -1 means found
@@ -108,21 +88,7 @@ __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 		result = _mm256_or_si256(result, locstore);
 		// If location is greater than boundary, reduce it
 		location = SimdHelper::remainder_epu32(locadd1, chtsize);
-		if(debug) {
-			printf("Round %u\n",i);
-			printf("chtval:\t");
-			SimdHelper::print_epu32(chtval);
-			printf("compare:\t");
-			SimdHelper::print_epu32(compare);
-			printf("locmask:\t");
-			SimdHelper::print_epu32(locmask);
-			printf("locadd1:\t");
-			SimdHelper::print_epu32(locadd1);
-			printf("locstore:\t");
-			SimdHelper::print_epu32(locstore);
-			printf("result\t");
-			SimdHelper::print_epu32(result);
-		}
+
 	}
 
 	__m256i resmask = SimdHelper::testz_epi32(result);
@@ -132,12 +98,7 @@ __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 	// Remaining key
 	__m256i rem = _mm256_and_si256(resmask, input);
 	::memcpy(remain, &rem, 32);
-	if(debug) {
-		printf("result\t");
-		SimdHelper::print_epu32(result);
-		printf("remain\t");
-		SimdHelper::print_epu32(rem);
-	}
+
 	return result;
 }
 
@@ -241,19 +202,10 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	uint* chtinput = bitmapresult;
 	uint chtinputsize = inner->size;
 
-	// FIXME Debug
-	for (uint i = 0; i < _probeSize; i++) {
-		if (bitmapresult[i] != 0 && bitmapresult[i] != _probe[i]) {
-			_logger->warn("Mismatched bitmap filter %u<->%u\n", bitmapresult[i],
-					_probe[i]);
-		}
-	}
-
 	if (collectBitmap) {
 		chtinput = (uint*) aligned_alloc(32, sizeof(uint) * inner->size);
 		chtinputsize = CollectThread::collect(bitmapresult, chtinput,
 				inner->size, &nz);
-		_logger->debug("Records passed bitmap check: %u\n", chtinputsize);
 		_timer.interval("cht_input_collect");
 	}
 	uint* chtresult = new uint[chtinputsize];
@@ -269,7 +221,6 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		cmprshashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 		hashinputsize = CollectThread::collect(hashinput, cmprshashinput,
 				chtinputsize, &nz);
-		_logger->debug("Records to check in hash: %u\n", hashinputsize);
 		_timer.interval("hash_input_collect");
 	}
 	uint* hashresult = new uint[hashinputsize];
@@ -279,48 +230,8 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	_timer.interval("hash_lookup");
 
 	NotEqual nmax(0xffffffff);
-	uint foundInCht = CounterThread::count(chtresult, chtinputsize, &nmax,
-			_matched);
-	uint foundInHash = CounterThread::count(hashresult, hashinputsize, &nmax,
-			_matched);
-	// FIX ME Debug info
-	uint sumcht = 0;
-	for (uint i = 0; i < chtinputsize; i++) {
-		if (chtresult[i] != 0xffffffff)
-			sumcht++;
-	}
-	uint sumhash = 0;
-	for (uint i = 0; i < hashinputsize; i++) {
-		if (hashresult[i] != 0xffffffff)
-			sumhash++;
-	}
-	_logger->debug("Found in CHT: %u,%u\n", foundInCht, sumcht);
-	_logger->debug("Found in Hash: %u,%u\n", foundInHash, sumhash);
-	CHT* cht = (CHT*) _lookup;
-
-	for (uint i = 0; i < _probeSize; i++) {
-		if (cht->has(_probe[i]) && chtresult[i] == 0xffffffff
-				&& hashresult[i] == 0xffffffff) {
-			_logger->warn("Key mismatch %u,%u,%u,%u\n", chtinput[i],
-					chtresult[i], hashresult[i],
-					cht->overflow->has(chtinput[i]));
-		}
-	}
-
-	uint incht = 0;
-	uint inhash = 0;
-	for (uint i = 0; i < _probeSize; i++) {
-		if (cht->has(_probe[i])) {
-			if (cht->overflow->has(_probe[i])) {
-				inhash++;
-			} else {
-				incht++;
-			}
-		}
-	}
-	_logger->debug("Real in CHT: %u\n", incht);
-	_logger->debug("Real in Hash: %u\n", inhash);
-
+	CounterThread::count(chtresult, chtinputsize, &nmax, _matched);
+	CounterThread::count(hashresult, hashinputsize, &nmax, _matched);
 	_timer.interval("count_result");
 
 	_timer.stop();
@@ -348,46 +259,8 @@ __m256i CheckBitmapTransform::transform(__m256i input) {
 
 __m256i LookupChtTransform::transform3(__m256i input, __m256i* out) {
 	CHT* cht = (CHT*) owner->_lookup;
-
-	__m256i result = SimdCHTJoin::lookup_cht(owner->alignedBitmap, cht->bitmapSize(),
+	return SimdCHTJoin::lookup_cht(owner->alignedBitmap, cht->bitmapSize(),
 	owner->alignedChtload,cht->payload_size, input, out);
-
-	Logger* logger = owner->_logger;
-	uint* inputdata = (uint*)&input;
-	uint* resultdata = (uint*)&result;
-	uint* outdata = (uint*)out;
-
-	for(uint i = 0; i < 8; i++) {
-		uint key = inputdata[i];
-		if(cht->has(key)) {
-			if(cht->overflow->has(key)) {
-				// in overflow
-				if(resultdata[i] != 0xffffffff) {
-					logger->warn("Result for key %u, should be in overflow, now is found at %u\n",key,resultdata[i]);
-				}
-				if(outdata[i] != key) {
-					logger->warn("Result for key %u, should be in overflow, now not going with %u\n",key,outdata[i]);
-				}
-			} else {
-				// in cht
-				if(resultdata[i] == 0xffffffff) {
-					logger->warn("Result for key %u, should be found, now not\n",key);
-				}
-				if(outdata[i] != 0) {
-					logger->warn("Result for key %u, should not go to overflow, now go %u\n",key,outdata[i]);
-				}
-			}
-		} else {
-			if(resultdata[i] != 0xffffffff) {
-				logger->warn("Result for key %u, should be not found and go to overflow, now %u\n",key,resultdata[i]);
-			}
-			if(outdata[i] != key) {
-				logger->warn("Result for key %u, should be not found and go to overflow, now not go %u\n",key, outdata[i]);
-			}
-		}
-	}
-
-	return result;
 }
 
 __m256i LookupHashTransform::transform(__m256i input) {
