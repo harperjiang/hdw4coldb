@@ -46,7 +46,9 @@ __m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
 	// Use offset to create pattern
 	__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
 	// -1 for selected key, zero for abandoned key
-	__m256i selector = _mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset);
+	__m256i selector = _mm256_and_si256(
+			_mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset),
+			SimdHelper::ONE);
 	selector = _mm256_sign_epi32(selector, SimdHelper::MAX);
 	return _mm256_and_si256(selector, input);
 }
