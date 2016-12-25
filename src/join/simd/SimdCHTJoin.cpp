@@ -58,7 +58,7 @@ __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 		uint* chtpayload, uint chtsize, __m256i input, __m256i* remain) {
 	bool debug = false;
 	uint* inputdata = (uint*)&input;
-	for(int i = 0 ; i < 8 ; i++) {
+	for(int i = 0; i < 8; i++) {
 		if(inputdata[i] == 4104995369) {
 			debug = true;
 		}
@@ -73,8 +73,7 @@ __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 	__m256i basePop = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
 	__m256i loadOffset = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
 
-	__m256i mask = _mm256_xor_si256(_mm256_srav_epi32(SimdHelper::MAX, offset),
-	SimdHelper::MAX);
+	__m256i mask = _mm256_xor_si256(_mm256_sllv_epi32(SimdHelper::MAX, offset), SimdHelper::MAX);
 	__m256i partialPop = SimdHelper::popcnt_epi32(_mm256_and_si256(loadOffset, mask));
 
 	__m256i location = _mm256_add_epi32(basePop, partialPop);
@@ -85,6 +84,14 @@ __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 	if(debug) {
 		printf("input:\t");
 		SimdHelper::print_epu32(input);
+		printf("hashed \t");
+		SimdHelper::print_epu32(hashed);
+		printf("base pop\t");
+		SimdHelper::print_epu32(basePop);
+		printf("load offset\t");
+		SimdHelper::print_epu32(loadOffset);
+		printf("partial pop\t");
+		SimdHelper::print_epu32(partialPop);
 		printf("location:\t");
 		SimdHelper::print_epu32(location);
 	}

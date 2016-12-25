@@ -162,6 +162,7 @@ uint8_t* CHT::findUnique(uint32_t key) {
 
 	// FIXME Debug Remove
 	if (key == 4104995369) {
+		printf("CHT: hval %u\n", hval);
 		printf("CHT: location for key %u\n", offset);
 	}
 
