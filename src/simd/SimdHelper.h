@@ -19,7 +19,6 @@ public:
 	virtual ~SimdTransform() {
 	}
 	virtual __m256i transform(__m256i);
-	virtual void transformv2(__m256i, __m256i *);
 	virtual __m256i transform2(__m256i, __m256i);
 	virtual __m256i transform3(__m256i, __m256i *);
 };

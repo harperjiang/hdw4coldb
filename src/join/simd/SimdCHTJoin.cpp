@@ -101,7 +101,7 @@ __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 
 	// Remaining key
 	__m256i rem = _mm256_and_si256(resmask, input);
-	::memcpy(remain, &rem, 32);
+	_mm256_store_si256(remain,rem);
 
 	return result;
 }
@@ -261,11 +261,6 @@ __m256i CheckBitmapTransform::transform(__m256i input) {
 	CHT* cht = (CHT*) owner->_lookup;
 	return SimdCHTJoin::check_bitmap(owner->alignedBitmap, cht->bitmapSize(),
 			input);
-}
-
-void CheckBitmapTransform::transformv2(__m256i input, __m256i* output) {
-	CHT* cht = (CHT*) owner->_lookup;
-	SimdCHTJoin::check_bitmap(owner->alignedBitmap, cht->bitmapSize(), input, output);
 }
 
 __m256i LookupChtTransform::transform3(__m256i input, __m256i* out) {

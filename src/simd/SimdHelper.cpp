@@ -30,8 +30,8 @@ void SimdHelper::transform(uint* src, uint srclength, uint* dest,
 		uint index = i * 8;
 		__m256i loadkey = _mm256_load_si256((__m256i *) (src + index));
 		__m256i* dest = (__m256i*)(dest+index);
-		trans->transformv2(loadkey, dest);
-//		store_epu32(dest, index, processed, 8);
+		__m256i result = trans->transform(loadkey);
+		_mm256_store_si256(dest, result);
 	}
 	if (srclength % 8) {
 		uint psize = srclength % 8;
@@ -53,7 +53,8 @@ void SimdHelper::transform2(uint* srca, uint* srcb, uint srclength, uint* dest,
 		__m256i a = _mm256_load_si256((__m256i *) (srca + index));
 		__m256i b = _mm256_load_si256((__m256i *) (srcb + index));
 		__m256i processed = trans->transform2(a, b);
-		store_epu32(dest, index, processed, 8);
+		__m256i* output = (__m256i*)(output+index);
+		_mm256_store_si256(output, processed);
 	}
 	if (srclength % 8) {
 		uint psize = srclength % 8;
@@ -76,14 +77,14 @@ void SimdHelper::transform2(uint* srca, uint* srcb, uint srclength, uint* dest,
 
 void SimdHelper::transform3(uint* src, uint srclength, uint* dest1, uint* dest2,
 		SimdTransform* trans, bool enableProfiling) {
-	__m256i out;
+
 	for (uint i = 0; i < srclength / 8; i++) {
 		uint index = i * 8;
 		__m256i loadkey = _mm256_load_si256((__m256i *) (src + index));
 
-		__m256i processed = trans->transform3(loadkey, &out);
-		store_epu32(dest1, index, processed, 8);
-		store_epu32(dest2, index, out, 8);
+		__m256i *out = (__m256i *) (dest2 + index);
+		__m256i processed = trans->transform3(loadkey, out);
+		_mm256_store_si256((__m256i *) (dest1 + index), processed);
 	}
 	if (srclength % 8) {
 		uint psize = srclength % 8;
@@ -176,6 +177,7 @@ __m256i SimdHelper::testnz_epi32(__m256i input) {
 	return _mm256_sub_epi32(_mm256_setzero_si256(), result);
 }
 
+// Copy a portion of a SIMD result
 void SimdHelper::store_epu32(uint* base, uint offset, __m256i input,
 		uint length) {
 	::memcpy(base + offset, &input, length * sizeof(int));
@@ -183,9 +185,6 @@ void SimdHelper::store_epu32(uint* base, uint offset, __m256i input,
 
 __m256i SimdTransform::transform(__m256i input) {
 	return input;
-}
-
-void SimdTransform::transformv2(__m256i input, __m256i* output) {
 }
 
 __m256i SimdTransform::transform2(__m256i a, __m256i b) {
