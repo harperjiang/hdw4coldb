@@ -55,8 +55,8 @@ __m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
  */
 __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 		uint* chtpayload, uint chtsize, __m256i input, __m256i* remain) {
-	__m256i hashed = SimdHelper::remainder_epu32(
-	_mm256_mullo_epi32(input, HASH_FACTOR), bitmapSize * BITMAP_UNIT);
+	__m256i hashed = SimdHelper::remainder_epu32(_mm256_mullo_epi32(input, HASH_FACTOR),
+	bitmapSize * BITMAP_UNIT);
 	__m256i offset;
 	__m256i index = SimdHelper::divrem_epu32(&offset, hashed, BITMAP_UNIT);
 	__m256i index2n = _mm256_add_epi32(index, index);
@@ -279,9 +279,47 @@ __m256i CheckBitmapTransform::transform(__m256i input) {
 
 __m256i LookupChtTransform::transform3(__m256i input, __m256i* out) {
 	CHT* cht = (CHT*) owner->_lookup;
-	return SimdCHTJoin::lookup_cht(owner->alignedBitmap,
-	cht->bitmapSize(), owner->alignedChtload,
-	cht->payload_size, input, out);
+
+	Logger* logger = owner->_logger;
+
+	__m256i result = SimdCHTJoin::lookup_cht(owner->alignedBitmap, cht->bitmapSize(),
+	owner->alignedChtload,cht->payload_size, input, out);
+
+	uint* inputdata = (uint*)&input;
+	uint* resultdata = (uint*)&result;
+	uint* outdata = (uint*)out;
+
+	for(uint i = 0; i < 8; i++) {
+		uint key = inpudata[i];
+		if(cht->has(key)) {
+			if(cht->overflow->has(key)) {
+				// in overflow
+				if(resultdata[i] != 0xffffffff) {
+					logger->warn("Result for key %u, should be in overflow, now is found at %u\n",key,resultdata[i]);
+				}
+				if(outdata[i] != key) {
+					logger->warn("Result for key %u, should be in overflow, now not going with %u\n",key,outdata[i]);
+				}
+			} else {
+				// in cht
+				if(resultdata[i] == 0xffffffff) {
+					logger->warn("Result for key %u, should be found, now not\n",key);
+				}
+				if(outdata[i] != 0) {
+					logger->warn("Result for key %u, should not go to overflow, now go %u\n",key,outdata[i]);
+				}
+			}
+		} else {
+			if(resultdata[i] != 0xffffffff) {
+				logger->warn("Result for key %u, should be not found and go to overflow, now %u\n",key,resultdata[i]);
+			}
+			if(outdata[i] != key) {
+				logger->warn("Result for key %u, should be not found and go to overflow, now not go %u\n",key, outdata[i]);
+			}
+		}
+	}
+
+	return result;
 }
 
 __m256i LookupHashTransform::transform(__m256i input) {
