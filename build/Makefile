@@ -9,7 +9,7 @@ INCLUDE=$(INCLUDE_OPENCL)
 LIB_OPENCL= -L $(AMDAPPSDKROOT)/lib/x86_64 -lOpenCL
 LIBS = -pthread $(LIB_OPENCL)
 
-CXX_FLAG= -O0 -g3 -Wall -std=gnu++11 -mavx2 -c -fmessage-length=0 -pthread $(INCLUDE)
+CXX_FLAG= -O3 -Wall -std=gnu++11 -mavx2 -c -fmessage-length=0 -pthread $(INCLUDE)
 
 BIN = ../bin
 

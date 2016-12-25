@@ -110,7 +110,7 @@ __m256i SimdCHTJoin::lookup_hash(uint* hashbuckets, uint bktsize,
 	__m256i flag = input;
 	__m256i result = SimdHelper::ZERO;
 	while (!_mm256_testz_si256(flag, SimdHelper::MAX)) {
-		__m256i load = _mm256_i32gather_epi32(hashbuckets, hashed, 4);
+		__m256i load = _mm256_i32gather_epi32((int* )hashbuckets, hashed, 4);
 		// For key equal to load and nz, store location
 		__m256i locmask = _mm256_and_si256(inputnz,
 				SimdHelper::testz_epi32(_mm256_xor_si256(load, input)));
