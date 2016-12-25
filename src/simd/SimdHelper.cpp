@@ -94,6 +94,7 @@ void SimdHelper::transform3(uint* src, uint srclength, uint* dest1, uint* dest2,
 				psize >= 2 ? start[1] : 0, psize >= 3 ? start[2] : 0,
 				psize >= 4 ? start[3] : 0, psize >= 5 ? start[4] : 0,
 				psize >= 6 ? start[5] : 0, psize >= 7 ? start[6] : 0, 0);
+		__m256i out;
 		__m256i partialprocessed = trans->transform3(loadpartial, &out);
 		store_epu32(dest1, index, partialprocessed, psize);
 		store_epu32(dest2, index, out, psize);
