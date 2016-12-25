@@ -59,9 +59,9 @@ __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 	bool debug = false;
 	uint* inputdata = (uint*)&input;
 	for(int i = 0; i < 8; i++) {
-		if(inputdata[i] == 4104995369) {
-			debug = true;
-		}
+//		if(inputdata[i] == 4104995369) {
+//			debug = true;
+//		}
 	}
 	__m256i hashed = SimdHelper::remainder_epu32(_mm256_mullo_epi32(input, HASH_FACTOR),
 	bitmapSize * BITMAP_UNIT);
@@ -322,42 +322,42 @@ __m256i LookupChtTransform::transform3(__m256i input, __m256i* out) {
 
 	__m256i result = SimdCHTJoin::lookup_cht(owner->alignedBitmap, cht->bitmapSize(),
 	owner->alignedChtload,cht->payload_size, input, out);
-	/*
-	 *  Logger* logger = owner->_logger;
-	 uint* inputdata = (uint*)&input;
-	 uint* resultdata = (uint*)&result;
-	 uint* outdata = (uint*)out;
 
-	 for(uint i = 0; i < 8; i++) {
-	 uint key = inputdata[i];
-	 if(cht->has(key)) {
-	 if(cht->overflow->has(key)) {
-	 // in overflow
-	 if(resultdata[i] != 0xffffffff) {
-	 logger->warn("Result for key %u, should be in overflow, now is found at %u\n",key,resultdata[i]);
-	 }
-	 if(outdata[i] != key) {
-	 logger->warn("Result for key %u, should be in overflow, now not going with %u\n",key,outdata[i]);
-	 }
-	 } else {
-	 // in cht
-	 if(resultdata[i] == 0xffffffff) {
-	 logger->warn("Result for key %u, should be found, now not\n",key);
-	 }
-	 if(outdata[i] != 0) {
-	 logger->warn("Result for key %u, should not go to overflow, now go %u\n",key,outdata[i]);
-	 }
-	 }
-	 } else {
-	 if(resultdata[i] != 0xffffffff) {
-	 logger->warn("Result for key %u, should be not found and go to overflow, now %u\n",key,resultdata[i]);
-	 }
-	 if(outdata[i] != key) {
-	 logger->warn("Result for key %u, should be not found and go to overflow, now not go %u\n",key, outdata[i]);
-	 }
-	 }
-	 }
-	 */
+	Logger* logger = owner->_logger;
+	uint* inputdata = (uint*)&input;
+	uint* resultdata = (uint*)&result;
+	uint* outdata = (uint*)out;
+
+	for(uint i = 0; i < 8; i++) {
+		uint key = inputdata[i];
+		if(cht->has(key)) {
+			if(cht->overflow->has(key)) {
+				// in overflow
+				if(resultdata[i] != 0xffffffff) {
+					logger->warn("Result for key %u, should be in overflow, now is found at %u\n",key,resultdata[i]);
+				}
+				if(outdata[i] != key) {
+					logger->warn("Result for key %u, should be in overflow, now not going with %u\n",key,outdata[i]);
+				}
+			} else {
+				// in cht
+				if(resultdata[i] == 0xffffffff) {
+					logger->warn("Result for key %u, should be found, now not\n",key);
+				}
+				if(outdata[i] != 0) {
+					logger->warn("Result for key %u, should not go to overflow, now go %u\n",key,outdata[i]);
+				}
+			}
+		} else {
+			if(resultdata[i] != 0xffffffff) {
+				logger->warn("Result for key %u, should be not found and go to overflow, now %u\n",key,resultdata[i]);
+			}
+			if(outdata[i] != key) {
+				logger->warn("Result for key %u, should be not found and go to overflow, now not go %u\n",key, outdata[i]);
+			}
+		}
+	}
+
 	return result;
 }
 
