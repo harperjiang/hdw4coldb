@@ -121,10 +121,9 @@ int main(int argc, char** argv) {
 
 		join->getLogger()->setLevel(DEBUG);
 		join->join(&outerkeys, &innerkeys);
+		delete[] outerkeys.entries;
+		delete[] innerkeys.entries;
 	} else {
 		logger->error("Algorithm %s not recognized\n", alg);
 	}
-	delete[] outerkeys.entries;
-	delete[] innerkeys.entries;
-
 }
