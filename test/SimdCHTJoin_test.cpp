@@ -59,7 +59,7 @@ TEST(SimdCHTJoin, lookup_cht) {
 
 	memcpy(alignedPayload, chtpayload, sizeof(uint) * chtsize);
 
-	__m256i input = _mm256_setr_epi32(2, 1, 0, 8, 11, 14, 0, 0);
+	__m256i input = _mm256_setr_epi32(2, 1, 0, 8, 11, 14, 0, 7);
 	__m256i remain;
 	__m256i result = SimdCHTJoin::lookup_cht(alignedBitmap, bitmapSize,
 			chtpayload, chtsize, input, &remain);
@@ -81,7 +81,7 @@ TEST(SimdCHTJoin, lookup_cht) {
 	ASSERT_EQ(0, rem[4]);
 	ASSERT_EQ(0, rem[5]);
 	ASSERT_EQ(0, rem[6]);
-	ASSERT_EQ(0, rem[7]);
+	ASSERT_EQ(7, rem[7]);
 
 	free(alignedPayload);
 	free(alignedBitmap);

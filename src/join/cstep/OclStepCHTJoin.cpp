@@ -133,3 +133,6 @@ void OclStepCHTJoin::collect() {
 	// DO NOTHING
 }
 
+const char* OclStepCHTJoin::name() {
+	return "OclStepCHTJoin";
+}

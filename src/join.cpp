@@ -88,15 +88,6 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	kvlist outerkeys;
-	kvlist innerkeys;
-	if (outerfile != NULL && innerfile != NULL) {
-		logger->info("Loading files\n");
-		loadkey(outerfile, &outerkeys);
-		loadkey(innerfile, &innerkeys);
-		logger->info("Outer file size: %u\n", outerkeys.size);
-		logger->info("Inner file size: %u\n", innerkeys.size);
-	}
 	if (enableProfiling) {
 		Logger::getLogger("CLBuffer")->setLevel(DEBUG);
 		Logger::getLogger("CLProgram")->setLevel(DEBUG);
@@ -118,8 +109,20 @@ int main(int argc, char** argv) {
 		join = NULL;
 	}
 	if (NULL != join) {
+		kvlist outerkeys;
+		kvlist innerkeys;
+		if (outerfile != NULL && innerfile != NULL) {
+			logger->info("Loading files\n");
+			loadkey(outerfile, &outerkeys);
+			loadkey(innerfile, &innerkeys);
+			logger->info("Outer file size: %u\n", outerkeys.size);
+			logger->info("Inner file size: %u\n", innerkeys.size);
+		}
+
 		join->getLogger()->setLevel(DEBUG);
 		join->join(&outerkeys, &innerkeys);
+	} else {
+		logger->error("Algorithm %s not recognized\n", alg);
 	}
 	delete[] outerkeys.entries;
 	delete[] innerkeys.entries;

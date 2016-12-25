@@ -34,6 +34,8 @@ protected:
 	void scanCht();
 	void scanHash();
 	void collect();
+
+	const char* name();
 };
 
 #endif /* SRC_JOIN_CSTEP_OCLSTEPCHTJOIN_H_ */
