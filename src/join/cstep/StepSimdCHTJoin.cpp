@@ -1,11 +1,11 @@
 /*
- * SimdCHTJoin.cpp
+ * StepSimdCHTJoin.cpp
  *
  *  Created on: Dec 18, 2016
  *      Author: Cathy
  */
 
-#include "SimdCHTJoin.h"
+#include "StepSimdCHTJoin.h"
 
 #include <avx2intrin.h>
 #include <avxintrin.h>
@@ -25,7 +25,7 @@
 #define BITMAP_UNIT 32
 #define THRESHOLD 5
 
-__m256i SimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
+__m256i StepSimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 		(int) UINT32_C(2654435761));
 
 void remainder(__m256i* hashed, __m256i* index, __m256i* offset, uint big, uint small) {
@@ -51,7 +51,7 @@ void remainder(__m256i* hashed, __m256i* index, __m256i* offset, uint big, uint 
 /**
  * Check 64-bit bitmap to see if the given key exists in the bitmap
  */
-__m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
+__m256i StepSimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
 		__m256i input) {
 	uint byteSize = 32;
 	__m256i offset;
@@ -63,10 +63,10 @@ __m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
 	// Use offset to create pattern
 	__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
 	// -1 for selected key, zero for abandoned key
-	__m256i selector = _mm256_cmpeq_epi32(
-			_mm256_and_si256(
-					_mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset),
-					SimdHelper::ONE), SimdHelper::ONE);
+	__m256i selector = _mm256_and_si256(
+			_mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset),
+			SimdHelper::ONE);
+	selector = _mm256_sign_epi32(selector, SimdHelper::MAX);
 	__m256i result = _mm256_and_si256(selector, input);
 	return result;
 }
@@ -74,7 +74,7 @@ __m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
 /**
  * Return the location of the given key in cht payload, -1 if not found
  */
-__m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
+__m256i StepSimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 		uint* chtpayload, uint chtsize, __m256i input, __m256i* remain) {
 	__m256i hashed = SimdHelper::remainder_epu32(_mm256_mullo_epi32(input, HASH_FACTOR),
 	bitmapSize * BITMAP_UNIT);
@@ -120,7 +120,7 @@ __m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
 	return result;
 }
 
-__m256i SimdCHTJoin::lookup_hash(uint* hashbuckets, uint bktsize,
+__m256i StepSimdCHTJoin::lookup_hash(uint* hashbuckets, uint bktsize,
 		__m256i input) {
 	__m256i hashed = SimdHelper::remainder_epu32(
 			_mm256_mullo_epi32(input, HASH_FACTOR), bktsize);
@@ -147,14 +147,14 @@ __m256i SimdCHTJoin::lookup_hash(uint* hashbuckets, uint bktsize,
 	return _mm256_sub_epi32(result, SimdHelper::ONE);
 }
 
-SimdCHTJoin::SimdCHTJoin(bool c1, bool c2, bool ep) :
+StepSimdCHTJoin::StepSimdCHTJoin(bool c1, bool c2, bool ep) :
 		Join(ep) {
 	this->collectBitmap = c1;
 	this->collectCht = c2;
-	this->_logger = Logger::getLogger("SimdCHTJoin");
+	this->_logger = Logger::getLogger("StepSimdCHTJoin");
 }
 
-SimdCHTJoin::~SimdCHTJoin() {
+StepSimdCHTJoin::~StepSimdCHTJoin() {
 	if (NULL != _probe)
 		::free(_probe);
 	_probe = NULL;
@@ -166,15 +166,15 @@ SimdCHTJoin::~SimdCHTJoin() {
 		::free(alignedHashbkt);
 }
 
-Lookup* SimdCHTJoin::createLookup() {
+Lookup* StepSimdCHTJoin::createLookup() {
 	return new CHT();
 }
 
-const char* SimdCHTJoin::name() {
-	return "SimdCHTJoin";
+const char* StepSimdCHTJoin::name() {
+	return "StepSimdCHTJoin";
 }
 
-void SimdCHTJoin::buildLookup(kvlist* outer) {
+void StepSimdCHTJoin::buildLookup(kvlist* outer) {
 	Join::buildLookup(outer);
 
 	CHT* cht = (CHT*) _lookup;
@@ -192,7 +192,7 @@ void SimdCHTJoin::buildLookup(kvlist* outer) {
 			sizeof(uint) * cht->overflow->bucket_size);
 }
 
-void SimdCHTJoin::buildProbe(kvlist* inner) {
+void StepSimdCHTJoin::buildProbe(kvlist* inner) {
 	_probe = (uint*) aligned_alloc(32, inner->size * sizeof(uint));
 	for (uint i = 0; i < inner->size; i++) {
 		_probe[i] = inner->entries[i].key;
@@ -200,7 +200,7 @@ void SimdCHTJoin::buildProbe(kvlist* inner) {
 	_probeSize = inner->size;
 }
 
-void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
+void StepSimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	// Allocate aligned bitmap
 
 	buildLookup(outer);
@@ -273,19 +273,19 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 
 __m256i CheckBitmapTransform::transform(__m256i input) {
 	CHT* cht = (CHT*) owner->_lookup;
-	return SimdCHTJoin::check_bitmap(owner->alignedBitmap, cht->bitmapSize(),
+	return StepSimdCHTJoin::check_bitmap(owner->alignedBitmap, cht->bitmapSize(),
 			input);
 }
 
 __m256i LookupChtTransform::transform3(__m256i input, __m256i* out) {
 	CHT* cht = (CHT*) owner->_lookup;
-	return SimdCHTJoin::lookup_cht(owner->alignedBitmap, cht->bitmapSize(),
+	return StepSimdCHTJoin::lookup_cht(owner->alignedBitmap, cht->bitmapSize(),
 	owner->alignedChtload,cht->payload_size, input, out);
 }
 
 __m256i LookupHashTransform::transform(__m256i input) {
 	CHT* cht = (CHT*) owner->_lookup;
-	return SimdCHTJoin::lookup_hash(owner->alignedHashbkt,
+	return StepSimdCHTJoin::lookup_hash(owner->alignedHashbkt,
 			cht->overflow->bucket_size, input);
 }
 

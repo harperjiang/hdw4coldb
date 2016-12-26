@@ -8,15 +8,12 @@
 #include <x86intrin.h>
 #include <memory.h>
 #include "SimdHelper.h"
-#include "stdio.h"
+#include <stdio.h>
 
 SimdHelper::SimdHelper() {
-	// TODO Auto-generated constructor stub
-
 }
 
 SimdHelper::~SimdHelper() {
-	// TODO Auto-generated destructor stub
 }
 
 __m256i SimdHelper::ZERO = _mm256_setzero_si256();
@@ -29,9 +26,9 @@ void SimdHelper::transform(uint* src, uint srclength, uint* dest,
 	for (uint i = 0; i < srclength / 8; i++) {
 		uint index = i * 8;
 		__m256i loadkey = _mm256_load_si256((__m256i *) (src + index));
-		__m256i* dest = (__m256i*)(dest+index);
+		__m256i* storeloc = (__m256i*)(dest+index);
 		__m256i result = trans->transform(loadkey);
-		_mm256_store_si256(dest, result);
+		_mm256_store_si256(storeloc, result);
 	}
 	if (srclength % 8) {
 		uint psize = srclength % 8;

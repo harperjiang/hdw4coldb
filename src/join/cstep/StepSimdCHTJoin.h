@@ -13,7 +13,7 @@
 #include "../../simd/SimdHelper.h"
 #include "../../lookup/CHT.h"
 
-class SimdCHTJoin: public Join {
+class StepSimdCHTJoin: public Join {
 	friend class CheckBitmapTransform;
 	friend class LookupChtTransform;
 	friend class LookupHashTransform;
@@ -32,8 +32,8 @@ protected:
 	const char* name();
 public:
 
-	SimdCHTJoin(bool = false, bool = false, bool = false);
-	virtual ~SimdCHTJoin();
+	StepSimdCHTJoin(bool = false, bool = false, bool = false);
+	virtual ~StepSimdCHTJoin();
 
 	void join(kvlist* outer, kvlist* inner);
 
