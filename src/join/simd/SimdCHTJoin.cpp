@@ -28,23 +28,24 @@
 __m256i SimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 		(int) UINT32_C(2654435761));
 
-void remainder(__m256i* hashed, __m256i* index, __m256i* offset, uint big, uint small) {
-	__m256i quotient;
+// index = hashed % big / 32
+// offset = hashed % big % 32
+void remainder(__m256i* hashed, __m256i* index, __m256i* offset, uint big) {
 	uint* rem = (uint*)offset;
 	uint* quo = (uint*)index;
 	uint* as = (uint*)hashed;
 	for(uint i = 0; i < 8;i++) {
 		asm volatile(
-		"movl $0, %%edx\n\t"
+		"xorl %%edx, %%edx\n\t"
 		"movl %2,%%eax\n\t"
 		"divl %3\n\t"
 		"movl %%edx,%%eax\n\t"
-		"movl $0, %%edx\n\t"
-		"divl %4\n\t"
-		"movl %%eax,%0\n\t"
-		"movl %%edx,%1\n\t"
+		"shrl $5, %%edx\n\t"
+		"andl $31, %%eax\n\t"
+		"movl %%eax,%1\n\t"
+		"movl %%edx,%0\n\t"
 		:"=m"(quo[i]),"=m"(rem[i])
-		:"m"(as[i]),"r"(big),"r"(small)
+		:"m"(as[i]),"r"(big)
 		:"edx","eax");
 	}
 }
@@ -57,7 +58,7 @@ __m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
 	__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
 	__m256i offset;
 	__m256i index;
-	remainder(&hashed, &index, &offset, bitmapSize * BITMAP_UNIT, byteSize);
+	remainder(&hashed, &index, &offset, bitmapSize * BITMAP_UNIT);
 	__m256i index2n = _mm256_add_epi32(index, index);
 	// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
 	__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
@@ -208,14 +209,48 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	buildProbe(inner);
 
 	uint* bitmapresult = (uint*) aligned_alloc(32, sizeof(uint) * _probeSize);
-
+	CHT* cht = (CHT*) _lookup;
 	NotEqual nz(0);
 
 	_timer.start();
+	ulong* bitmap = cht->bitmap;
+	uint bitmapSize = cht->bitmap_size;
+	__m256i moffset;
+	__m256i mindex;
+	for (uint i = 0; i < _probeSize / 8; i++) {
+		uint offset = i * 8;
+		__m256i input = _mm256_load_si256((__m256i *) (_probe + offset));
+		__m256i* storeloc = (__m256i*)(bitmapresult+offset);
 
-	CheckBitmapTransform cbt(this);
-	SimdHelper::transform(_probe, _probeSize, bitmapresult, &cbt,
-			this->enableProfiling);
+		__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
+
+		remainder(&hashed, &mindex, &moffset, bitmapSize * BITMAP_UNIT);
+		__m256i index2n = _mm256_add_epi32(mindex, mindex);
+		// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
+		__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
+		// Use offset to create pattern
+		__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, moffset);
+		// -1 for selected key, zero for abandoned key
+		__m256i selector = _mm256_cmpeq_epi32(
+				_mm256_and_si256(
+						_mm256_srav_epi32(_mm256_and_si256(byte, ptn), moffset),
+						SimdHelper::ONE), SimdHelper::ONE);
+		__m256i result = _mm256_and_si256(selector, input);
+
+		_mm256_store_si256(storeloc, result);
+	}
+	if (_probeSize % 8) {
+		uint psize = _probeSize % 8;
+		uint index = (_probeSize / 8) * 8;
+		uint* start = _probe + index;
+		__m256i loadpartial = _mm256_setr_epi32(psize >= 1 ? start[0] : 0,
+				psize >= 2 ? start[1] : 0, psize >= 3 ? start[2] : 0,
+				psize >= 4 ? start[3] : 0, psize >= 5 ? start[4] : 0,
+				psize >= 6 ? start[5] : 0, psize >= 7 ? start[6] : 0, 0);
+		__m256i partialprocessed = check_bitmap(bitmap, bitmapSize,
+				loadpartial);
+		SimdHelper::store_epu32(bitmapresult, index, partialprocessed, psize);
+	}
 
 	_timer.interval("filter");
 
@@ -290,6 +325,3 @@ __m256i LookupHashTransform::transform(__m256i input) {
 			cht->overflow->bucket_size, input);
 }
 
-__m256i AndTransform::transform2(__m256i a, __m256i b) {
-	return _mm256_and_si256(a, b);
-}

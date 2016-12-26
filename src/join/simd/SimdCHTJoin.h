@@ -83,15 +83,4 @@ public:
 	__m256i transform(__m256i);
 };
 
-class AndTransform: public SimdTransform {
-public:
-	AndTransform() {
-
-	}
-	virtual ~AndTransform() {
-
-	}
-	__m256i transform2(__m256i a, __m256i b);
-};
-
 #endif /* SRC_JOIN_SIMDCHTJOIN_H_ */

@@ -28,7 +28,7 @@
 __m256i StepSimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 		(int) UINT32_C(2654435761));
 
-void remainder(__m256i* hashed, __m256i* index, __m256i* offset, uint big, uint small) {
+void step_remainder(__m256i* hashed, __m256i* index, __m256i* offset, uint big, uint small) {
 	__m256i quotient;
 	uint* rem = (uint*)offset;
 	uint* quo = (uint*)index;
@@ -54,9 +54,11 @@ void remainder(__m256i* hashed, __m256i* index, __m256i* offset, uint big, uint 
 __m256i StepSimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
 		__m256i input) {
 	uint byteSize = 32;
+	__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
 	__m256i offset;
 	__m256i index;
-	remainder(&hashed, &index, &offset, bitmapSize * BITMAP_UNIT, byteSize);
+	step_remainder(&hashed, &index, &offset, bitmapSize * BITMAP_UNIT,
+			byteSize);
 	__m256i index2n = _mm256_add_epi32(index, index);
 	// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
 	__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
@@ -212,7 +214,7 @@ void StepSimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 
 	_timer.start();
 
-	CheckBitmapTransform cbt(this);
+	SCheckBitmapTransform cbt(this);
 	SimdHelper::transform(_probe, _probeSize, bitmapresult, &cbt,
 			this->enableProfiling);
 
@@ -230,7 +232,7 @@ void StepSimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	uint* chtresult = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 	uint* hashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 
-	LookupChtTransform lct(this);
+	SLookupChtTransform lct(this);
 	SimdHelper::transform3(chtinput, chtinputsize, chtresult, hashinput, &lct,
 			this->enableProfiling);
 	_timer.interval("cht_lookup");
@@ -245,7 +247,7 @@ void StepSimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	}
 	uint* hashresult = (uint*) aligned_alloc(32, sizeof(uint) * hashinputsize);
 
-	LookupHashTransform lht(this);
+	SLookupHashTransform lht(this);
 	SimdHelper::transform(cmprshashinput, hashinputsize, hashresult, &lht,
 			this->enableProfiling);
 	_timer.interval("hash_lookup");
@@ -271,24 +273,21 @@ void StepSimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	free(hashresult);
 }
 
-__m256i CheckBitmapTransform::transform(__m256i input) {
+__m256i SCheckBitmapTransform::transform(__m256i input) {
 	CHT* cht = (CHT*) owner->_lookup;
-	return StepSimdCHTJoin::check_bitmap(owner->alignedBitmap, cht->bitmapSize(),
-			input);
+	return StepSimdCHTJoin::check_bitmap(owner->alignedBitmap,
+			cht->bitmapSize(), input);
 }
 
-__m256i LookupChtTransform::transform3(__m256i input, __m256i* out) {
+__m256i SLookupChtTransform::transform3(__m256i input, __m256i* out) {
 	CHT* cht = (CHT*) owner->_lookup;
 	return StepSimdCHTJoin::lookup_cht(owner->alignedBitmap, cht->bitmapSize(),
 	owner->alignedChtload,cht->payload_size, input, out);
 }
 
-__m256i LookupHashTransform::transform(__m256i input) {
+__m256i SLookupHashTransform::transform(__m256i input) {
 	CHT* cht = (CHT*) owner->_lookup;
 	return StepSimdCHTJoin::lookup_hash(owner->alignedHashbkt,
 			cht->overflow->bucket_size, input);
 }
 
-__m256i AndTransform::transform2(__m256i a, __m256i b) {
-	return _mm256_and_si256(a, b);
-}

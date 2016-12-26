@@ -14,9 +14,9 @@
 #include "../../lookup/CHT.h"
 
 class StepSimdCHTJoin: public Join {
-	friend class CheckBitmapTransform;
-	friend class LookupChtTransform;
-	friend class LookupHashTransform;
+	friend class SCheckBitmapTransform;
+	friend class SLookupChtTransform;
+	friend class SLookupHashTransform;
 protected:
 	ulong* alignedBitmap = NULL;
 	uint* alignedChtload = NULL;
@@ -45,53 +45,41 @@ public:
 	static __m256i lookup_hash(uint* hashbuckets, uint bktsize, __m256i input);
 };
 
-class CheckBitmapTransform: public SimdTransform {
+class SCheckBitmapTransform: public SimdTransform {
 private:
-	SimdCHTJoin* owner;
+	StepSimdCHTJoin* owner;
 public:
-	CheckBitmapTransform(SimdCHTJoin* css) {
+	SCheckBitmapTransform(StepSimdCHTJoin* css) {
 		owner = css;
 	}
-	virtual ~CheckBitmapTransform() {
+	virtual ~SCheckBitmapTransform() {
 	}
 
 	__m256i transform(__m256i);
-	void transformv2(__m256i, __m256i *);
 };
 
-class LookupChtTransform: public SimdTransform {
+class SLookupChtTransform: public SimdTransform {
 private:
-	SimdCHTJoin* owner;
+	StepSimdCHTJoin* owner;
 public:
-	LookupChtTransform(SimdCHTJoin* css) {
+	SLookupChtTransform(StepSimdCHTJoin* css) {
 		owner = css;
 	}
-	virtual ~LookupChtTransform() {
+	virtual ~SLookupChtTransform() {
 	}
 	__m256i transform3(__m256i, __m256i *);
 };
 
-class LookupHashTransform: public SimdTransform {
+class SLookupHashTransform: public SimdTransform {
 private:
-	SimdCHTJoin* owner;
+	StepSimdCHTJoin* owner;
 public:
-	LookupHashTransform(SimdCHTJoin* css) {
+	SLookupHashTransform(StepSimdCHTJoin* css) {
 		owner = css;
 	}
-	virtual ~LookupHashTransform() {
+	virtual ~SLookupHashTransform() {
 	}
 	__m256i transform(__m256i);
-};
-
-class AndTransform: public SimdTransform {
-public:
-	AndTransform() {
-
-	}
-	virtual ~AndTransform() {
-
-	}
-	__m256i transform2(__m256i a, __m256i b);
 };
 
 #endif /* SRC_JOIN_SIMDCHTJOIN_H_ */
