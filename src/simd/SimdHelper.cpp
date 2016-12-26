@@ -50,7 +50,7 @@ void SimdHelper::transform2(uint* srca, uint* srcb, uint srclength, uint* dest,
 		__m256i a = _mm256_load_si256((__m256i *) (srca + index));
 		__m256i b = _mm256_load_si256((__m256i *) (srcb + index));
 		__m256i processed = trans->transform2(a, b);
-		__m256i* output = (__m256i*)(output+index);
+		__m256i* output = (__m256i*)(dest+index);
 		_mm256_store_si256(output, processed);
 	}
 	if (srclength % 8) {
