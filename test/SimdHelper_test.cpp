@@ -122,7 +122,7 @@ TEST(SimdHelper, Transform) {
 	for (int i = 0; i < 20; i++) {
 		src[i] = 3 * i + 25;
 	}
-	int* dest = new int[20];
+	int* dest = (int*) aligned_alloc(32, 20* sizeof(int));
 	TestTransform bt;
 	SimdHelper::transform((uint*) src, 20, (uint*) dest, &bt,false);
 
@@ -141,7 +141,7 @@ TEST(SimdHelper, Transform2) {
 		srca[i] = 6 * i + 7;
 		srcb[i] = 25 * i + 235;
 	}
-	int* dest = new int[20];
+	int* dest = (int*) aligned_alloc(32, 20*sizeof(int));
 	TestTransform bt;
 	SimdHelper::transform2((uint*) srca, (uint*) srcb, 20, (uint*) dest, &bt);
 
