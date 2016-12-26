@@ -54,6 +54,7 @@ void remainder(__m256i* hashed, __m256i* index, __m256i* offset, uint big, uint 
 __m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
 		__m256i input) {
 	uint byteSize = 32;
+	__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
 	__m256i offset;
 	__m256i index;
 	remainder(&hashed, &index, &offset, bitmapSize * BITMAP_UNIT, byteSize);
