@@ -264,7 +264,6 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		_logger->info("Pass bitmap :%u\n", chtinputsize);
 		_timer.interval("cht_input_collect");
 	}
-	CHT* cht = (CHT*) _lookup;
 	for (uint i = 0; i < chtinputsize; i++) {
 		if (cht->has(chtinput[i])) {
 			_matched->match(chtinput[i], NULL, NULL);
