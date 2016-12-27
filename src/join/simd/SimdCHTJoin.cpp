@@ -264,34 +264,41 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		_logger->info("Pass bitmap :%u\n", chtinputsize);
 		_timer.interval("cht_input_collect");
 	}
-	uint* chtresult = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
-	uint* hashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
-
-	LookupChtTransform lct(this);
-	SimdHelper::transform3(chtinput, chtinputsize, chtresult, hashinput, &lct,
-			this->enableProfiling);
-	_timer.interval("cht_lookup");
-
-	uint* cmprshashinput = hashinput;
-	uint hashinputsize = chtinputsize;
-	if (collectCht) {
-		cmprshashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
-		hashinputsize = CollectThread::collect(hashinput, cmprshashinput,
-				chtinputsize, &nz);
-		_timer.interval("hash_input_collect");
+	CHT* cht = (CHT*) _lookup;
+	for (uint i = 0; i < chtinputsize; i++) {
+		if (cht->has(chtinput[i])) {
+			_matched->match(chtinput[i], NULL, NULL);
+		}
 	}
-	uint* hashresult = (uint*) aligned_alloc(32, sizeof(uint) * hashinputsize);
+	/*
+	 uint* chtresult = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
+	 uint* hashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 
-	LookupHashTransform lht(this);
-	SimdHelper::transform(cmprshashinput, hashinputsize, hashresult, &lht,
-			this->enableProfiling);
-	_timer.interval("hash_lookup");
+	 LookupChtTransform lct(this);
+	 SimdHelper::transform3(chtinput, chtinputsize, chtresult, hashinput, &lct,
+	 this->enableProfiling);
+	 _timer.interval("cht_lookup");
 
-	NotEqual nmax(0xffffffff);
-	CounterThread::count(chtresult, chtinputsize, &nmax, _matched);
-	CounterThread::count(hashresult, hashinputsize, &nmax, _matched);
-	_timer.interval("count_result");
+	 uint* cmprshashinput = hashinput;
+	 uint hashinputsize = chtinputsize;
+	 if (collectCht) {
+	 cmprshashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
+	 hashinputsize = CollectThread::collect(hashinput, cmprshashinput,
+	 chtinputsize, &nz);
+	 _timer.interval("hash_input_collect");
+	 }
+	 uint* hashresult = (uint*) aligned_alloc(32, sizeof(uint) * hashinputsize);
 
+	 LookupHashTransform lht(this);
+	 SimdHelper::transform(cmprshashinput, hashinputsize, hashresult, &lht,
+	 this->enableProfiling);
+	 _timer.interval("hash_lookup");
+
+	 NotEqual nmax(0xffffffff);
+	 CounterThread::count(chtresult, chtinputsize, &nmax, _matched);
+	 CounterThread::count(hashresult, hashinputsize, &nmax, _matched);
+	 _timer.interval("count_result");
+	 */
 	_timer.stop();
 
 	printSummary();
@@ -300,12 +307,12 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		free(chtinput);
 	}
 	if (collectCht) {
-		free(cmprshashinput);
+		free (cmprshashinput);
 	}
 	free(bitmapresult);
-	free(hashinput);
-	free(chtresult);
-	free(hashresult);
+	free (hashinput);
+	free (chtresult);
+	free (hashresult);
 }
 
 __m256i CheckBitmapTransform::transform(__m256i input) {
