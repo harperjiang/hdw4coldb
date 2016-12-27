@@ -30,6 +30,11 @@ TEST(BloomFilter, Test) {
 	for(int i = 0; i < 1000;i++) {
 		ASSERT_TRUE(bf->test(3*i+5));
 	}
+	uint sum = 0;
+	for(int i = 1000; i < 2000;i++) {
+		sum+=bf->test(3*i+5);
+	}
+	ASSERT_TRUE(sum < 500);
 	delete[] data;
 	delete bf;
 }
