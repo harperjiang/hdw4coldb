@@ -49,6 +49,12 @@ inline uint32_t mut_hash(uint32_t v) {
 	return v * UINT32_C(2654435761);
 }
 
+inline uint32_t mut_hash2(uint32_t v);
+
+inline uint32_t mut_hash2(uint32_t v) {
+	return v * UINT32_C(3729515385);
+}
+
 /**
  * Load key from files
  */

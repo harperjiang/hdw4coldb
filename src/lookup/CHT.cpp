@@ -94,6 +94,8 @@ uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t hval) {
 	return pop_before + popcount(pop_upto);
 }
 
+uint bfdata[3] = { 3224232347, 113, 114141513 };
+
 CHT::CHT() :
 		Lookup("CHT") {
 	bitmap = NULL;
@@ -102,6 +104,7 @@ CHT::CHT() :
 	payloads = NULL;
 	payload_size = 0;
 	overflow = NULL;
+	bf = new BloomFilter(3, bfdata);
 }
 
 CHT::~CHT() {
@@ -113,6 +116,7 @@ CHT::~CHT() {
 		delete[] payloads;
 	if (NULL != overflow)
 		delete overflow;
+	delete bf;
 }
 
 void CHT::build(kv* entries, uint32_t size) {
@@ -128,8 +132,9 @@ void CHT::build(kv* entries, uint32_t size) {
 			(size / OVERFLOW_INIT) > MIN_SIZE ?
 					(size / OVERFLOW_INIT) : MIN_SIZE;
 	this->overflow = new Hash(initsize);
+	this->bf->build(entries, size);
 
-	// The first pass, fill in bitmap, do linear probing on collision
+// The first pass, fill in bitmap, do linear probing on collision
 	for (uint32_t i = 0; i < size; i++) {
 		uint32_t hval = mut_hash(entries[i].key) % bitsize;
 		uint32_t counter = 0;
@@ -141,7 +146,7 @@ void CHT::build(kv* entries, uint32_t size) {
 			this->overflow->put(entries[i].key, entries[i].payload);
 		}
 	}
-	// update population in bitmap
+// update population in bitmap
 	uint32_t sum = 0;
 	for (uint32_t i = 0; i < bitmap_size; i++) {
 		bitmap_setpopcnt(this->bitmap, i, sum);
@@ -149,7 +154,7 @@ void CHT::build(kv* entries, uint32_t size) {
 	}
 	this->payload_size = sum;
 
-	// The second pass, allocate space and place items
+// The second pass, allocate space and place items
 	this->keys = new uint32_t[sum]();
 	this->payloads = new uint8_t[sum * PAYLOAD_SIZE];
 	for (uint32_t i = 0; i < size; i++) {
@@ -183,6 +188,9 @@ uint32_t CHT::bitmapSize() {
 uint8_t* CHT::findUnique(uint32_t key) {
 	uint32_t hval = mut_hash(key) % (bitmap_size * BITMAP_UNIT);
 	if (!bitmap_test(bitmap, hval)) {
+		return NULL;
+	}
+	if (!bf->test(key)) {
 		return NULL;
 	}
 	uint32_t offset = bitmap_popcnt(this->bitmap, hval);

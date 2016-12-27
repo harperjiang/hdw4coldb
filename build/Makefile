@@ -30,6 +30,7 @@ COMMON_OBJS = \
 ./src/lookup/CHT.o \
 ./src/lookup/Hash.o \
 ./src/lookup/LookupHelper.o \
+./src/lookup/BloomFilter.o \
 ./src/util/Logger.o \
 ./src/util/Timer.o \
 ./src/util/Thread.o \
@@ -63,6 +64,7 @@ TEST_OBJS = \
 ./test/Timer_test.o \
 ./test/CounterThread_test.o \
 ./test/CollectThread_test.o \
+./test/BloomFilter_test.o \
 
 MAIN = join
 

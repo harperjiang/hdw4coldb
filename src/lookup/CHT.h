@@ -10,6 +10,7 @@
 
 #include "Hash.h"
 #include "Lookup.h"
+#include "BloomFilter.h"
 
 class CHT: public Lookup {
 public:
@@ -19,6 +20,7 @@ public:
 	uint8_t* payloads;
 	uint32_t payload_size;
 	Hash* overflow;
+	BloomFilter* bf;
 public:
 	CHT();
 	virtual ~CHT();
