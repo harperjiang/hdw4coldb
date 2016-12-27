@@ -306,13 +306,14 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	if (collectBitmap) {
 		free(chtinput);
 	}
-	if (collectCht) {
-		free (cmprshashinput);
-	}
+//
+//	if (collectCht) {
+//		free (cmprshashinput);
+//	}
 	free(bitmapresult);
-	free (hashinput);
-	free (chtresult);
-	free (hashresult);
+//	free (hashinput);
+//	free (chtresult);
+//	free (hashresult);
 }
 
 __m256i CheckBitmapTransform::transform(__m256i input) {
