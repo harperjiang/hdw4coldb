@@ -77,6 +77,17 @@ void bitmap_setpopcnt(uint64_t* bitmap, uint32_t offset, uint32_t value) {
 }
 
 /**
+ * Round up the number to 2^(n-1).
+ */
+uint32_t bitmap_roundup(uint32_t n) {
+	n |= (n >> 1);
+	n |= (n >> 2);
+	n |= (n >> 4);
+	n |= (n >> 8);
+	n |= (n >> 16);
+	return n;
+}
+/**
  * Get popcount for the given hval, this equals to the value at upper half
  * and number of 1 in lower half up to hval
  */
@@ -120,7 +131,7 @@ CHT::~CHT() {
 }
 
 void CHT::build(kv* entries, uint32_t size) {
-	uint32_t bitnumber = BITMAP_FACTOR * size;
+	uint32_t bitnumber = bitmap_roundup(BITMAP_FACTOR * size);
 	uint32_t bitmap_size = bitnumber / BITMAP_UNIT;
 	bitmap_size += (bitnumber % BITMAP_UNIT) ? 1 : 0;
 	uint32_t bitsize = bitmap_size * BITMAP_UNIT;

@@ -117,7 +117,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	_timer.start();
 	ulong* bitmap = cht->bitmap;
 	uint bitmapSize = cht->bitmap_size;
-
+	__m256i bitsize = _mm256_set1_epi32(bitmapSize * BITMAP_UNIT);
 	uint store_offset = 0;
 	for (uint i = 0; i < _probeSize / 8; i++) {
 		uint load_offset = i * 8;
@@ -125,10 +125,14 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		__m256i* storeloc = (__m256i*)(bitmapresult+store_offset);
 
 		__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
-		hashed = remainder(&hashed, bitmapSize * BITMAP_UNIT);
+		// Modulo
+		hashed = _mm256_and_si256(hashed, bitsize);
+		hashed = _mm256_and_si256(hashed,
+				_mm256_xor_si256(_mm256_cmpeq_epi32(hashed, bitsize),
+						SimdHelper::MAX));
 
 		__m256i index = _mm256_srli_epi32(hashed, 5);
-//		SimdHelper::print_epu32(index);
+
 		__m256i offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
 		__m256i index2n = _mm256_add_epi32(index, index);
 		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
