@@ -35,7 +35,7 @@ TEST( CHT, Build) {
 	delete[] entries;
 
 	ASSERT_TRUE(125000 >= table->payloadSize());
-	ASSERT_EQ(bitmap_roundup(125000 * BITMAP_FACTOR) / 32, table->bitmapSize());
+	ASSERT_EQ(4095 * BITMAP_FACTOR, table->bitmapSize());
 
 	delete table;
 }
