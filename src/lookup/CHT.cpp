@@ -23,6 +23,18 @@ using namespace std;
  * Test a bitmap location and set it to 1 if it is 0, return 1 if set
  */
 bool bitmap_testset(uint64_t* bitmap, uint32_t offset) {
+	bool result;
+	asm("movl %1,%%edx\n\t"
+		"movl %1,%%eax\n\t"
+		"shrl $5,%%eax\n\t"
+		"andl $31,%%edx\n\t"
+		"bts %%edx,(%2,%%eax,8)\n\t"
+		"setc %0\n\t"
+		:"=m"(result)
+		:"m"(offset),"m"(bitmap)
+		:"cc","edx","eax"
+		);
+	return result;/*
 	uint32_t bitmap_index = offset / BITMAP_UNIT;
 	uint32_t bitmap_offset = offset % BITMAP_UNIT;
 	uint32_t mask = 1 << bitmap_offset;
@@ -32,7 +44,7 @@ bool bitmap_testset(uint64_t* bitmap, uint32_t offset) {
 		// Set
 		bitmap[bitmap_index] |= mask;
 	}
-	return !test;
+	return !test;*/
 }
 
 bool bitmap_test(uint64_t* bitmap, uint32_t offset) {
