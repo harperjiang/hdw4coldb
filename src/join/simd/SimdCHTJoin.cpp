@@ -116,8 +116,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	_timer.start();
 	ulong* bitmap = cht->bitmap;
 	uint bitmapSize = cht->bitmap_size;
-	__m256i offset;
-	__m256i index;
+
 	uint store_offset = 0;
 	for (uint i = 0; i < _probeSize / 8; i++) {
 		uint load_offset = i * 8;
@@ -126,9 +125,10 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 
 		__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
 		remainder(&hashed, bitmapSize * BITMAP_UNIT);
-		index = _mm256_srli_epi32(hashed, 5);
+
+		__m256i index = _mm256_srli_epi32(hashed, 5);
 		SimdHelper::print_epu32(index);
-		offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
+		__m256i offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
 		__m256i index2n = _mm256_add_epi32(index, index);
 		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
 		// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
