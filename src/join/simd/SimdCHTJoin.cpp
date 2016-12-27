@@ -302,9 +302,9 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 
 	printSummary();
 
-	if (collectBitmap) {
-		free(chtinput);
-	}
+//	if (collectBitmap) {
+//		free(chtinput);
+//	}
 //
 //	if (collectCht) {
 //		free (cmprshashinput);
