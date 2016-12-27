@@ -11,31 +11,25 @@
 BloomFilter::BloomFilter(uint size, uint* factors) {
 	this->size = size;
 	this->factors = factors;
-	this->bitmaps = new ulong*[size];
+	this->bitmap = NULL;
 	this->bitmapSize = 0;
 }
 
 BloomFilter::~BloomFilter() {
-	for (uint i = 0; i < size; i++) {
-		if (bitmaps[i] != NULL)
-			delete[] bitmaps[i];
-	}
-	delete[] bitmaps;
+	if (NULL != bitmap)
+		delete[] bitmap;
 }
 
 void BloomFilter::build(kv* datas, uint data_size) {
 	uint bitnum = data_size * BF_BITMAP_FACTOR;
 	bitmapSize = bitnum / BF_BITMAP_UNIT + ((bitnum % BF_BITMAP_UNIT) ? 1 : 0);
 	bitnum = bitmapSize * BF_BITMAP_UNIT;
-	for (uint i = 0; i < size; i++) {
-		bitmaps[i] = new ulong[bitmapSize];
-	}
+	bitmap = new ulong[bitmapSize];
 
 	for (uint i = 0; i < data_size; i++) {
 		for (uint j = 0; j < size; j++) {
 			uint hashed = (factors[j] * datas[i].key) % bitnum;
-			bitmaps[j][hashed / BF_BITMAP_UNIT] |= (1
-					<< (hashed % BF_BITMAP_UNIT));
+			bitmap[hashed / BF_BITMAP_UNIT] |= (1 << (hashed % BF_BITMAP_UNIT));
 		}
 	}
 }
@@ -44,8 +38,7 @@ bool BloomFilter::test(uint key) {
 	uint bitnum = bitmapSize * BF_BITMAP_UNIT;
 	for (uint i = 0; i < size; i++) {
 		uint hashed = (factors[i] * key) % bitnum;
-		if (!bitmaps[i][hashed / BF_BITMAP_UNIT]
-				& (1 << hashed % BF_BITMAP_UNIT))
+		if (!(bitmap[hashed / BF_BITMAP_UNIT] & (1 << hashed % BF_BITMAP_UNIT)))
 			return false;
 	}
 	return true;

@@ -94,7 +94,7 @@ uint32_t bitmap_popcnt(uint64_t* bitmap, uint32_t hval) {
 	return pop_before + popcount(pop_upto);
 }
 
-uint bfdata[3] = { 3224232347, 113, 114141513 };
+uint bfdata[3] = { 3224232347, 1826503991, 114141513 };
 
 CHT::CHT() :
 		Lookup("CHT") {

@@ -15,7 +15,7 @@ class BloomFilter {
 private:
 	uint size;
 	uint* factors;
-	ulong** bitmaps;
+	ulong* bitmap;
 	uint bitmapSize;
 public:
 	BloomFilter(uint size, uint* factors);
@@ -23,6 +23,8 @@ public:
 
 	void build(kv* datas, uint size);
 	bool test(uint key);
+
+	void stat();
 };
 
 #endif /* SRC_LOOKUP_BLOOMFILTER_H_ */
