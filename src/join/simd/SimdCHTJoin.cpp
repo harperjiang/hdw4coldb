@@ -254,28 +254,21 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 
 	_timer.interval("filter");
 
-	uint* chtinput = bitmapresult;
-	uint chtinputsize = inner->size;
+//	uint* chtinput = bitmapresult;
+//	uint chtinputsize = inner->size;
 
-	if (collectBitmap) {
-		chtinput = (uint*) aligned_alloc(32, sizeof(uint) * inner->size);
-		chtinputsize = CollectThread::collect(bitmapresult, chtinput,
-				inner->size, &nz);
-		_logger->info("Pass bitmap :%u\n", chtinputsize);
-		uint bfhelp = 0;
-		for (uint i = 0; i < _probeSize; i++) {
-			if (!cht->bf->test(_probe[i])) {
-				bfhelp++;
-			}
-		}
-		_logger->info("Bloom Filter filter out %u\n", bfhelp);
-		_timer.interval("cht_input_collect");
-	}
-	for (uint i = 0; i < chtinputsize; i++) {
-		if (cht->has(chtinput[i])) {
-			_matched->match(chtinput[i], NULL, NULL);
-		}
-	}
+//	if (collectBitmap) {
+//		chtinput = (uint*) aligned_alloc(32, sizeof(uint) * inner->size);
+//		chtinputsize = CollectThread::collect(bitmapresult, chtinput,
+//				inner->size, &nz);
+//		_logger->info("Pass bitmap :%u\n", chtinputsize);
+//		_timer.interval("cht_input_collect");
+//	}
+//	for (uint i = 0; i < chtinputsize; i++) {
+//		if (cht->has(chtinput[i])) {
+//			_matched->match(chtinput[i], NULL, NULL);
+//		}
+//	}
 	/*
 	 uint* chtresult = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);
 	 uint* hashinput = (uint*) aligned_alloc(32, sizeof(uint) * chtinputsize);

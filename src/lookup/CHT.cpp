@@ -132,7 +132,7 @@ void CHT::build(kv* entries, uint32_t size) {
 			(size / OVERFLOW_INIT) > MIN_SIZE ?
 					(size / OVERFLOW_INIT) : MIN_SIZE;
 	this->overflow = new Hash(initsize);
-	this->bf->build(entries, size);
+//	this->bf->build(entries, size);
 
 // The first pass, fill in bitmap, do linear probing on collision
 	for (uint32_t i = 0; i < size; i++) {
@@ -190,9 +190,9 @@ uint8_t* CHT::findUnique(uint32_t key) {
 	if (!bitmap_test(bitmap, hval)) {
 		return NULL;
 	}
-	if (!bf->test(key)) {
-		return NULL;
-	}
+//	if (!bf->test(key)) {
+//		return NULL;
+//	}
 	uint32_t offset = bitmap_popcnt(this->bitmap, hval);
 
 	uint32_t counter = 0;
