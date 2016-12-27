@@ -210,7 +210,6 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 
 	uint* bitmapresult = (uint*) aligned_alloc(32, sizeof(uint) * _probeSize);
 	CHT* cht = (CHT*) _lookup;
-	NotEqual nz(0);
 
 	_timer.start();
 	ulong* bitmap = cht->bitmap;
@@ -230,17 +229,22 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
 		// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
 		__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
-		__m256i popcnt = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
+		__m256i basePop = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
 		// Use offset to create pattern
 		__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
-		// -1 for selected key, zero for abandoned key
-		__m256i selector = _mm256_cmpeq_epi32(
-				_mm256_and_si256(
-						_mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset),
-						SimdHelper::ONE), SimdHelper::ONE);
-		__m256i result = _mm256_and_si256(selector, input);
-		if (!_mm256_testz_si256(result, SimdHelper::MAX)) {
-			_mm256_store_si256(storeloc, result);
+		__m256i mask = _mm256_xor_si256(
+				_mm256_cmpeq_epi32(_mm256_and_si256(byte, ptn),
+						SimdHelper::ZERO), SimdHelper::MAX);
+
+		__m256i popmask = _mm256_xor_si256(
+				_mm256_sllv_epi32(SimdHelper::MAX, offset), SimdHelper::MAX);
+		__m256i partialPop = SimdHelper::popcnt_epi32(
+				_mm256_and_si256(byte, popmask));
+
+		__m256i location = _mm256_and_si256(
+				_mm256_add_epi32(basePop, partialPop), mask);
+		if (!_mm256_testz_si256(location, SimdHelper::MAX)) {
+			_mm256_store_si256(storeloc, location);
 			store_offset += 8;
 		}
 	}
