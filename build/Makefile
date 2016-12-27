@@ -59,7 +59,7 @@ TEST_OBJS = \
 ./test/CHT_test.o \
 ./test/Hash_test.o \
 ./test/LookupHelper_test.o \
-./test/SimdCHTJoin_test.o \
+./test/StepSimdCHTJoin_test.o \
 ./test/SimdHelper_test.o \
 ./test/Timer_test.o \
 ./test/CounterThread_test.o \
