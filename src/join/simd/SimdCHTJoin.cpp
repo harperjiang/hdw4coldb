@@ -50,105 +50,6 @@ void remainder(__m256i* hashed, uint big) {
 		 */
 	}
 }
-/**
- * Check 64-bit bitmap to see if the given key exists in the bitmap
- */
-__m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
-		__m256i input) {
-	uint byteSize = 32;
-	__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
-	__m256i offset;
-	__m256i index;
-	remainder(&hashed, bitmapSize * BITMAP_UNIT);
-	__m256i index2n = _mm256_add_epi32(index, index);
-	// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
-	__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
-	// Use offset to create pattern
-	__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
-	// -1 for selected key, zero for abandoned key
-	__m256i selector = _mm256_cmpeq_epi32(
-			_mm256_and_si256(
-					_mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset),
-					SimdHelper::ONE), SimdHelper::ONE);
-	__m256i result = _mm256_and_si256(selector, input);
-	return result;
-}
-
-/**
- * Return the location of the given key in cht payload, -1 if not found
- */
-__m256i SimdCHTJoin::lookup_cht(ulong* bitmap, uint bitmapSize,
-		uint* chtpayload, uint chtsize, __m256i input, __m256i* remain) {
-	__m256i hashed = SimdHelper::remainder_epu32(_mm256_mullo_epi32(input, HASH_FACTOR),
-	bitmapSize * BITMAP_UNIT);
-	__m256i offset;
-	__m256i index = SimdHelper::divrem_epu32(&offset, hashed, BITMAP_UNIT);
-	__m256i index2n = _mm256_add_epi32(index, index);
-	__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
-
-	__m256i basePop = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
-	__m256i loadOffset = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
-
-	__m256i mask = _mm256_xor_si256(_mm256_sllv_epi32(SimdHelper::MAX, offset), SimdHelper::MAX);
-	__m256i partialPop = SimdHelper::popcnt_epi32(_mm256_and_si256(loadOffset, mask));
-
-	__m256i location = _mm256_add_epi32(basePop, partialPop);
-
-	__m256i result = SimdHelper::ZERO;
-
-	__m256i notzero = SimdHelper::testnz_epi32(input);
-
-	for (int i = 0; i < THRESHOLD; i++) {
-		__m256i chtval = _mm256_i32gather_epi32((int* )chtpayload, location, 4);
-		// a value of -1 means found
-		__m256i compare = _mm256_xor_si256(input, chtval);
-		__m256i locmask = _mm256_and_si256(notzero, SimdHelper::testz_epi32(compare));
-		// Store location + 1 in result, 0 for not found
-		__m256i locadd1 = _mm256_add_epi32(location, SimdHelper::ONE);
-		__m256i locstore = _mm256_and_si256(locmask, locadd1);
-		result = _mm256_or_si256(result, locstore);
-		// If location is greater than boundary, reduce it
-		location = SimdHelper::remainder_epu32(locadd1, chtsize);
-
-	}
-
-	__m256i resmask = SimdHelper::testz_epi32(result);
-	// Location for found key, and -1 for not found
-	result = _mm256_sub_epi32(result, SimdHelper::ONE);
-
-	// Remaining key
-	__m256i rem = _mm256_and_si256(resmask, input);
-	_mm256_store_si256(remain,rem);
-
-	return result;
-}
-
-__m256i SimdCHTJoin::lookup_hash(uint* hashbuckets, uint bktsize,
-		__m256i input) {
-	__m256i hashed = SimdHelper::remainder_epu32(
-			_mm256_mullo_epi32(input, HASH_FACTOR), bktsize);
-	__m256i inputnz = SimdHelper::testnz_epi32(input);
-	__m256i flag = input;
-	__m256i result = SimdHelper::ZERO;
-	while (!_mm256_testz_si256(flag, SimdHelper::MAX)) {
-		__m256i load = _mm256_i32gather_epi32((int* )hashbuckets, hashed, 4);
-		// For key equal to load and nz, store location
-		__m256i locmask = _mm256_and_si256(inputnz,
-				SimdHelper::testz_epi32(_mm256_xor_si256(load, input)));
-		__m256i hashed1 = _mm256_add_epi32(hashed, SimdHelper::ONE);
-		result = _mm256_or_si256(result, _mm256_and_si256(locmask, hashed1));
-		// For 0, store 0 to flag
-		__m256i flagmask = SimdHelper::testnz_epi32(load);
-		flag = _mm256_and_si256(flagmask, flag);
-		// For found, store 0 to flag
-		flag = _mm256_and_si256(flag,
-				_mm256_sub_epi32(SimdHelper::ZERO,
-						_mm256_add_epi32(SimdHelper::ONE, locmask)));
-		// Increase by one
-		hashed = SimdHelper::remainder_epu32(hashed1, bktsize);
-	}
-	return _mm256_sub_epi32(result, SimdHelper::ONE);
-}
 
 SimdCHTJoin::SimdCHTJoin(bool c1, bool c2, bool ep) :
 		Join(ep) {
@@ -226,6 +127,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
 		remainder(&hashed, bitmapSize * BITMAP_UNIT);
 		index = _mm256_srli_epi32(hashed, 5);
+		SimdHelper::print_epu32(index);
 		offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
 		__m256i index2n = _mm256_add_epi32(index, index);
 		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
@@ -259,8 +161,10 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 				psize >= 2 ? start[1] : 0, psize >= 3 ? start[2] : 0,
 				psize >= 4 ? start[3] : 0, psize >= 5 ? start[4] : 0,
 				psize >= 6 ? start[5] : 0, psize >= 7 ? start[6] : 0, 0);
-		__m256i partialprocessed = check_bitmap(bitmap, bitmapSize,
-				loadpartial);
+//		__m256i partialprocessed = check_bitmap(bitmap, bitmapSize,
+//				loadpartial);
+		// TODO Fix this
+		__m256i partialprocessed = loadpartial;
 		SimdHelper::store_epu32(bitmapresult, store_offset, partialprocessed,
 				psize);
 	}
@@ -326,23 +230,5 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 //	free (hashinput);
 //	free (chtresult);
 //	free (hashresult);
-}
-
-__m256i CheckBitmapTransform::transform(__m256i input) {
-	CHT* cht = (CHT*) owner->_lookup;
-	return SimdCHTJoin::check_bitmap(owner->alignedBitmap, cht->bitmapSize(),
-			input);
-}
-
-__m256i LookupChtTransform::transform3(__m256i input, __m256i* out) {
-	CHT* cht = (CHT*) owner->_lookup;
-	return SimdCHTJoin::lookup_cht(owner->alignedBitmap, cht->bitmapSize(),
-	owner->alignedChtload,cht->payload_size, input, out);
-}
-
-__m256i LookupHashTransform::transform(__m256i input) {
-	CHT* cht = (CHT*) owner->_lookup;
-	return SimdCHTJoin::lookup_hash(owner->alignedHashbkt,
-			cht->overflow->bucket_size, input);
 }
 

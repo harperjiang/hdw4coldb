@@ -39,48 +39,7 @@ public:
 
 public:
 	static __m256i HASH_FACTOR;
-	static __m256i check_bitmap(ulong* bitmap, uint bitmapSize, __m256i input);
-	static __m256i lookup_cht(ulong* bitmap, uint bitmapSize, uint* chtpayload,
-			uint chtsize, __m256i input, __m256i * out);
-	static __m256i lookup_hash(uint* hashbuckets, uint bktsize, __m256i input);
-};
 
-class CheckBitmapTransform: public SimdTransform {
-private:
-	SimdCHTJoin* owner;
-public:
-	CheckBitmapTransform(SimdCHTJoin* css) {
-		owner = css;
-	}
-	virtual ~CheckBitmapTransform() {
-	}
-
-	__m256i transform(__m256i);
-	void transformv2(__m256i, __m256i *);
-};
-
-class LookupChtTransform: public SimdTransform {
-private:
-	SimdCHTJoin* owner;
-public:
-	LookupChtTransform(SimdCHTJoin* css) {
-		owner = css;
-	}
-	virtual ~LookupChtTransform() {
-	}
-	__m256i transform3(__m256i, __m256i *);
-};
-
-class LookupHashTransform: public SimdTransform {
-private:
-	SimdCHTJoin* owner;
-public:
-	LookupHashTransform(SimdCHTJoin* css) {
-		owner = css;
-	}
-	virtual ~LookupHashTransform() {
-	}
-	__m256i transform(__m256i);
 };
 
 #endif /* SRC_JOIN_SIMDCHTJOIN_H_ */
