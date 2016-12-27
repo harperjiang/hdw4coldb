@@ -225,18 +225,18 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 
 		__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
 
-		remainder(&hashed, &mindex, &moffset, bitmapSize * BITMAP_UNIT);
-		__m256i index2n = _mm256_add_epi32(mindex, mindex);
+		remainder(&hashed, &index, &offset, bitmapSize * BITMAP_UNIT);
+		__m256i index2n = _mm256_add_epi32(index, index);
 		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
 		// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
 		__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
 		__m256i popcnt = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
 		// Use offset to create pattern
-		__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, moffset);
+		__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
 		// -1 for selected key, zero for abandoned key
 		__m256i selector = _mm256_cmpeq_epi32(
 				_mm256_and_si256(
-						_mm256_srav_epi32(_mm256_and_si256(byte, ptn), moffset),
+						_mm256_srav_epi32(_mm256_and_si256(byte, ptn), offset),
 						SimdHelper::ONE), SimdHelper::ONE);
 		__m256i result = _mm256_and_si256(selector, input);
 		if (!_mm256_testz_si256(result, SimdHelper::MAX)) {
