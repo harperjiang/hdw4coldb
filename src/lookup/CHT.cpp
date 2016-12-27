@@ -24,34 +24,49 @@ using namespace std;
  */
 bool bitmap_testset(uint64_t* bitmap, uint32_t offset) {
 	bool result;
-	asm("movl %1,%%edx\n\t"
-		"movl %1,%%eax\n\t"
-		"shrl $5,%%eax\n\t"
-		"andl $31,%%edx\n\t"
-		"bts %%edx,(%2,%%eax,8)\n\t"
-		"setc %0\n\t"
-		:"=m"(result)
-		:"m"(offset),"m"(bitmap)
-		:"cc","edx","eax"
-		);
+	asm("xorq %%rax,%%rax\n\t"
+			"movl %1,%%edx\n\t"
+			"movl %%edx,%%eax\n\t"
+			"shrl $5,%%eax\n\t"
+			"andl $31,%%edx\n\t"
+			"btsl %%edx, (%2,%%rax,8)\n\t"
+			"setnc %0\n\t"
+			:"=m"(result)
+			:"m"(offset),"r"(bitmap)
+			:"cc","edx","rax"
+	);
 	return result;/*
-	uint32_t bitmap_index = offset / BITMAP_UNIT;
-	uint32_t bitmap_offset = offset % BITMAP_UNIT;
-	uint32_t mask = 1 << bitmap_offset;
-	uint32_t test = BITMAP_MASK & bitmap[bitmap_index] & mask;
+	 uint32_t bitmap_index = offset / BITMAP_UNIT;
+	 uint32_t bitmap_offset = offset % BITMAP_UNIT;
+	 uint32_t mask = 1 << bitmap_offset;
+	 uint32_t test = BITMAP_MASK & bitmap[bitmap_index] & mask;
 
-	if (!test) {
-		// Set
-		bitmap[bitmap_index] |= mask;
-	}
-	return !test;*/
+	 if (!test) {
+	 // Set
+	 bitmap[bitmap_index] |= mask;
+	 }
+	 return !test;*/
 }
 
 bool bitmap_test(uint64_t* bitmap, uint32_t offset) {
-	uint32_t bitmap_index = offset / BITMAP_UNIT;
-	uint32_t bitmap_offset = offset % BITMAP_UNIT;
-	uint32_t mask = 1 << bitmap_offset;
-	return BITMAP_MASK & bitmap[bitmap_index] & mask;
+	bool result;
+	asm("xorq %%rax,%%rax\n\t"
+			"movl %1,%%edx\n\t"
+			"movl %%edx,%%eax\n\t"
+			"shrl $5,%%eax\n\t"
+			"andl $31,%%edx\n\t"
+			"btl %%edx, (%2,%%rax,8)\n\t"
+			"setc %0\n\t"
+			:"=m"(result)
+			:"m"(offset),"r"(bitmap)
+			:"cc","edx","rax"
+	);
+	return result;
+	/*
+	 uint32_t bitmap_index = offset / BITMAP_UNIT;
+	 uint32_t bitmap_offset = offset % BITMAP_UNIT;
+	 uint32_t mask = 1 << bitmap_offset;
+	 return BITMAP_MASK & bitmap[bitmap_index] & mask;*/
 }
 
 /**
