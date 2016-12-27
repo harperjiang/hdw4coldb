@@ -10,6 +10,7 @@
 #include <cstdio>
 
 #include "CHT.h"
+#include "../util/Logger.h";
 #include "CHTConstants.h"
 #include "LookupHelper.h"
 
@@ -85,7 +86,7 @@ uint32_t bitmap_roundup(uint32_t n) {
 	n |= (n >> 4);
 	n |= (n >> 8);
 	n |= (n >> 16);
-	return n;
+	return (n == 0xffffffff) ? n : n + 1;
 }
 /**
  * Get popcount for the given hval, this equals to the value at upper half
@@ -132,6 +133,11 @@ CHT::~CHT() {
 
 void CHT::build(kv* entries, uint32_t size) {
 	uint32_t bitnumber = bitmap_roundup(BITMAP_FACTOR * size);
+	if (bitnumber == 0xffffffff) {
+		Logger::getLogger("CHT")->error(
+				"Exceed maximal allowed size: %u, abort\n", size);
+		abort();
+	}
 	uint32_t bitmap_size = bitnumber / BITMAP_UNIT;
 	bitmap_size += (bitnumber % BITMAP_UNIT) ? 1 : 0;
 	uint32_t bitsize = bitmap_size * BITMAP_UNIT;

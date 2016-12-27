@@ -82,13 +82,19 @@ TEST( Bitmap, Popcnt) {
 }
 
 TEST(Bitmap, Roundup) {
-	ASSERT_EQ(0xf, bitmap_roundup(0b1000));
-	ASSERT_EQ(0xf, bitmap_roundup(0b1100));
-	ASSERT_EQ(0xf, bitmap_roundup(0b1010));
-	ASSERT_EQ(0xf, bitmap_roundup(0b1101));
+	ASSERT_EQ(0x10, bitmap_roundup(0b1000));
+	ASSERT_EQ(0x10, bitmap_roundup(0b1100));
+	ASSERT_EQ(0x10, bitmap_roundup(0b1010));
+	ASSERT_EQ(0x10, bitmap_roundup(0b1101));
 
-	ASSERT_EQ(0xff, bitmap_roundup(0xfa));
-	ASSERT_EQ(0xff, bitmap_roundup(0b10000000));
-	ASSERT_EQ(0xff, bitmap_roundup(0b10101101));
-	ASSERT_EQ(0xff, bitmap_roundup(0b10000100));
+	ASSERT_EQ(0x100, bitmap_roundup(0xfa));
+	ASSERT_EQ(0x100, bitmap_roundup(0b10000000));
+	ASSERT_EQ(0x100, bitmap_roundup(0b10101101));
+	ASSERT_EQ(0x100, bitmap_roundup(0b10000100));
+
+	ASSERT_EQ(0xffffffff, bitmap_roundup(0xf1234567));
+	ASSERT_EQ(0xffffffff, bitmap_roundup(0xf0000000));
+	ASSERT_EQ(0xffffffff, bitmap_roundup(0x80000000));
+	ASSERT_EQ(0xffffffff, bitmap_roundup(0x90000000));
+	ASSERT_EQ(0xffffffff, bitmap_roundup(0xa1232133));
 }
