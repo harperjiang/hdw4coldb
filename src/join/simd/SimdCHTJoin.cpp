@@ -215,19 +215,22 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	_timer.start();
 	ulong* bitmap = cht->bitmap;
 	uint bitmapSize = cht->bitmap_size;
-	__m256i moffset;
-	__m256i mindex;
+	__m256i offset;
+	__m256i index;
+	uint store_offset = 0;
 	for (uint i = 0; i < _probeSize / 8; i++) {
-		uint offset = i * 8;
-		__m256i input = _mm256_load_si256((__m256i *) (_probe + offset));
-		__m256i* storeloc = (__m256i*)(bitmapresult+offset);
+		uint load_offset = i * 8;
+		__m256i input = _mm256_load_si256((__m256i *) (_probe + load_offset));
+		__m256i* storeloc = (__m256i*)(bitmapresult+store_offset);
 
 		__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
 
 		remainder(&hashed, &mindex, &moffset, bitmapSize * BITMAP_UNIT);
 		__m256i index2n = _mm256_add_epi32(mindex, mindex);
+		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
 		// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
 		__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
+		__m256i popcnt = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
 		// Use offset to create pattern
 		__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, moffset);
 		// -1 for selected key, zero for abandoned key
@@ -236,8 +239,10 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 						_mm256_srav_epi32(_mm256_and_si256(byte, ptn), moffset),
 						SimdHelper::ONE), SimdHelper::ONE);
 		__m256i result = _mm256_and_si256(selector, input);
-
-		_mm256_store_si256(storeloc, result);
+		if (!_mm256_testz_si256(result, SimdHelper::MAX)) {
+			_mm256_store_si256(storeloc, result);
+			store_offset += 8;
+		}
 	}
 	if (_probeSize % 8) {
 		uint psize = _probeSize % 8;
@@ -249,7 +254,8 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 				psize >= 6 ? start[5] : 0, psize >= 7 ? start[6] : 0, 0);
 		__m256i partialprocessed = check_bitmap(bitmap, bitmapSize,
 				loadpartial);
-		SimdHelper::store_epu32(bitmapresult, index, partialprocessed, psize);
+		SimdHelper::store_epu32(bitmapresult, store_offset, partialprocessed,
+				psize);
 	}
 
 	_timer.interval("filter");
