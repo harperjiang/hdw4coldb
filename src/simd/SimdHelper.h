@@ -32,6 +32,8 @@ public:
 	static __m256i ONE;
 	static __m256i TWO;
 	static __m256i MAX;
+	static __m256i FIVE;
+	static __m256i THIRTY_ONE;
 
 	static void transform(uint* src, uint srclength, uint* dest,
 			SimdTransform* trans, bool enableProfiling = false);

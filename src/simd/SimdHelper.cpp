@@ -19,6 +19,8 @@ SimdHelper::~SimdHelper() {
 __m256i SimdHelper::ZERO = _mm256_setzero_si256();
 __m256i SimdHelper::ONE = _mm256_set1_epi32(1);
 __m256i SimdHelper::TWO = _mm256_set1_epi32(2);
+__m256i SimdHelper::FIVE = _mm256_set1_epi32(5);
+__m256i SimdHelper::THIRTY_ONE = _mm256_set1_epi32(31);
 __m256i SimdHelper::MAX = _mm256_set1_epi32(-1);
 
 void SimdHelper::transform(uint* src, uint srclength, uint* dest,

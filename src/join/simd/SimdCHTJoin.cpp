@@ -30,23 +30,24 @@ __m256i SimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 
 // index = hashed % big / 32
 // offset = hashed % big % 32
-void remainder(__m256i* hashed, __m256i* index, __m256i* offset, uint big) {
-	uint* rem = (uint*)offset;
-	uint* quo = (uint*)index;
+void remainder(__m256i* hashed, uint big) {
 	uint* as = (uint*)hashed;
 	for(uint i = 0; i < 8;i++) {
-		asm volatile(
-		"xorl %%edx, %%edx\n\t"
-		"movl %2,%%eax\n\t"
-		"divl %3\n\t"
-		"movl %%edx,%%eax\n\t"
-		"shrl $5, %%edx\n\t"
-		"andl $31, %%eax\n\t"
-		"movl %%eax,%1\n\t"
-		"movl %%edx,%0\n\t"
-		:"=m"(quo[i]),"=m"(rem[i])
-		:"m"(as[i]),"r"(big)
-		:"edx","eax");
+		as[i]%=big;
+		/*
+		 asm volatile(
+		 "xorl %%edx, %%edx\n\t"
+		 "movl %2,%%eax\n\t"
+		 "divl %3\n\t"
+		 "movl %%edx,%%eax\n\t"
+		 "shrl $5, %%edx\n\t"
+		 "andl $31, %%eax\n\t"
+		 "movl %%eax,%1\n\t"
+		 "movl %%edx,%0\n\t"
+		 :"=m"(quo[i]),"=m"(rem[i])
+		 :"m"(as[i]),"r"(big)
+		 :"edx","eax");
+		 */
 	}
 }
 /**
@@ -223,13 +224,15 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		__m256i* storeloc = (__m256i*)(bitmapresult+store_offset);
 
 		__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
-
-		remainder(&hashed, &index, &offset, bitmapSize * BITMAP_UNIT);
+		remainder(&hashed, bitmapSize * BITMAP_UNIT);
+		index = _mm256_srav_epi32(hashed, SimdHelper::FIVE);
+		offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
 		__m256i index2n = _mm256_add_epi32(index, index);
 		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
 		// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
 		__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
 		__m256i basePop = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
+
 		// Use offset to create pattern
 		__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
 		__m256i mask = _mm256_xor_si256(
