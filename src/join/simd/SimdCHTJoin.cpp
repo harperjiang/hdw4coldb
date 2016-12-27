@@ -30,7 +30,7 @@ __m256i SimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 
 // index = hashed % big / 32
 // offset = hashed % big % 32
-void remainder(__m256i* hashed, uint big) {
+__m256i remainder(__m256i* hashed, uint big) {
 	uint* as = (uint*)hashed;
 	for(uint i = 0; i < 8;i++) {
 		as[i]%=big;
@@ -49,6 +49,7 @@ void remainder(__m256i* hashed, uint big) {
 		 :"edx","eax");
 		 */
 	}
+	return _mm256_load_si256(hashed);
 }
 
 SimdCHTJoin::SimdCHTJoin(bool c1, bool c2, bool ep) :
@@ -124,10 +125,10 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		__m256i* storeloc = (__m256i*)(bitmapresult+store_offset);
 
 		__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
-		remainder(&hashed, bitmapSize * BITMAP_UNIT);
+		hashed = remainder(&hashed, bitmapSize * BITMAP_UNIT);
 
 		__m256i index = _mm256_srli_epi32(hashed, 5);
-		SimdHelper::print_epu32(index);
+//		SimdHelper::print_epu32(index);
 		__m256i offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
 		__m256i index2n = _mm256_add_epi32(index, index);
 		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
