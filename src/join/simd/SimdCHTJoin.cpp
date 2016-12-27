@@ -263,8 +263,8 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 				inner->size, &nz);
 		_logger->info("Pass bitmap :%u\n", chtinputsize);
 		uint bfhelp = 0;
-		for (uint i = 0; i < chtinputsize; i++) {
-			if (!cht->bf->test(chtinput[i])) {
+		for (uint i = 0; i < _probeSize; i++) {
+			if (!cht->bf->test(_probe[i])) {
 				bfhelp++;
 			}
 		}
