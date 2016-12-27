@@ -225,7 +225,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 
 		__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
 		remainder(&hashed, bitmapSize * BITMAP_UNIT);
-		index = _mm256_srav_epi32(hashed, SimdHelper::FIVE);
+		index = _mm256_srli_epi32(hashed, 5);
 		offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
 		__m256i index2n = _mm256_add_epi32(index, index);
 		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
