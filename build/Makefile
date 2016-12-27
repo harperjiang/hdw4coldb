@@ -45,6 +45,7 @@ COMMON_OBJS = \
 ./src/join/cstep/GatherThread.o \
 ./src/join/cstep/StepCHTJoin.o \
 ./src/join/cstep/OclStepCHTJoin.o \
+./src/join/cstep/SimdStepCHTJoin.o \
 ./src/join/ocl/OclCHTJoin.o \
 ./src/join/ocl/OclHashJoin.o \
 ./src/join/simd/SimdCHTJoin.o \
@@ -59,7 +60,7 @@ TEST_OBJS = \
 ./test/CHT_test.o \
 ./test/Hash_test.o \
 ./test/LookupHelper_test.o \
-./test/StepSimdCHTJoin_test.o \
+./test/SimdStepCHTJoin_test.o \
 ./test/SimdHelper_test.o \
 ./test/Timer_test.o \
 ./test/CounterThread_test.o \

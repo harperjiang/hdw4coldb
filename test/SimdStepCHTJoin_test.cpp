@@ -7,10 +7,11 @@
 
 #include <gtest/gtest.h>
 #include <stdlib.h>
-#include "../src/join/cstep/StepSimdCHTJoin.h"
+
+#include "../src/join/cstep/SimdStepCHTJoin.h"
 #include "../src/lookup/Hash.h"
 
-TEST(StepSimdCHTJoin, check_bitmap) {
+TEST(SimdStepCHTJoin, check_bitmap) {
 
 	uint bitmapSize = 5;
 	ulong data[bitmapSize] = { 0x81000, 0x280044880, 0x744002040, 0xb02200122,
@@ -25,7 +26,7 @@ TEST(StepSimdCHTJoin, check_bitmap) {
 
 	__m256i input = _mm256_setr_epi32(3, 6, 2, 8, 11, 14, 25, 18);
 
-	__m256i result = StepSimdCHTJoin::check_bitmap(alignedBitmap, bitmapSize,
+	__m256i result = SimdStepCHTJoin::check_bitmap(alignedBitmap, bitmapSize,
 			input);
 
 	uint* res = (uint*) &result;
@@ -42,7 +43,7 @@ TEST(StepSimdCHTJoin, check_bitmap) {
 	free(alignedBitmap);
 }
 
-TEST(StepSimdCHTJoin, lookup_cht) {
+TEST(SimdStepCHTJoin, lookup_cht) {
 	uint bitmapSize = 5;
 	ulong data[bitmapSize] = { 0x81000, 0x280044880, 0x744002040, 0xb02200122,
 			0x1009100001 };
@@ -61,7 +62,7 @@ TEST(StepSimdCHTJoin, lookup_cht) {
 
 	__m256i input = _mm256_setr_epi32(2, 1, 0, 8, 11, 14, 0, 7);
 	__m256i remain;
-	__m256i result = StepSimdCHTJoin::lookup_cht(alignedBitmap, bitmapSize,
+	__m256i result = SimdStepCHTJoin::lookup_cht(alignedBitmap, bitmapSize,
 			chtpayload, chtsize, input, &remain);
 	uint* res = (uint*) &result;
 	ASSERT_EQ(0xffffffff, res[0]);
@@ -97,7 +98,7 @@ TEST(SimdCHTJoin, lookup_hash) {
 
 	__m256i input = _mm256_setr_epi32(1, 0, 21, 8, 11, 14, 0, 0);
 
-	__m256i result = StepSimdCHTJoin::lookup_hash(alignedbuckets, datasize, input);
+	__m256i result = SimdStepCHTJoin::lookup_hash(alignedbuckets, datasize, input);
 
 	uint* res = (uint*) &result;
 	ASSERT_EQ(0xffffffff, res[0]);
@@ -109,7 +110,7 @@ TEST(SimdCHTJoin, lookup_hash) {
 	ASSERT_EQ(0xffffffff, res[6]);
 	ASSERT_EQ(0xffffffff, res[7]);
 
-	result = StepSimdCHTJoin::lookup_hash(alignedbuckets, datasize,
+	result = SimdStepCHTJoin::lookup_hash(alignedbuckets, datasize,
 			SimdHelper::ZERO);
 
 	res = (uint*) &result;

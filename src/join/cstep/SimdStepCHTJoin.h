@@ -13,7 +13,7 @@
 #include "../../simd/SimdHelper.h"
 #include "../../lookup/CHT.h"
 
-class StepSimdCHTJoin: public Join {
+class SimdStepCHTJoin: public Join {
 	friend class SCheckBitmapTransform;
 	friend class SLookupChtTransform;
 	friend class SLookupHashTransform;
@@ -32,8 +32,8 @@ protected:
 	const char* name();
 public:
 
-	StepSimdCHTJoin(bool = false, bool = false, bool = false);
-	virtual ~StepSimdCHTJoin();
+	SimdStepCHTJoin(bool = false, bool = false, bool = false);
+	virtual ~SimdStepCHTJoin();
 
 	void join(kvlist* outer, kvlist* inner);
 
@@ -47,9 +47,9 @@ public:
 
 class SCheckBitmapTransform: public SimdTransform {
 private:
-	StepSimdCHTJoin* owner;
+	SimdStepCHTJoin* owner;
 public:
-	SCheckBitmapTransform(StepSimdCHTJoin* css) {
+	SCheckBitmapTransform(SimdStepCHTJoin* css) {
 		owner = css;
 	}
 	virtual ~SCheckBitmapTransform() {
@@ -60,9 +60,9 @@ public:
 
 class SLookupChtTransform: public SimdTransform {
 private:
-	StepSimdCHTJoin* owner;
+	SimdStepCHTJoin* owner;
 public:
-	SLookupChtTransform(StepSimdCHTJoin* css) {
+	SLookupChtTransform(SimdStepCHTJoin* css) {
 		owner = css;
 	}
 	virtual ~SLookupChtTransform() {
@@ -72,9 +72,9 @@ public:
 
 class SLookupHashTransform: public SimdTransform {
 private:
-	StepSimdCHTJoin* owner;
+	SimdStepCHTJoin* owner;
 public:
-	SLookupHashTransform(StepSimdCHTJoin* css) {
+	SLookupHashTransform(SimdStepCHTJoin* css) {
 		owner = css;
 	}
 	virtual ~SLookupHashTransform() {
