@@ -262,6 +262,13 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 		chtinputsize = CollectThread::collect(bitmapresult, chtinput,
 				inner->size, &nz);
 		_logger->info("Pass bitmap :%u\n", chtinputsize);
+		uint bfhelp = 0;
+		for (uint i = 0; i < chtinputsize; i++) {
+			if (!cht->bf->test(chtinput[i])) {
+				bfhelp++;
+			}
+		}
+		_logger->info("Bloom Filter filter out %u\n", bfhelp);
 		_timer.interval("cht_input_collect");
 	}
 	for (uint i = 0; i < chtinputsize; i++) {

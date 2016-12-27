@@ -190,9 +190,9 @@ uint8_t* CHT::findUnique(uint32_t key) {
 	if (!bitmap_test(bitmap, hval)) {
 		return NULL;
 	}
-	if (!bf->test(key)) {
-		return NULL;
-	}
+//	if (!bf->test(key)) {
+//		return NULL;
+//	}
 	uint32_t offset = bitmap_popcnt(this->bitmap, hval);
 
 	uint32_t counter = 0;
