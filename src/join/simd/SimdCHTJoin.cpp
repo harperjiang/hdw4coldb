@@ -59,7 +59,7 @@ __m256i SimdCHTJoin::check_bitmap(ulong* bitmap, uint bitmapSize,
 	__m256i hashed = _mm256_mullo_epi32(input, HASH_FACTOR);
 	__m256i offset;
 	__m256i index;
-	remainder(&hashed, &index, &offset, bitmapSize * BITMAP_UNIT);
+	remainder(&hashed, bitmapSize * BITMAP_UNIT);
 	__m256i index2n = _mm256_add_epi32(index, index);
 	// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
 	__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
