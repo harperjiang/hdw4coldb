@@ -86,19 +86,6 @@ void SimdCHTJoin::buildProbe(kvlist* inner) {
 	_probeSize = inner->size;
 }
 
-void SimdCHTJoin::load_bitmap(__m256i input, __m256i* base, __m256i* byte) {
-	__m256i permute = _mm256_permutevar8x32_epi32(input, PERMUTE);
-	__m128i index1 = _mm256_extracti128_si256(permute, 0);
-	__m128i index2 = _mm256_extracti128_si256(permute, 1);
-	// Each load has 4 64 bits
-	__m256i load1 = _mm256_i32gather_epi64((const long long int* )alignedBitmap, index1, 8);
-	__m256i load2 = _mm256_i32gather_epi64((const long long int* )alignedBitmap, index2, 8);
-	// lower 32
-	*byte = _mm256_or_si256(_mm256_and_si256(load1, SHIFT_MASK_LOW),_mm256_slli_epi64(_mm256_and_si256(load2, SHIFT_MASK_LOW), 32));
-	// higher 32
-	*base = _mm256_or_si256(_mm256_srli_epi64(_mm256_and_si256(load1, SHIFT_MASK_HIGH), 32), _mm256_and_si256(load2, SHIFT_MASK_HIGH));
-}
-
 __m256i SimdCHTJoin::process(__m256i input) {
 	__m256i hashed = _mm256_and_si256(_mm256_mullo_epi32(input, HASH_FACTOR),
 			bitsize);
@@ -255,5 +242,17 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 //	free (hashinput);
 //	free (chtresult);
 //	free (hashresult);
+}
+
+void SimdCHTJoin::load_bitmap(__m256i input, __m256i* base, __m256i* byte) {
+	__m256i permute = _mm256_permutevar8x32_epi32(input, PERMUTE);
+	__m128i index1 = _mm256_extracti128_si256(permute, 0);
+	__m128i index2 = _mm256_extracti128_si256(permute, 1);
+	__m256i load1 = _mm256_i32gather_epi64((const long long int* )alignedBitmap,index1, 8);
+	__m256i load2 = _mm256_i32gather_epi64((const long long int* )alignedBitmap, index2, 8);
+	// lower 32
+	*byte = _mm256_or_si256(_mm256_and_si256(load1, SHIFT_MASK_LOW),_mm256_slli_epi64(_mm256_and_si256(load2, SHIFT_MASK_LOW), 32));
+	// higher 32
+	*base = _mm256_or_si256(_mm256_srli_epi64(_mm256_and_si256(load1, SHIFT_MASK_HIGH), 32), _mm256_and_si256(load2, SHIFT_MASK_HIGH));
 }
 
