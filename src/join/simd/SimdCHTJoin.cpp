@@ -28,30 +28,6 @@
 __m256i SimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 		(int) UINT32_C(2654435761));
 
-// index = hashed % big / 32
-// offset = hashed % big % 32
-__m256i remainder(__m256i* hashed, uint big) {
-	uint* as = (uint*)hashed;
-	for(uint i = 0; i < 8;i++) {
-		as[i]%=big;
-		/*
-		 asm volatile(
-		 "xorl %%edx, %%edx\n\t"
-		 "movl %2,%%eax\n\t"
-		 "divl %3\n\t"
-		 "movl %%edx,%%eax\n\t"
-		 "shrl $5, %%edx\n\t"
-		 "andl $31, %%eax\n\t"
-		 "movl %%eax,%1\n\t"
-		 "movl %%edx,%0\n\t"
-		 :"=m"(quo[i]),"=m"(rem[i])
-		 :"m"(as[i]),"r"(big)
-		 :"edx","eax");
-		 */
-	}
-	return _mm256_load_si256(hashed);
-}
-
 SimdCHTJoin::SimdCHTJoin(bool c1, bool c2, bool ep) :
 		Join(ep) {
 	this->collectBitmap = c1;
@@ -97,7 +73,6 @@ void SimdCHTJoin::buildLookup(kvlist* outer) {
 			sizeof(uint) * cht->overflow->bucket_size);
 
 	bitsize = _mm256_set1_epi32(cht->bitmap_size * BITMAP_UNIT - 1);
-
 }
 
 void SimdCHTJoin::buildProbe(kvlist* inner) {
@@ -122,7 +97,7 @@ __m256i SimdCHTJoin::process(__m256i input) {
 	// Use offset to create pattern
 	__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
 	// -1 for passed bitmap check, 0 for failed
-	__m256i mask = _mm256_xor_si256(
+	__m256i bitmap_mask = _mm256_xor_si256(
 			_mm256_cmpeq_epi32(_mm256_and_si256(byte, ptn), SimdHelper::ZERO),
 			SimdHelper::MAX);
 	__m256i popmask = _mm256_xor_si256(
@@ -131,12 +106,31 @@ __m256i SimdCHTJoin::process(__m256i input) {
 			_mm256_and_si256(byte, popmask));
 
 	__m256i location = _mm256_and_si256(_mm256_add_epi32(basePop, partialPop),
-			mask);
-	return location;
+			bitmap_mask);
+	// Return not found
+	if (_mm256_testz_si256(bitmap_mask, SimdHelper::MAX)) {
+		return SimdHelper::MAX;
+	}
+	// Check cht
+
+	__m256i chtFound = SimdHelper::ZERO;
+	for (int i = 0; i < THRESHOLD; i++) {
+		if (_mm256_testz_si256(location, SimdHelper::MAX))
+			break;
+		// Compare data at location with key
+		__m256i gathered = _mm256_i32gather_epi32((int* )alignedBitmap,
+				location, 4);
+		__m256i foundmask = _mm256_cmpeq_epi32(gathered, input);
+		locationadd1 = _mm256_add_epi32(location, ONE);
+		chtFound = _mm256_or_si256(chtFound,
+				_mm256_and_si256(locationadd1, foundmask));
+	}
+
+	return chtFound;
 }
 
 void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
-	// Allocate aligned bitmap
+// Allocate aligned bitmap
 
 	buildLookup(outer);
 	buildProbe(inner);
