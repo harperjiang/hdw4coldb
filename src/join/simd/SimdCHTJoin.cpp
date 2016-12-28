@@ -27,6 +27,7 @@
 
 __m256i SimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 		(int) UINT32_C(2654435761));
+__m256i SimdCHTJoin::PERMUTE = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
 __m256i SimdCHTJoin::SHIFT_MASK_LOW = _mm256_set1_epi64x(0xFFFFFFFF);
 __m256i SimdCHTJoin::SHIFT_MASK_HIGH = _mm256_set1_epi64x(0xFFFFFFFF00000000);
 
@@ -92,17 +93,17 @@ __m256i SimdCHTJoin::process(__m256i input) {
 	__m256i offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
 
 	// Load 8 64-bit words
-	__m128i index1 = _mm256_extracti128_si256(index, 0);
-	__m128i index2 = _mm256_extracti128_si256(index, 1);
+	__m256i permute = _mm256_permutevar8x32_epi32(index, PERMUTE);
+	__m128i index1 = _mm256_extracti128_si256(permute, 0);
+	__m128i index2 = _mm256_extracti128_si256(permute, 1);
 	// Each load has 4 64 bits
 	__m256i load1 = _mm256_i32gather_epi64((const long long int* )alignedBitmap,
 			index1, 8);
 	__m256i load2 = _mm256_i32gather_epi64((const long long int* )alignedBitmap,
 			index2, 8);
-	// TODO Fix the bug here
 	// lower 32
 	__m256i byte = _mm256_or_si256(_mm256_and_si256(load1, SHIFT_MASK_LOW),
-			_mm256_srli_epi64(_mm256_and_si256(load2, SHIFT_MASK_LOW), 32));
+			_mm256_slli_epi64(_mm256_and_si256(load2, SHIFT_MASK_LOW), 32));
 	// higher 32
 	__m256i basePop = _mm256_or_si256(
 			_mm256_srli_epi64(_mm256_and_si256(load1, SHIFT_MASK_HIGH), 32),
@@ -121,6 +122,7 @@ __m256i SimdCHTJoin::process(__m256i input) {
 
 	__m256i location = _mm256_and_si256(_mm256_add_epi32(basePop, partialPop),
 			bitmap_mask);
+
 	// Return not found
 	if (_mm256_testz_si256(bitmap_mask, SimdHelper::MAX)) {
 		return SimdHelper::MAX;
