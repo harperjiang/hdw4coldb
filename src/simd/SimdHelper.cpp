@@ -19,8 +19,14 @@ SimdHelper::~SimdHelper() {
 __m256i SimdHelper::ZERO = _mm256_setzero_si256();
 __m256i SimdHelper::ONE = _mm256_set1_epi32(1);
 __m256i SimdHelper::TWO = _mm256_set1_epi32(2);
+__m256i SimdHelper::FOUR = _mm256_set1_epi32(4);
+__m256i SimdHelper::TWENTY_FOUR = _mm256_set1_epi32(24);
 __m256i SimdHelper::THIRTY_ONE = _mm256_set1_epi32(31);
 __m256i SimdHelper::MAX = _mm256_set1_epi32(-1);
+__m256i SimdHelper::POPCNT_C1 = _mm256_set1_epi32(0x55555555);
+__m256i SimdHelper::POPCNT_C2 = _mm256_set1_epi32(0x33333333);
+__m256i SimdHelper::POPCNT_C3 = _mm256_set1_epi32(0x0F0F0F0F);
+__m256i SimdHelper::POPCNT_C4 = _mm256_set1_epi32(0x01010101);
 
 void SimdHelper::transform(uint* src, uint srclength, uint* dest,
 		SimdTransform* trans, bool enableProfiling) {
@@ -127,15 +133,23 @@ __m256i SimdHelper::divrem_epu32(__m256i* remainder, __m256i a, uint b) {
 		:"m"(as[i]),"m"(b)
 		:"edx","eax");
 	}
-
 	return quotient;
 }
-
+/**
+ * This implementation use the idea from https://arxiv.org/pdf/1611.07612v4.pdf
+ */
 __m256i SimdHelper::popcnt_epi32(__m256i input) {
-	int* data = (int*) &input;
-	return _mm256_setr_epi32(_popcnt32(data[0]), _popcnt32(data[1]),
-			_popcnt32(data[2]), _popcnt32(data[3]), _popcnt32(data[4]),
-			_popcnt32(data[5]), _popcnt32(data[6]), _popcnt32(data[7]));
+	__m256i result = _mm256_sub_epi32(input,
+			_mm256_and_si256(_mm256_srlv_epi32(input, ONE), POPCNT_C1));
+	result = _mm256_add_epi32(
+			_mm256_and_si256(_mm256_srlv_epi32(result, TWO), POPCNT_C2),
+			_mm256_and_si256(result, POPCNT_C2));
+	result = _mm256_add_epi32(
+			_mm256_and_si256(_mm256_srlv_epi32(result, FOUR), POPCNT_C3),
+			result);
+	result = _mm256_mullo_epi32(result, POPCNT_C4);
+	result = _mm256_srlv_epi32(result, TWENTY_FOUR);
+	return result;
 }
 
 // set -1 for zero, 0 for non-zero

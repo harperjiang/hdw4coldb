@@ -95,6 +95,9 @@ void SimdCHTJoin::buildLookup(kvlist* outer) {
 			sizeof(uint) * cht->overflow->bucket_size);
 	::memcpy(alignedHashbkt, cht->overflow->buckets,
 			sizeof(uint) * cht->overflow->bucket_size);
+
+	bitsize = _mm256_set1_epi32(cht->bitmap_size * BITMAP_UNIT - 1);
+
 }
 
 void SimdCHTJoin::buildProbe(kvlist* inner) {
@@ -105,6 +108,33 @@ void SimdCHTJoin::buildProbe(kvlist* inner) {
 	_probeSize = inner->size;
 }
 
+__m256i SimdCHTJoin::process(__m256i input) {
+	__m256i hashed = _mm256_and_si256(_mm256_mullo_epi32(input, HASH_FACTOR),
+			bitsize);
+	__m256i index = _mm256_srli_epi32(hashed, 5);
+	__m256i offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
+	__m256i index2n = _mm256_add_epi32(index, index);
+	__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
+	// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
+	__m256i byte = _mm256_i32gather_epi32((int* )alignedBitmap, index2n, 4);
+	__m256i basePop = _mm256_i32gather_epi32((int* )alignedBitmap, index2n1, 4);
+
+	// Use offset to create pattern
+	__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
+	// -1 for passed bitmap check, 0 for failed
+	__m256i mask = _mm256_xor_si256(
+			_mm256_cmpeq_epi32(_mm256_and_si256(byte, ptn), SimdHelper::ZERO),
+			SimdHelper::MAX);
+	__m256i popmask = _mm256_xor_si256(
+			_mm256_sllv_epi32(SimdHelper::MAX, offset), SimdHelper::MAX);
+	__m256i partialPop = SimdHelper::popcnt_epi32(
+			_mm256_and_si256(byte, popmask));
+
+	__m256i location = _mm256_and_si256(_mm256_add_epi32(basePop, partialPop),
+			mask);
+	return location;
+}
+
 void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	// Allocate aligned bitmap
 
@@ -112,45 +142,17 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 	buildProbe(inner);
 
 	uint* bitmapresult = (uint*) aligned_alloc(32, sizeof(uint) * _probeSize);
-	CHT* cht = (CHT*) _lookup;
 
 	_timer.start();
-	ulong* bitmap = cht->bitmap;
-	uint bitmapSize = cht->bitmap_size;
-
-	__m256i bitsize = _mm256_set1_epi32(bitmapSize * BITMAP_UNIT - 1);
 
 	uint store_offset = 0;
 	for (uint i = 0; i < _probeSize / 8; i++) {
 		uint load_offset = i * 8;
 		__m256i input = _mm256_load_si256((__m256i *) (_probe + load_offset));
 		__m256i* storeloc = (__m256i*)(bitmapresult+store_offset);
-		// Modulo
-		__m256i hashed = _mm256_and_si256(
-				_mm256_mullo_epi32(input, HASH_FACTOR), bitsize);
-		__m256i index = _mm256_srli_epi32(hashed, 5);
-		__m256i offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
-		__m256i index2n = _mm256_add_epi32(index, index);
-		__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
-		// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
-		__m256i byte = _mm256_i32gather_epi32((int* )bitmap, index2n, 4);
-		__m256i basePop = _mm256_i32gather_epi32((int* )bitmap, index2n1, 4);
-
-		// Use offset to create pattern
-		__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);
-		__m256i mask = _mm256_xor_si256(
-				_mm256_cmpeq_epi32(_mm256_and_si256(byte, ptn),
-						SimdHelper::ZERO), SimdHelper::MAX);
-
-		__m256i popmask = _mm256_xor_si256(
-				_mm256_sllv_epi32(SimdHelper::MAX, offset), SimdHelper::MAX);
-		__m256i partialPop = SimdHelper::popcnt_epi32(
-				_mm256_and_si256(byte, popmask));
-
-		__m256i location = _mm256_and_si256(
-				_mm256_add_epi32(basePop, partialPop), mask);
-		if (!_mm256_testz_si256(location, SimdHelper::MAX)) {
-			_mm256_store_si256(storeloc, location);
+		__m256i processed = process(input);
+		if (!_mm256_testz_si256(processed, SimdHelper::MAX)) {
+			_mm256_store_si256(storeloc, processed);
 			store_offset += 8;
 		}
 	}
@@ -162,10 +164,7 @@ void SimdCHTJoin::join(kvlist* outer, kvlist* inner) {
 				psize >= 2 ? start[1] : 0, psize >= 3 ? start[2] : 0,
 				psize >= 4 ? start[3] : 0, psize >= 5 ? start[4] : 0,
 				psize >= 6 ? start[5] : 0, psize >= 7 ? start[6] : 0, 0);
-//		__m256i partialprocessed = check_bitmap(bitmap, bitmapSize,
-//				loadpartial);
-		// TODO Fix this
-		__m256i partialprocessed = loadpartial;
+		__m256i partialprocessed = process(loadpartial);
 		SimdHelper::store_epu32(bitmapresult, store_offset, partialprocessed,
 				psize);
 	}

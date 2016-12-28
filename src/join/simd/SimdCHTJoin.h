@@ -14,9 +14,6 @@
 #include "../../lookup/CHT.h"
 
 class SimdCHTJoin: public Join {
-	friend class CheckBitmapTransform;
-	friend class LookupChtTransform;
-	friend class LookupHashTransform;
 protected:
 	ulong* alignedBitmap = NULL;
 	uint* alignedChtload = NULL;
@@ -30,16 +27,16 @@ protected:
 	void buildProbe(kvlist* input);
 
 	const char* name();
-public:
 
+protected:
+	static __m256i HASH_FACTOR;
+	__m256i bitsize;
+	__m256i process(__m256i input);
+public:
 	SimdCHTJoin(bool = false, bool = false, bool = false);
 	virtual ~SimdCHTJoin();
 
 	void join(kvlist* outer, kvlist* inner);
-
-public:
-	static __m256i HASH_FACTOR;
-
 };
 
 #endif /* SRC_JOIN_SIMDCHTJOIN_H_ */

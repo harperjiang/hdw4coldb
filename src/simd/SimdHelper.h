@@ -31,9 +31,16 @@ public:
 	static __m256i ZERO;
 	static __m256i ONE;
 	static __m256i TWO;
+	static __m256i FOUR;
 	static __m256i MAX;
 	static __m256i THIRTY_ONE;
-
+	static __m256i TWENTY_FOUR;
+protected:
+	static __m256i POPCNT_C1;
+	static __m256i POPCNT_C2;
+	static __m256i POPCNT_C3;
+	static __m256i POPCNT_C4;
+public:
 	static void transform(uint* src, uint srclength, uint* dest,
 			SimdTransform* trans, bool enableProfiling = false);
 	static void transform2(uint* srca, uint* srcb, uint srclength, uint* dest,
