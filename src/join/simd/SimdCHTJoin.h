@@ -34,8 +34,10 @@ protected:
 	static __m256i SHIFT_MASK_LOW;
 	static __m256i SHIFT_MASK_HIGH;
 	__m256i bitsize;
-public:// Functions for internal use
+
+	// Functions for internal use
 	__m256i process(__m256i input);
+	void load_bitmap(__m256i index, __m256i* base, __m256i* byte);
 public:
 	SimdCHTJoin(bool = false, bool = false, bool = false);
 	virtual ~SimdCHTJoin();
