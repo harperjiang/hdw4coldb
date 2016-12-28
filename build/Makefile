@@ -35,6 +35,7 @@ COMMON_OBJS = \
 ./src/util/Timer.o \
 ./src/util/Thread.o \
 ./src/simd/SimdHelper.o \
+./src/simd/SimdBuffer.o \
 ./src/opencl/CLBuffer.o \
 ./src/opencl/CLEnv.o \
 ./src/opencl/CLProgram.o \
