@@ -34,7 +34,6 @@ public:
 	static __m256i FOUR;
 	static __m256i MAX;
 	static __m256i THIRTY_ONE;
-	static __m256i TWENTY_FOUR;
 protected:
 	static __m256i POPCNT_WWG_C1;
 	static __m256i POPCNT_WWG_C2;

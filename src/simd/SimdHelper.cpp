@@ -20,7 +20,6 @@ __m256i SimdHelper::ZERO = _mm256_setzero_si256();
 __m256i SimdHelper::ONE = _mm256_set1_epi32(1);
 __m256i SimdHelper::TWO = _mm256_set1_epi32(2);
 __m256i SimdHelper::FOUR = _mm256_set1_epi32(4);
-__m256i SimdHelper::TWENTY_FOUR = _mm256_set1_epi32(24);
 __m256i SimdHelper::THIRTY_ONE = _mm256_set1_epi32(31);
 __m256i SimdHelper::MAX = _mm256_set1_epi32(-1);
 __m256i SimdHelper::POPCNT_WWG_C1 = _mm256_set1_epi32(0x55555555);
@@ -142,23 +141,23 @@ __m256i SimdHelper::popcnt_epi32_mula(__m256i input) {
 	__m256i lower = _mm256_shuffle_epi8(POPCNT_MULA_C,
 			_mm256_and_si256(input, POPCNT_WWG_C3));
 	__m256i higher = _mm256_shuffle_epi8(POPCNT_MULA_C,
-			_mm256_and_si256(_mm256_srlv_epi32(input, FOUR), POPCNT_WWG_C3));
+			_mm256_and_si256(_mm256_srli_epi32(input, 4), POPCNT_WWG_C3));
 	__m256i byte = _mm256_add_epi32(lower, higher);
 	__m256i result = _mm256_mullo_epi32(byte, POPCNT_WWG_C4);
-	return _mm256_srlv_epi32(result, TWENTY_FOUR);
+	return _mm256_srli_epi32(result, 24);
 }
 
 __m256i SimdHelper::popcnt_epi32_wwg(__m256i input) {
 	__m256i result = _mm256_sub_epi32(input,
-			_mm256_and_si256(_mm256_srlv_epi32(input, ONE), POPCNT_WWG_C1));
+			_mm256_and_si256(_mm256_srli_epi32(input, 1), POPCNT_WWG_C1));
 	result = _mm256_add_epi32(
-			_mm256_and_si256(_mm256_srlv_epi32(result, TWO), POPCNT_WWG_C2),
+			_mm256_and_si256(_mm256_srli_epi32(result, 2), POPCNT_WWG_C2),
 			_mm256_and_si256(result, POPCNT_WWG_C2));
 	result = _mm256_add_epi32(
-			_mm256_and_si256(_mm256_srlv_epi32(result, FOUR), POPCNT_WWG_C3),
+			_mm256_and_si256(_mm256_srli_epi32(result, 4), POPCNT_WWG_C3),
 			_mm256_and_si256(result, POPCNT_WWG_C3));
 	result = _mm256_mullo_epi32(result, POPCNT_WWG_C4);
-	result = _mm256_srlv_epi32(result, TWENTY_FOUR);
+	result = _mm256_srli_epi32(result, 24);
 	return result;
 }
 /**
