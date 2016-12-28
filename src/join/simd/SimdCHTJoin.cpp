@@ -27,8 +27,8 @@
 
 __m256i SimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 		(int) UINT32_C(2654435761));
-__m256i SimdCHTJoin::SHIFT_MASK_LOW = _mm256_set1_epi64(0xFFFFFFFF);
-__m256i SimdCHTJoin::SHIFT_MASK_HIGH = _mm256_set1_epi64(0xFFFFFFFF00000000);
+__m256i SimdCHTJoin::SHIFT_MASK_LOW = _mm256_set1_epi64x(0xFFFFFFFF);
+__m256i SimdCHTJoin::SHIFT_MASK_HIGH = _mm256_set1_epi64x(0xFFFFFFFF00000000);
 
 SimdCHTJoin::SimdCHTJoin(bool c1, bool c2, bool ep) :
 		Join(ep) {
@@ -103,7 +103,7 @@ __m256i SimdCHTJoin::process(__m256i input) {
 			_mm256_srli_epi64(_mm256_and_si256(load2, SHIFT_MASK_LOW), 32));
 	// higher 32
 	__m256i basePop = _mm256_or_si256(
-			_mm256_and_si256(_mm256_srli_epi64(load1, SHIFT_MASK_HIGH), 32),
+			_mm256_srli_epi64(_mm256_and_si256(load1, SHIFT_MASK_HIGH), 32),
 			_mm256_and_si256(load2, SHIFT_MASK_HIGH));
 
 	// Use offset to create pattern
