@@ -121,9 +121,11 @@ __m256i SimdCHTJoin::process(__m256i input) {
 		__m256i gathered = _mm256_i32gather_epi32((int* )alignedBitmap,
 				location, 4);
 		__m256i foundmask = _mm256_cmpeq_epi32(gathered, input);
-		locationadd1 = _mm256_add_epi32(location, ONE);
+		__m256i donemask = _mm256_xor_si256(foundmask, SimdHelper::MAX);
+		__m256i locationadd1 = _mm256_add_epi32(location, SimdHelper::ONE);
 		chtFound = _mm256_or_si256(chtFound,
 				_mm256_and_si256(locationadd1, foundmask));
+		location = _mm256_and_si256(locationadd1, donemask);
 	}
 
 	return chtFound;
