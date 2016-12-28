@@ -118,7 +118,7 @@ __m256i SimdCHTJoin::process(__m256i input) {
 		if (_mm256_testz_si256(location, SimdHelper::MAX))
 			break;
 		// Compare data at location with key
-		__m256i gathered = _mm256_i32gather_epi32((int* )alignedBitmap,
+		__m256i gathered = _mm256_i32gather_epi32((int* )alignedChtload,
 				location, 4);
 		__m256i foundmask = _mm256_cmpeq_epi32(gathered, input);
 		__m256i donemask = _mm256_xor_si256(foundmask, SimdHelper::MAX);
