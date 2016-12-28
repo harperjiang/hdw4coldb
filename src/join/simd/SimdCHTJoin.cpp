@@ -27,6 +27,8 @@
 
 __m256i SimdCHTJoin::HASH_FACTOR = _mm256_set1_epi32(
 		(int) UINT32_C(2654435761));
+__m256i SimdCHTJoin::SHIFT_MASK_LOW = _mm256_set1_epi64(0xFFFFFFFF);
+__m256i SimdCHTJoin::SHIFT_MASK_HIGH = _mm256_set1_epi64(0xFFFFFFFF00000000);
 
 SimdCHTJoin::SimdCHTJoin(bool c1, bool c2, bool ep) :
 		Join(ep) {
@@ -88,11 +90,21 @@ __m256i SimdCHTJoin::process(__m256i input) {
 			bitsize);
 	__m256i index = _mm256_srli_epi32(hashed, 5);
 	__m256i offset = _mm256_and_si256(hashed, SimdHelper::THIRTY_ONE);
-	__m256i index2n = _mm256_add_epi32(index, index);
-	__m256i index2n1 = _mm256_add_epi32(index2n, SimdHelper::ONE);
-	// Use index to load from bitmap, the scale here is byte, thus load 32 bit integer use scale 4.
-	__m256i byte = _mm256_i32gather_epi32((int* )alignedBitmap, index2n, 4);
-	__m256i basePop = _mm256_i32gather_epi32((int* )alignedBitmap, index2n1, 4);
+
+	// Load 8 64-bit words
+	__m128i index1 = _mm256_extracti128_si256(index, 0);
+	__m128i index2 = _mm256_extracti128_si256(index, 1);
+	// Each load has 4 64 bits
+	__m256i load1 = _mm256_i32gather_epi64((int* )alignedBitmap, index1, 8);
+	__m256i load2 = _mm256_i32gather_epi64((int* )alignedBitmap, index2, 8);
+
+	// lower 32
+	__m256i byte = _mm256_or_si256(_mm256_and_si256(load1, SHIFT_MASK_LOW),
+			_mm256_srli_epi64(_mm256_and_si256(load2, SHIFT_MASK_LOW), 32));
+	// higher 32
+	__m256i basePop = _mm256_or_si256(
+			_mm256_and_si256(_mm256_srli_epi64(load1, SHIFT_MASK_HIGH), 32),
+			_mm256_and_si256(load2, SHIFT_MASK_HIGH));
 
 	// Use offset to create pattern
 	__m256i ptn = _mm256_sllv_epi32(SimdHelper::ONE, offset);

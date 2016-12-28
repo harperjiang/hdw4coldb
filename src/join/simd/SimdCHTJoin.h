@@ -30,6 +30,8 @@ protected:
 
 protected:
 	static __m256i HASH_FACTOR;
+	static __m256i SHIFT_MASK_LOW;
+	static __m256i SHIFT_MASK_HIGH;
 	__m256i bitsize;
 	__m256i process(__m256i input);
 public:
