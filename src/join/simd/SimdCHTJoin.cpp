@@ -95,9 +95,11 @@ __m256i SimdCHTJoin::process(__m256i input) {
 	__m128i index1 = _mm256_extracti128_si256(index, 0);
 	__m128i index2 = _mm256_extracti128_si256(index, 1);
 	// Each load has 4 64 bits
-	__m256i load1 = _mm256_i32gather_epi64((int* )alignedBitmap, index1, 8);
-	__m256i load2 = _mm256_i32gather_epi64((int* )alignedBitmap, index2, 8);
-
+	__m256i load1 = _mm256_i32gather_epi64((const long long int* )alignedBitmap,
+			index1, 8);
+	__m256i load2 = _mm256_i32gather_epi64((const long long int* )alignedBitmap,
+			index2, 8);
+	// TODO Fix the bug here
 	// lower 32
 	__m256i byte = _mm256_or_si256(_mm256_and_si256(load1, SHIFT_MASK_LOW),
 			_mm256_srli_epi64(_mm256_and_si256(load2, SHIFT_MASK_LOW), 32));
