@@ -112,6 +112,11 @@ void SimdHelper::print_epu32(__m256i a) {
 			data[4], data[5], data[6], data[7]);
 }
 
+void SimdHelper::print_m128_epu32(__m128i a) {
+	uint* data = (uint*) &a;
+	printf("%x,%x,%x,%x\n", data[0], data[1], data[2], data[3]);
+}
+
 __m256i SimdHelper::remainder_epu32(__m256i a, uint b) {
 	uint* as = (uint*) &a;
 	return _mm256_setr_epi32(as[0] % b, as[1] % b, as[2] % b, as[3] % b,

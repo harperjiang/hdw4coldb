@@ -59,6 +59,7 @@ public:
 			SimdTransform* trans, bool enableProfiling = false);
 
 	static void print_epu32(__m256i a);
+	static void print_m128_epu32(__m128i a);
 	static __m256i remainder_epu32(__m256i a, uint b);
 	static __m256i divrem_epu32(__m256i* remainder, __m256i a, uint b);
 	static __m256i popcnt_epi32(__m256i input);
