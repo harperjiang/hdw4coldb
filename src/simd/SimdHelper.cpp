@@ -146,7 +146,7 @@ __m256i SimdHelper::popcnt_epi32(__m256i input) {
 			_mm256_and_si256(result, POPCNT_C2));
 	result = _mm256_add_epi32(
 			_mm256_and_si256(_mm256_srlv_epi32(result, FOUR), POPCNT_C3),
-			result);
+			_mm256_and_si256(result, POPCNT_C3));
 	result = _mm256_mullo_epi32(result, POPCNT_C4);
 	result = _mm256_srlv_epi32(result, TWENTY_FOUR);
 	return result;
