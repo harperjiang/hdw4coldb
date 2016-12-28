@@ -57,6 +57,7 @@ COMMON_OBJS = \
 
 TEST_OBJS = \
 ./test/bitmap_test.o \
+./test/SimdCHTJoin_test.o \
 ./test/CHT_test.o \
 ./test/Hash_test.o \
 ./test/LookupHelper_test.o \
