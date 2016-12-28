@@ -36,10 +36,21 @@ public:
 	static __m256i THIRTY_ONE;
 	static __m256i TWENTY_FOUR;
 protected:
-	static __m256i POPCNT_C1;
-	static __m256i POPCNT_C2;
-	static __m256i POPCNT_C3;
-	static __m256i POPCNT_C4;
+	static __m256i POPCNT_WWG_C1;
+	static __m256i POPCNT_WWG_C2;
+	static __m256i POPCNT_WWG_C3;
+	static __m256i POPCNT_WWG_C4;
+
+	static __m256i POPCNT_MULA_C;
+protected:
+	/**
+	 * Popcount use WWG algorithm
+	 */
+	static __m256i popcnt_epi32_wwg(__m256i input);
+	/**
+	 * Popcount use Mula's Algorithm
+	 */
+	static __m256i popcnt_epi32_mula(__m256i input);
 public:
 	static void transform(uint* src, uint srclength, uint* dest,
 			SimdTransform* trans, bool enableProfiling = false);

@@ -23,10 +23,12 @@ __m256i SimdHelper::FOUR = _mm256_set1_epi32(4);
 __m256i SimdHelper::TWENTY_FOUR = _mm256_set1_epi32(24);
 __m256i SimdHelper::THIRTY_ONE = _mm256_set1_epi32(31);
 __m256i SimdHelper::MAX = _mm256_set1_epi32(-1);
-__m256i SimdHelper::POPCNT_C1 = _mm256_set1_epi32(0x55555555);
-__m256i SimdHelper::POPCNT_C2 = _mm256_set1_epi32(0x33333333);
-__m256i SimdHelper::POPCNT_C3 = _mm256_set1_epi32(0x0F0F0F0F);
-__m256i SimdHelper::POPCNT_C4 = _mm256_set1_epi32(0x01010101);
+__m256i SimdHelper::POPCNT_WWG_C1 = _mm256_set1_epi32(0x55555555);
+__m256i SimdHelper::POPCNT_WWG_C2 = _mm256_set1_epi32(0x33333333);
+__m256i SimdHelper::POPCNT_WWG_C3 = _mm256_set1_epi32(0x0F0F0F0F);
+__m256i SimdHelper::POPCNT_WWG_C4 = _mm256_set1_epi32(0x01010101);
+__m256i SimdHelper::POPCNT_MULA_C = _mm256_setr_epi8(0, 1, 1, 2, 1, 2, 2, 3, 1,
+		2, 2, 3, 2, 3, 3, 4, 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4);
 
 void SimdHelper::transform(uint* src, uint srclength, uint* dest,
 		SimdTransform* trans, bool enableProfiling) {
@@ -135,59 +137,78 @@ __m256i SimdHelper::divrem_epu32(__m256i* remainder, __m256i a, uint b) {
 	}
 	return quotient;
 }
+
+__m256i SimdHelper::popcnt_epi32_mula(__m256i input) {
+	__m256i lower = _mm256_shuffle_epi8(POPCNT_MULA_C,
+			_mm256_and_si256(input, POPCNT_WWG_C3));
+	__m256i higher = _mm256_shuffle_epi8(POPCNT_MULA_C,
+			_mm256_and_si256(_mm256_srlv_epi32(input, FOUR), POPCNT_WWG_C3));
+	__m256i byte = _mm256_add_epi32(lower, higher);
+	__m256i result = _mm256_mullo_epi32(byte, POPCNT_WWG_C4);
+	return _mm256_srlv_epi32(result, TWENTY_FOUR);
+}
+
+__m256i SimdHelper::popcnt_epi32_wwg(__m256i input) {
+	__m256i result = _mm256_sub_epi32(input,
+			_mm256_and_si256(_mm256_srlv_epi32(input, ONE), POPCNT_WWG_C1));
+	result = _mm256_add_epi32(
+			_mm256_and_si256(_mm256_srlv_epi32(result, TWO), POPCNT_WWG_C2),
+			_mm256_and_si256(result, POPCNT_WWG_C2));
+	result = _mm256_add_epi32(
+			_mm256_and_si256(_mm256_srlv_epi32(result, FOUR), POPCNT_WWG_C3),
+			_mm256_and_si256(result, POPCNT_WWG_C3));
+	result = _mm256_mullo_epi32(result, POPCNT_WWG_C4);
+	result = _mm256_srlv_epi32(result, TWENTY_FOUR);
+	return result;
+}
 /**
  * This implementation use the idea from https://arxiv.org/pdf/1611.07612v4.pdf
  */
 __m256i SimdHelper::popcnt_epi32(__m256i input) {
-	__m256i result = _mm256_sub_epi32(input,
-			_mm256_and_si256(_mm256_srlv_epi32(input, ONE), POPCNT_C1));
-	result = _mm256_add_epi32(
-			_mm256_and_si256(_mm256_srlv_epi32(result, TWO), POPCNT_C2),
-			_mm256_and_si256(result, POPCNT_C2));
-	result = _mm256_add_epi32(
-			_mm256_and_si256(_mm256_srlv_epi32(result, FOUR), POPCNT_C3),
-			_mm256_and_si256(result, POPCNT_C3));
-	result = _mm256_mullo_epi32(result, POPCNT_C4);
-	result = _mm256_srlv_epi32(result, TWENTY_FOUR);
-	return result;
+	return popcnt_epi32_mula(input);
 }
 
 // set -1 for zero, 0 for non-zero
 // Use test and setz assembly
 __m256i SimdHelper::testz_epi32(__m256i input) {
-	__m256i result;
-	int* intinput = (int*) &input;
-	int* intresult = (int*) &result;
-	for (int i = 0; i < 8; i++) {
-		asm volatile(
-				"testl\t%1,%1\n\t"
-				"setz\t%0\n\t"
-				"andl\t$1,%0\n\t"
-				: "=m"(intresult[i])
-				: "r"(intinput[i])
-				:"cc"
-		);
-	}
-	return _mm256_sub_epi32(_mm256_setzero_si256(), result);
+	/*
+	 __m256i result;
+	 int* intinput = (int*) &input;
+	 int* intresult = (int*) &result;
+	 for (int i = 0; i < 8; i++) {
+	 asm volatile(
+	 "testl\t%1,%1\n\t"
+	 "setz\t%0\n\t"
+	 "andl\t$1,%0\n\t"
+	 : "=m"(intresult[i])
+	 : "r"(intinput[i])
+	 :"cc"
+	 );
+	 }
+	 return _mm256_sub_epi32(_mm256_setzero_si256(), result);
+	 */
+	return _mm256_cmpeq_epi32(input, ZERO);
 }
 
 // set -1 for nz, 0 for zero
 // Use test and setz assembly
 __m256i SimdHelper::testnz_epi32(__m256i input) {
-	__m256i result;
-	int* intinput = (int*) &input;
-	int* intresult = (int*) &result;
-	for (int i = 0; i < 8; i++) {
-		asm volatile(
-				"testl\t%1,%1\n\t"
-				"setnz\t%0\n\t"
-				"andl\t$1,%0\n\t"
-				: "=m"(intresult[i])
-				: "r"(intinput[i])
-				:"cc"
-		);
-	}
-	return _mm256_sub_epi32(_mm256_setzero_si256(), result);
+	return _mm256_xor_si256(testz_epi32(input), MAX);
+	/*
+	 __m256i result;
+	 int* intinput = (int*) &input;
+	 int* intresult = (int*) &result;
+	 for (int i = 0; i < 8; i++) {
+	 asm volatile(
+	 "testl\t%1,%1\n\t"
+	 "setnz\t%0\n\t"
+	 "andl\t$1,%0\n\t"
+	 : "=m"(intresult[i])
+	 : "r"(intinput[i])
+	 :"cc"
+	 );
+	 }
+	 return _mm256_sub_epi32(_mm256_setzero_si256(), result);*/
 }
 
 // Copy a portion of a SIMD result
