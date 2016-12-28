@@ -22,10 +22,10 @@ __m256i SimdHelper::TWO = _mm256_set1_epi32(2);
 __m256i SimdHelper::FOUR = _mm256_set1_epi32(4);
 __m256i SimdHelper::THIRTY_ONE = _mm256_set1_epi32(31);
 __m256i SimdHelper::MAX = _mm256_set1_epi32(-1);
-__m256i SimdHelper::POPCNT_WWG_C1 = _mm256_set1_epi32(0x55555555);
-__m256i SimdHelper::POPCNT_WWG_C2 = _mm256_set1_epi32(0x33333333);
-__m256i SimdHelper::POPCNT_WWG_C3 = _mm256_set1_epi32(0x0F0F0F0F);
-__m256i SimdHelper::POPCNT_WWG_C4 = _mm256_set1_epi32(0x01010101);
+__m256i SimdHelper::POPCNT_WWG_C1 = _mm256_set1_epi8(0x55);
+__m256i SimdHelper::POPCNT_WWG_C2 = _mm256_set1_epi8(0x33);
+__m256i SimdHelper::POPCNT_WWG_C3 = _mm256_set1_epi8(0x0F);
+__m256i SimdHelper::POPCNT_WWG_C4 = _mm256_set1_epi8(0x01);
 __m256i SimdHelper::POPCNT_MULA_C = _mm256_setr_epi8(0, 1, 1, 2, 1, 2, 2, 3, 1,
 		2, 2, 3, 2, 3, 3, 4, 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4);
 
