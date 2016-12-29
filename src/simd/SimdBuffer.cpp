@@ -19,14 +19,17 @@ SimdBuffer::~SimdBuffer() {
 }
 
 __m256i SHIFT = _mm256_setr_epi32(0, 1, 2, 3, 0, 1, 2, 3);
+__m256i FLAG_PERMUTE = _mm256_setr_epi32(0, 4, 1, 5, 2, 3, 6, 7);
 
 __m256i serve(__m256i input) {
 	__m256i flag = _mm256_xor_si256(
 			_mm256_cmpeq_epi32(input, SimdHelper::ZERO));
-	flag = _mm256_sllv_epi32(flag, SHIFT);
-	flag = _mm256_hadd_epi32(flag, flag);
-	flag = _mm256_hadd_epi32(flag, flag);
-	// flag[0] has first 4 bit flag, flag[4] has second 4 bit flag
-
+	__m256i sflag = _mm256_sllv_epi32(flag, SHIFT);
+	flag = _mm256_hadd_epi32(sflag, flag);
+	flag = _mm256_hadd_epi32(flag, SimdHelper::ZERO);
+	flag = _mm256_permutevar8x32_epi32(flag, FLAG_PERMUTE);
+	// flag[0] has first 4 bit flag, flag[1] has second 4 bit flag
+	__m256i numCount = _mm256_hadd_epi32(flag, SimdHelper::ZERO);
+	// numCount[1] has the number of count
 
 }
