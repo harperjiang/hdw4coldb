@@ -29,7 +29,15 @@ __m256i serve(__m256i input) {
 	flag = _mm256_hadd_epi32(flag, SimdHelper::ZERO);
 	flag = _mm256_permutevar8x32_epi32(flag, FLAG_PERMUTE);
 	// flag[0] has first 4 bit flag, flag[1] has second 4 bit flag
-	__m256i numCount = _mm256_hadd_epi32(flag, SimdHelper::ZERO);
+	__m256i ncvec = _mm256_hadd_epi32(flag, SimdHelper::ZERO);
 	// numCount[1] has the number of count
+	int numCount = _mm256_extract_epi32(ncvec,1);
+	if(numCount > 4) {
+		// Already dense
+		return input;
+	}
 
 }
+
+
+
