@@ -35,13 +35,6 @@ public:
 	static __m256i MAX;
 	static __m256i THIRTY_ONE;
 protected:
-	static __m256i POPCNT_WWG_C1;
-	static __m256i POPCNT_WWG_C2;
-	static __m256i POPCNT_WWG_C3;
-	static __m256i POPCNT_WWG_C4;
-
-	static __m256i POPCNT_MULA_C;
-protected:
 	/**
 	 * Popcount use WWG algorithm
 	 */

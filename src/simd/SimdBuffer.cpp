@@ -10,6 +10,74 @@
 
 __m256i SimdBuffer::EMPTY = _mm256_setzero_si256();
 
+namespace SimdBufferConstants {
+__m256i FLAG_SHIFT = _mm256_setr_epi32(3, 2, 1, 0, 3, 2, 1, 0);
+__m256i FLAG_PERMUTE = _mm256_setr_epi32(0, 4, 1, 5, 2, 3, 6, 7);
+
+__m256i LOOKUP_SIZE = _mm256_setr_epi8(0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3,
+		3, 4, 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4);
+
+__m256i LOOKUP_POS1 = _mm256_setr_epi8(-1, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+		0, 0, 0, -1, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0);
+__m256i LOOKUP_POS2 = _mm256_setr_epi8(-1, -1, -1, 3, -1, 3, 2, 2, -1, 3, 2, 2,
+		1, 1, 1, 1, -1, -1, -1, 3, -1, 3, 2, 2, -1, 3, 2, 2, 1, 1, 1, 1);
+__m256i LOOKUP_POS3 = _mm256_setr_epi8(-1, -1, -1, -1, -1, -1, -1, 3, -1, -1,
+		-1, 3, -1, 3, 2, 2, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1, 3, -1, 3,
+		2, 2);
+__m256i LOOKUP_POS4 = _mm256_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, 3);
+__m256i PERMU_POS1 = _mm256_setr_epi32(0, 4, 2, 3, 1, 5, 6, 7);
+__m256i PERMU_POS2 = _mm256_setr_epi32(5, 0, 2, 3, 4, 1, 6, 7);
+__m256i PERMU_POS3 = _mm256_setr_epi32(2, 6, 0, 3, 4, 5, 1, 7);
+__m256i PERMU_POS4 = _mm256_setr_epi32(3, 7, 2, 0, 4, 5, 6, 1);
+
+__m256i ADD_FOUR = _mm256_setr_epi32(0, 0, 0, 0, 4, 4, 4, 4);
+
+__m256i SHL_POS[5] = { _mm256_setr_epi32(4, 5, 6, 7, 0, 1, 2, 3),
+		_mm256_setr_epi32(0, 4, 5, 6, 7, 1, 2, 3), _mm256_setr_epi32(0, 1, 4, 5,
+				6, 7, 2, 3), _mm256_setr_epi32(0, 1, 2, 4, 5, 6, 7, 3),
+		_mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7) };
+
+__m256i SHR_POS[8] = { _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7),
+		_mm256_setr_epi32(7, 0, 1, 2, 3, 4, 5, 6), _mm256_setr_epi32(6, 7, 0, 1,
+				2, 3, 4, 5), _mm256_setr_epi32(5, 6, 7, 0, 1, 2, 3, 4),
+		_mm256_setr_epi32(4, 5, 6, 7, 0, 1, 2, 3), _mm256_setr_epi32(3, 4, 5, 6,
+				7, 0, 1, 2), _mm256_setr_epi32(2, 3, 4, 5, 6, 7, 0, 1),
+		_mm256_setr_epi32(1, 2, 3, 4, 5, 6, 7, 0) };
+
+__m256i blend_0(__m256i a, __m256i b) {
+	return b;
+}
+__m256i blend_1(__m256i a, __m256i b) {
+	return _mm256_blend_epi32(a, b, 0xfe);
+}
+__m256i blend_2(__m256i a, __m256i b) {
+	return _mm256_blend_epi32(a, b, 0xfc);
+}
+__m256i blend_3(__m256i a, __m256i b) {
+	return _mm256_blend_epi32(a, b, 0xf8);
+}
+__m256i blend_4(__m256i a, __m256i b) {
+	return _mm256_blend_epi32(a, b, 0xf0);
+}
+__m256i blend_5(__m256i a, __m256i b) {
+	return _mm256_blend_epi32(a, b, 0xe0);
+}
+__m256i blend_6(__m256i a, __m256i b) {
+	return _mm256_blend_epi32(a, b, 0xc0);
+}
+__m256i blend_7(__m256i a, __m256i b) {
+	return _mm256_blend_epi32(a, b, 0x80);
+}
+
+__m256i (*BLEND[8])(__m256i, __m256i
+		)= {blend_0,blend_1,blend_2,blend_3,blend_4,blend_5,blend_6,blend_7};
+
+}
+
+using namespace SimdBufferConstants;
+
 SimdBuffer::SimdBuffer() {
 
 }
@@ -21,42 +89,6 @@ SimdBuffer::~SimdBuffer() {
 __m256i SimdBuffer::serve(__m256i input) {
 	return input;
 }
-
-__m256i SimdBuffer::FLAG_SHIFT = _mm256_setr_epi32(3, 2, 1, 0, 3, 2, 1, 0);
-__m256i SimdBuffer::FLAG_PERMUTE = _mm256_setr_epi32(0, 4, 1, 5, 2, 3, 6, 7);
-
-__m256i SimdBuffer::LOOKUP_SIZE = _mm256_setr_epi8(0, 1, 1, 2, 1, 2, 2, 3, 1, 2,
-		2, 3, 2, 3, 3, 4, 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4);
-
-__m256i SimdBuffer::LOOKUP_POS1 = _mm256_setr_epi8(-1, 3, 2, 2, 1, 1, 1, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, -1, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0);
-__m256i SimdBuffer::LOOKUP_POS2 = _mm256_setr_epi8(-1, -1, -1, 3, -1, 3, 2, 2,
-		-1, 3, 2, 2, 1, 1, 1, 1, -1, -1, -1, 3, -1, 3, 2, 2, -1, 3, 2, 2, 1, 1,
-		1, 1);
-__m256i SimdBuffer::LOOKUP_POS3 = _mm256_setr_epi8(-1, -1, -1, -1, -1, -1, -1,
-		3, -1, -1, -1, 3, -1, 3, 2, 2, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1,
-		-1, 3, -1, 3, 2, 2);
-__m256i SimdBuffer::LOOKUP_POS4 = _mm256_setr_epi8(-1, -1, -1, -1, -1, -1, -1,
-		-1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-		-1, -1, -1, -1, -1, -1, 3);
-__m256i SimdBuffer::PERMU_POS1 = _mm256_setr_epi32(0, 4, 2, 3, 1, 5, 6, 7);
-__m256i SimdBuffer::PERMU_POS2 = _mm256_setr_epi32(5, 0, 2, 3, 4, 1, 6, 7);
-__m256i SimdBuffer::PERMU_POS3 = _mm256_setr_epi32(2, 6, 0, 3, 4, 5, 1, 7);
-__m256i SimdBuffer::PERMU_POS4 = _mm256_setr_epi32(3, 7, 2, 0, 4, 5, 6, 1);
-
-__m256i SimdBuffer::ADD_FOUR = _mm256_setr_epi32(0, 0, 0, 0, 4, 4, 4, 4);
-
-__m256i SimdBuffer::SHL_POS[5] = { _mm256_setr_epi32(4, 5, 6, 7, 0, 1, 2, 3),
-		_mm256_setr_epi32(0, 4, 5, 6, 7, 1, 2, 3), _mm256_setr_epi32(0, 1, 4, 5,
-				6, 7, 2, 3), _mm256_setr_epi32(0, 1, 2, 4, 5, 6, 7, 3),
-		_mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7) };
-
-__m256i SimdBuffer::SHR_POS[8] = { _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7),
-		_mm256_setr_epi32(7, 0, 1, 2, 3, 4, 5, 6), _mm256_setr_epi32(6, 7, 0, 1,
-				2, 3, 4, 5), _mm256_setr_epi32(5, 6, 7, 0, 1, 2, 3, 4),
-		_mm256_setr_epi32(4, 5, 6, 7, 0, 1, 2, 3), _mm256_setr_epi32(3, 4, 5, 6,
-				7, 0, 1, 2), _mm256_setr_epi32(2, 3, 4, 5, 6, 7, 0, 1),
-		_mm256_setr_epi32(1, 2, 3, 4, 5, 6, 7, 0) };
 /**
  * The first two 32-bit integers in input contain the 4-bit block of flag
  */
@@ -94,8 +126,7 @@ __m256i SimdBuffer::shr(__m256i input, int offset) {
 	return _mm256_permutevar8x32_epi32(input, SHR_POS[offset]);
 }
 
-int SimdBuffer::BLEND[8] = { 0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80 };
-
 __m256i SimdBuffer::merge(__m256i a, __m256i b, int sizea) {
-	return _mm256_blend_epi32(a, shr(b, sizea), BLEND[sizea]);
+	return BLEND[sizea](a, shr(b, sizea));
 }
+
