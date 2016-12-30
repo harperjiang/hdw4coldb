@@ -64,6 +64,7 @@ TEST_OBJS = \
 ./test/LookupHelper_test.o \
 ./test/SimdStepCHTJoin_test.o \
 ./test/SimdHelper_test.o \
+./test/SimdBuffer_test.o \
 ./test/Timer_test.o \
 ./test/CounterThread_test.o \
 ./test/CollectThread_test.o \

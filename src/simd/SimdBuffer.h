@@ -20,13 +20,28 @@ public:
 	__m256i serve(__m256i input);
 	// Read out all remaining data
 	__m256i purge();
-protected:
-
 public:
-	// Shift 32-bit data to left 32-bit lane
-	static __m256i shiftLeft(__m256i input, int offset);
+	// Align the vector to left
+	static __m256i align(__m256i input);
 	// Shift 32-bit data to right 32-bit lane
-	static __m256i shiftRight(__m256i input, int offset);
+	static __m256i shr(__m256i input, int offset);
+protected:
+	static __m256i FLAG_SHIFT;
+	static __m256i FLAG_PERMUTE;
+
+	static __m256i LOOKUP_SIZE;
+	static __m256i LOOKUP_POS1;
+	static __m256i LOOKUP_POS2;
+	static __m256i LOOKUP_POS3;
+	static __m256i LOOKUP_POS4;
+
+	static __m256i PERMU_POS1;
+	static __m256i PERMU_POS2;
+	static __m256i PERMU_POS3;
+	static __m256i PERMU_POS4;
+
+	static __m256i SHL_POS[5];
+	static __m256i SHR_POS[8];
 };
 
 #endif /* SRC_JOIN_SIMD_SIMDBUFFER_H_ */
