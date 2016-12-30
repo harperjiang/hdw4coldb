@@ -22,7 +22,7 @@ public:
 	__m256i purge();
 public:
 	// Align the vector to left
-	static __m256i align(__m256i input);
+	static __m256i align(__m256i input, int* size);
 	// Shift 32-bit data to right 32-bit lane
 	static __m256i shr(__m256i input, int offset);
 protected:
