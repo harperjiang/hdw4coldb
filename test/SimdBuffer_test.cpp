@@ -10,7 +10,7 @@
 #include "../src/simd/SimdBuffer.h"
 
 TEST(SimdBuffer, Align) {
-	// 10010011
+	// 10100110
 	__m256i input = _mm256_setr_epi32(31331, 0, 22013, 0, 0, 124141, 551, 0);
 	int size;
 	__m256i result = SimdBuffer::align(input, &size);

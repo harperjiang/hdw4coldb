@@ -40,6 +40,8 @@ protected:
 	static __m256i PERMU_POS3;
 	static __m256i PERMU_POS4;
 
+	static __m256i ADD_FOUR;
+
 	static __m256i SHL_POS[5];
 	static __m256i SHR_POS[8];
 };

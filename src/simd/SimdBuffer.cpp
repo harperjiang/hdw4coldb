@@ -18,7 +18,7 @@ SimdBuffer::~SimdBuffer() {
 
 }
 
-__m256i SimdBuffer::FLAG_SHIFT = _mm256_setr_epi32(0, 1, 2, 3, 0, 1, 2, 3);
+__m256i SimdBuffer::FLAG_SHIFT = _mm256_setr_epi32(3, 2, 1, 0, 3, 2, 1, 0);
 __m256i SimdBuffer::FLAG_PERMUTE = _mm256_setr_epi32(0, 4, 1, 5, 2, 3, 6, 7);
 
 __m256i SimdBuffer::serve(__m256i input) {
@@ -44,6 +44,8 @@ __m256i SimdBuffer::PERMU_POS2 = _mm256_setr_epi32(5, 0, 2, 3, 4, 1, 6, 7);
 __m256i SimdBuffer::PERMU_POS3 = _mm256_setr_epi32(2, 6, 0, 3, 4, 5, 1, 7);
 __m256i SimdBuffer::PERMU_POS4 = _mm256_setr_epi32(3, 7, 2, 0, 4, 5, 6, 1);
 
+__m256i SimdBuffer::ADD_FOUR = _mm256_setr_epi32(0, 0, 0, 0, 4, 4, 4, 4);
+
 __m256i SimdBuffer::SHL_POS[5] = { _mm256_setr_epi32(4, 5, 6, 7, 0, 1, 2, 3),
 		_mm256_setr_epi32(0, 4, 5, 6, 7, 1, 2, 3), _mm256_setr_epi32(0, 1, 4, 5,
 				6, 7, 2, 3), _mm256_setr_epi32(0, 1, 2, 4, 5, 6, 7, 3),
@@ -59,8 +61,8 @@ __m256i SimdBuffer::SHR_POS[8] = { _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7),
  * The first two 32-bit integers in input contain the 4-bit block of flag
  */
 __m256i SimdBuffer::align(__m256i input, int *size) {
-	__m256i flag = _mm256_xor_si256(_mm256_cmpeq_epi32(input, SimdHelper::ZERO),
-			SimdHelper::MAX);
+	__m256i flag = _mm256_add_epi32(_mm256_cmpeq_epi32(input, SimdHelper::ZERO),
+			SimdHelper::ONE);
 	__m256i sflag = _mm256_sllv_epi32(flag, FLAG_SHIFT);
 	flag = _mm256_hadd_epi32(sflag, flag);
 	flag = _mm256_hadd_epi32(flag, SimdHelper::ZERO);
@@ -78,11 +80,12 @@ __m256i SimdBuffer::align(__m256i input, int *size) {
 	__m256i p1p2 = _mm256_blend_epi32(p1, p2, 0x22);
 	__m256i p3p4 = _mm256_blend_epi32(p3, p4, 0x88);
 	__m256i allblend = _mm256_blend_epi32(p1p2, p3p4, 0xcc);
+	__m256i add4 = _mm256_add_epi32(allblend, ADD_FOUR);
 
 	__m256i sizev = _mm256_shuffle_epi8(LOOKUP_SIZE, flag);
 	int size1 = _mm256_extract_epi32(sizev, 0);
 	int size2 = _mm256_extract_epi32(sizev, 1);
-	__m256i permute = _mm256_permutevar8x32_epi32(allblend, SHL_POS[size1]);
+	__m256i permute = _mm256_permutevar8x32_epi32(add4, SHL_POS[size1]);
 	*size = size1 + size2;
 	return _mm256_permutevar8x32_epi32(input, permute);
 }
