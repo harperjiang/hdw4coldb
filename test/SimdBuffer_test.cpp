@@ -9,6 +9,14 @@
 #include <immintrin.h>
 #include "../src/simd/SimdBuffer.h"
 
+TEST(SimdBuffer, Serve) {
+	FAIL()<< "Not implemented";
+}
+
+TEST(SimdBuffer, Purge) {
+	FAIL()<< "Not implemented";
+}
+
 TEST(SimdBuffer, Align) {
 	// 10100110
 	__m256i input = _mm256_setr_epi32(31331, 0, 22013, 0, 0, 124141, 551, 0);
@@ -39,6 +47,10 @@ TEST(SimdBuffer, Align) {
 	ASSERT_EQ(551, _mm256_extract_epi32(result,3));
 	ASSERT_EQ(9895678, _mm256_extract_epi32(result,4));
 	ASSERT_EQ(5, size);
+}
+
+TEST(SimdBuffer, Shl) {
+	FAIL()<< "Not implemented";
 }
 
 TEST(SimdBuffer, Shr) {

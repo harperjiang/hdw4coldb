@@ -11,18 +11,23 @@
 #include <immintrin.h>
 
 class SimdBuffer {
+protected:
+	__m256i buffer;
+	int bufferSize;
 public:
 	SimdBuffer();
 	virtual ~SimdBuffer();
 
 	static __m256i EMPTY;
 	// Serve new data, and get compressed data (if any)
-	__m256i serve(__m256i input);
+	__m256i serve(__m256i input, int* outputSize);
 	// Read out all remaining data
-	__m256i purge();
+	__m256i purge(int* outputSize);
 public:
 	// Align the vector to left
 	static __m256i align(__m256i input, int* size);
+	// Shift 32-bit data to left 32-bit lane
+	static __m256i shl(__m256i input, int offset);
 	// Shift 32-bit data to right 32-bit lane
 	static __m256i shr(__m256i input, int offset);
 	// Merge two vectors
