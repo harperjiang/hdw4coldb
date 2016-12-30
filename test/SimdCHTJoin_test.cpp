@@ -27,7 +27,7 @@ TEST(SimdCHTJoin, LoadBitmap) {
 	for (int i = 0; i < 40; i++) {
 		long top = 2 * i + 3;
 		long bottom = 3 * i + 5;
-		bitmap[i] = top << 32 + bottom;
+		bitmap[i] = (top << 32) + bottom;
 	}
 	join->setBitmap(bitmap);
 
