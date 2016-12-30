@@ -59,8 +59,8 @@ __m256i SimdBuffer::SHR_POS[8] = { _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7),
  * The first two 32-bit integers in input contain the 4-bit block of flag
  */
 __m256i SimdBuffer::align(__m256i input, int *size) {
-	__m256i flag = _mm256_xor_si256(
-			_mm256_cmpeq_epi32(input, SimdHelper::ZERO));
+	__m256i flag = _mm256_xor_si256(_mm256_cmpeq_epi32(input, SimdHelper::ZERO),
+			SimdHelper::MAX);
 	__m256i sflag = _mm256_sllv_epi32(flag, FLAG_SHIFT);
 	flag = _mm256_hadd_epi32(sflag, flag);
 	flag = _mm256_hadd_epi32(flag, SimdHelper::ZERO);
@@ -80,9 +80,9 @@ __m256i SimdBuffer::align(__m256i input, int *size) {
 	__m256i allblend = _mm256_blend_epi32(p1p2, p3p4, 0xcc);
 
 	__m256i sizev = _mm256_shuffle_epi8(LOOKUP_SIZE, flag);
-	int size1 = _mm256_extract_epi32(size, 0);
-	int size2 = _mm256_extract_epi32(size, 1);
-	__m256i permute = _mm256_permutevar8x32_epi32(allblend, SHL_POS[*size1]);
+	int size1 = _mm256_extract_epi32(sizev, 0);
+	int size2 = _mm256_extract_epi32(sizev, 1);
+	__m256i permute = _mm256_permutevar8x32_epi32(allblend, SHL_POS[size1]);
 	*size = size1 + size2;
 	return _mm256_permutevar8x32_epi32(input, permute);
 }
