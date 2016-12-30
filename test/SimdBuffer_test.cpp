@@ -113,3 +113,88 @@ TEST(SimdBuffer, Shr) {
 	ASSERT_EQ(8, _mm256_extract_epi32(s7,6));
 	ASSERT_EQ(1, _mm256_extract_epi32(s7,7));
 }
+
+TEST(SimdBuffer, Merge) {
+	__m256i a = _mm256_setr_epi32(2, 4, 6, 8, 10, 12, 14, 16);
+	__m256i b = _mm256_setr_epi32(1, 3, 5, 7, 9, 11, 13, 15);
+
+	__m256i merge = SimdBuffer::merge(a, b, 0);
+	ASSERT_EQ(1, _mm256_extract_epi32(merge,0));
+	ASSERT_EQ(3, _mm256_extract_epi32(merge,1));
+	ASSERT_EQ(5, _mm256_extract_epi32(merge,2));
+	ASSERT_EQ(7, _mm256_extract_epi32(merge,3));
+	ASSERT_EQ(9, _mm256_extract_epi32(merge,4));
+	ASSERT_EQ(11, _mm256_extract_epi32(merge,5));
+	ASSERT_EQ(13, _mm256_extract_epi32(merge,6));
+	ASSERT_EQ(15, _mm256_extract_epi32(merge,7));
+
+	merge = SimdBuffer::merge(a, b, 1);
+	ASSERT_EQ(2, _mm256_extract_epi32(merge,0));
+	ASSERT_EQ(1, _mm256_extract_epi32(merge,1));
+	ASSERT_EQ(3, _mm256_extract_epi32(merge,2));
+	ASSERT_EQ(5, _mm256_extract_epi32(merge,3));
+	ASSERT_EQ(7, _mm256_extract_epi32(merge,4));
+	ASSERT_EQ(9, _mm256_extract_epi32(merge,5));
+	ASSERT_EQ(11, _mm256_extract_epi32(merge,6));
+	ASSERT_EQ(13, _mm256_extract_epi32(merge,7));
+
+	merge = SimdBuffer::merge(a, b, 2);
+	ASSERT_EQ(2, _mm256_extract_epi32(merge,0));
+	ASSERT_EQ(4, _mm256_extract_epi32(merge,1));
+	ASSERT_EQ(1, _mm256_extract_epi32(merge,2));
+	ASSERT_EQ(3, _mm256_extract_epi32(merge,3));
+	ASSERT_EQ(5, _mm256_extract_epi32(merge,4));
+	ASSERT_EQ(7, _mm256_extract_epi32(merge,5));
+	ASSERT_EQ(9, _mm256_extract_epi32(merge,6));
+	ASSERT_EQ(11, _mm256_extract_epi32(merge,7));
+
+	merge = SimdBuffer::merge(a, b, 3);
+	ASSERT_EQ(2, _mm256_extract_epi32(merge,0));
+	ASSERT_EQ(4, _mm256_extract_epi32(merge,1));
+	ASSERT_EQ(6, _mm256_extract_epi32(merge,2));
+	ASSERT_EQ(1, _mm256_extract_epi32(merge,3));
+	ASSERT_EQ(3, _mm256_extract_epi32(merge,4));
+	ASSERT_EQ(5, _mm256_extract_epi32(merge,5));
+	ASSERT_EQ(7, _mm256_extract_epi32(merge,6));
+	ASSERT_EQ(9, _mm256_extract_epi32(merge,7));
+
+	merge = SimdBuffer::merge(a, b, 4);
+	ASSERT_EQ(2, _mm256_extract_epi32(merge,0));
+	ASSERT_EQ(4, _mm256_extract_epi32(merge,1));
+	ASSERT_EQ(6, _mm256_extract_epi32(merge,2));
+	ASSERT_EQ(8, _mm256_extract_epi32(merge,3));
+	ASSERT_EQ(1, _mm256_extract_epi32(merge,4));
+	ASSERT_EQ(3, _mm256_extract_epi32(merge,5));
+	ASSERT_EQ(5, _mm256_extract_epi32(merge,6));
+	ASSERT_EQ(7, _mm256_extract_epi32(merge,7));
+
+	merge = SimdBuffer::merge(a, b, 5);
+	ASSERT_EQ(2, _mm256_extract_epi32(merge,0));
+	ASSERT_EQ(4, _mm256_extract_epi32(merge,1));
+	ASSERT_EQ(6, _mm256_extract_epi32(merge,2));
+	ASSERT_EQ(8, _mm256_extract_epi32(merge,3));
+	ASSERT_EQ(10, _mm256_extract_epi32(merge,4));
+	ASSERT_EQ(1, _mm256_extract_epi32(merge,5));
+	ASSERT_EQ(3, _mm256_extract_epi32(merge,6));
+	ASSERT_EQ(5, _mm256_extract_epi32(merge,7));
+
+	merge = SimdBuffer::merge(a, b, 6);
+	ASSERT_EQ(2, _mm256_extract_epi32(merge,0));
+	ASSERT_EQ(4, _mm256_extract_epi32(merge,1));
+	ASSERT_EQ(6, _mm256_extract_epi32(merge,2));
+	ASSERT_EQ(8, _mm256_extract_epi32(merge,3));
+	ASSERT_EQ(10, _mm256_extract_epi32(merge,4));
+	ASSERT_EQ(12, _mm256_extract_epi32(merge,5));
+	ASSERT_EQ(1, _mm256_extract_epi32(merge,6));
+	ASSERT_EQ(3, _mm256_extract_epi32(merge,7));
+
+	merge = SimdBuffer::merge(a, b, 7);
+	ASSERT_EQ(2, _mm256_extract_epi32(merge,0));
+	ASSERT_EQ(4, _mm256_extract_epi32(merge,1));
+	ASSERT_EQ(6, _mm256_extract_epi32(merge,2));
+	ASSERT_EQ(8, _mm256_extract_epi32(merge,3));
+	ASSERT_EQ(10, _mm256_extract_epi32(merge,4));
+	ASSERT_EQ(12, _mm256_extract_epi32(merge,5));
+	ASSERT_EQ(14, _mm256_extract_epi32(merge,6));
+	ASSERT_EQ(1, _mm256_extract_epi32(merge,7));
+}

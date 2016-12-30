@@ -18,12 +18,12 @@ SimdBuffer::~SimdBuffer() {
 
 }
 
-__m256i SimdBuffer::FLAG_SHIFT = _mm256_setr_epi32(3, 2, 1, 0, 3, 2, 1, 0);
-__m256i SimdBuffer::FLAG_PERMUTE = _mm256_setr_epi32(0, 4, 1, 5, 2, 3, 6, 7);
-
 __m256i SimdBuffer::serve(__m256i input) {
 	return input;
 }
+
+__m256i SimdBuffer::FLAG_SHIFT = _mm256_setr_epi32(3, 2, 1, 0, 3, 2, 1, 0);
+__m256i SimdBuffer::FLAG_PERMUTE = _mm256_setr_epi32(0, 4, 1, 5, 2, 3, 6, 7);
 
 __m256i SimdBuffer::LOOKUP_SIZE = _mm256_setr_epi8(0, 1, 1, 2, 1, 2, 2, 3, 1, 2,
 		2, 3, 2, 3, 3, 4, 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4);
@@ -92,4 +92,10 @@ __m256i SimdBuffer::align(__m256i input, int *size) {
 
 __m256i SimdBuffer::shr(__m256i input, int offset) {
 	return _mm256_permutevar8x32_epi32(input, SHR_POS[offset]);
+}
+
+int SimdBuffer::BLEND[8] = { 0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80 };
+
+__m256i SimdBuffer::merge(__m256i a, __m256i b, int sizea) {
+	return _mm256_blend_epi32(a, shr(b, sizea), BLEND[sizea]);
 }

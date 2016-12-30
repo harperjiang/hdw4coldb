@@ -25,6 +25,8 @@ public:
 	static __m256i align(__m256i input, int* size);
 	// Shift 32-bit data to right 32-bit lane
 	static __m256i shr(__m256i input, int offset);
+	// Merge two vectors
+	static __m256i merge(__m256i a, __m256i b, int sizea);
 protected:
 	static __m256i FLAG_SHIFT;
 	static __m256i FLAG_PERMUTE;
@@ -44,6 +46,8 @@ protected:
 
 	static __m256i SHL_POS[5];
 	static __m256i SHR_POS[8];
+
+	static int BLEND[8];
 };
 
 #endif /* SRC_JOIN_SIMD_SIMDBUFFER_H_ */
