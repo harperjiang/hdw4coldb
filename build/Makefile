@@ -36,6 +36,7 @@ COMMON_OBJS = \
 ./src/util/Thread.o \
 ./src/simd/SimdHelper.o \
 ./src/simd/SimdBuffer.o \
+./src/simd/SimdBuffer64.o \
 ./src/opencl/CLBuffer.o \
 ./src/opencl/CLEnv.o \
 ./src/opencl/CLProgram.o \
@@ -65,6 +66,7 @@ TEST_OBJS = \
 ./test/SimdStepCHTJoin_test.o \
 ./test/SimdHelper_test.o \
 ./test/SimdBuffer_test.o \
+./test/SimdBuffer64_test.o \
 ./test/Timer_test.o \
 ./test/CounterThread_test.o \
 ./test/CollectThread_test.o \

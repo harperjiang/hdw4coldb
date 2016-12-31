@@ -23,7 +23,7 @@ public:
 	__m256i serve(__m256i input, int* outputSize);
 	// Read out all remaining data
 	__m256i purge(int* outputSize);
-public:
+protected:
 	// Align the vector to left
 	static __m256i align(__m256i input, int* size);
 	// Shift 32-bit data to left 32-bit lane

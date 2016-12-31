@@ -18,6 +18,7 @@ SimdHelper::~SimdHelper() {
 
 __m256i SimdHelper::ZERO = _mm256_setzero_si256();
 __m256i SimdHelper::ONE = _mm256_set1_epi32(1);
+__m256i SimdHelper::ONE_64 = _mm256_set1_epi64x(1);
 __m256i SimdHelper::TWO = _mm256_set1_epi32(2);
 __m256i SimdHelper::FOUR = _mm256_set1_epi32(4);
 __m256i SimdHelper::THIRTY_ONE = _mm256_set1_epi32(31);

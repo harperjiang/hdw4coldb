@@ -30,6 +30,7 @@ public:
 
 	static __m256i ZERO;
 	static __m256i ONE;
+	static __m256i ONE_64;
 	static __m256i TWO;
 	static __m256i FOUR;
 	static __m256i MAX;

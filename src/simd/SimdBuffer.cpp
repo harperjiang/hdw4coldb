@@ -17,14 +17,14 @@ __m256i FLAG_PERMUTE = _mm256_setr_epi32(0, 4, 1, 5, 2, 3, 6, 7);
 __m256i LOOKUP_SIZE = _mm256_setr_epi8(0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3,
 		3, 4, 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4);
 
-__m256i LOOKUP_POS1 = _mm256_setr_epi8(-1, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-		0, 0, 0, -1, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0);
-__m256i LOOKUP_POS2 = _mm256_setr_epi8(-1, -1, -1, 3, -1, 3, 2, 2, -1, 3, 2, 2,
+__m256i LOOKUP_POS1 = _mm256_setr_epi8(0, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+		0, 0, -1, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0);
+__m256i LOOKUP_POS2 = _mm256_setr_epi8(0, -1, -1, 3, -1, 3, 2, 2, -1, 3, 2, 2,
 		1, 1, 1, 1, -1, -1, -1, 3, -1, 3, 2, 2, -1, 3, 2, 2, 1, 1, 1, 1);
-__m256i LOOKUP_POS3 = _mm256_setr_epi8(-1, -1, -1, -1, -1, -1, -1, 3, -1, -1,
-		-1, 3, -1, 3, 2, 2, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1, 3, -1, 3,
-		2, 2);
-__m256i LOOKUP_POS4 = _mm256_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+__m256i LOOKUP_POS3 = _mm256_setr_epi8(0, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1,
+		3, -1, 3, 2, 2, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1, 3, -1, 3, 2,
+		2);
+__m256i LOOKUP_POS4 = _mm256_setr_epi8(0, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 		-1, -1, -1, -1, -1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 		-1, -1, -1, 3);
 __m256i PERMU_POS1 = _mm256_setr_epi32(0, 4, 2, 3, 1, 5, 6, 7);
@@ -98,7 +98,12 @@ __m256i SimdBuffer::serve(__m256i input, int* outputSize) {
 	int inputSize;
 	__m256i aligned = align(input, &inputSize);
 	if (inputSize == 8) {
+		*outputSize = 8;
 		return input;
+	}
+	if (inputSize == 0) {
+		*outputSize = 0;
+		return EMPTY;
 	}
 	__m256i oldBuffer = buffer;
 	int oldBufferSize = bufferSize;
