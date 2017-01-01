@@ -111,25 +111,25 @@ __m256i SimdBuffer::serve(__m256i input, int* outputSize) {
 	// update old buffer
 	if (inputSize + oldBufferSize > 8) {
 		bufferSize = inputSize + oldBufferSize - 8;
-		buffer = shl(input, inputSize - bufferSize);
+		buffer = shl(aligned, inputSize - bufferSize);
 
 		*outputSize = 8;
-		return merge(oldBuffer, input, oldBufferSize);
+		return merge(oldBuffer, aligned, oldBufferSize);
 	} else if (inputSize + oldBufferSize == 8) {
 		bufferSize = 0;
 		buffer = EMPTY;
 
 		*outputSize = 8;
-		return merge(oldBuffer, input, oldBufferSize);
+		return merge(oldBuffer, aligned, oldBufferSize);
 	} else {
 		bufferSize = inputSize + oldBufferSize;
-		buffer = merge(oldBuffer, input, oldBufferSize);
+		buffer = merge(oldBuffer, aligned, oldBufferSize);
 
 		*outputSize = 0;
 		return EMPTY;
 	}
 
-	return input;
+	return aligned;
 }
 
 __m256i SimdBuffer::purge(int* outputSize) {
