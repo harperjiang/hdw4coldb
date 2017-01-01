@@ -176,14 +176,20 @@ __m256i SimdBuffer::align(__m256i input, int *size) {
 }
 
 __m256i SimdBuffer::shl(__m256i input, int offset) {
+	if (offset >= 8)
+		abort();
 	return _mm256_permutevar8x32_epi32(input, SHL_POS[offset]);
 }
 
 __m256i SimdBuffer::shr(__m256i input, int offset) {
+	if (offset >= 8)
+		abort();
 	return _mm256_permutevar8x32_epi32(input, SHR_POS[offset]);
 }
 
 __m256i SimdBuffer::merge(__m256i a, __m256i b, int sizea) {
+	if (sizea >= 8)
+		abort();
 	return BLEND[sizea](a, shr(b, sizea));
 }
 
