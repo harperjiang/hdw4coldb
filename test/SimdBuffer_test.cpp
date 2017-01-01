@@ -26,7 +26,9 @@ public:
 };
 
 TEST(SimdBuffer, Serve) {
-	SimdBuffer* sbuf = new SimdBuffer();
+	void* space = aligned_alloc(32, sizeof(SimdBuffer));
+
+	SimdBuffer* sbuf = new (space) SimdBuffer();
 
 	int outputSize = 0447;
 	__m256i input = _mm256_setr_epi32(3, 0, 0, 2, 7, 1, 4, 8);
@@ -51,6 +53,7 @@ TEST(SimdBuffer, Serve) {
 	ASSERT_EQ(0, outputSize);
 
 	delete sbuf;
+	free(space);
 }
 
 TEST(SimdBuffer, Purge) {

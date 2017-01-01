@@ -15,10 +15,11 @@ protected:
 	__m256i buffer;
 	int bufferSize;
 public:
+	static __m256i EMPTY;
+
 	SimdBuffer();
 	virtual ~SimdBuffer();
 
-	static __m256i EMPTY;
 	// Serve new data, and get compressed data (if any)
 	__m256i serve(__m256i input, int* outputSize);
 	// Read out all remaining data

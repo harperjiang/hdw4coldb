@@ -117,7 +117,7 @@ __m256i SimdBuffer::serve(__m256i input, int* outputSize) {
 		return merge(oldBuffer, aligned, oldBufferSize);
 	} else if (inputSize + oldBufferSize == 8) {
 		bufferSize = 0;
-		buffer = EMPTY;
+		buffer = _mm256_setzero_si256();
 
 		*outputSize = 8;
 		return merge(oldBuffer, aligned, oldBufferSize);
