@@ -5,6 +5,7 @@
  *      Author: harper
  */
 
+#include <stdlib.h>
 #include "SimdBuffer.h"
 #include "SimdHelper.h"
 
@@ -92,6 +93,10 @@ SimdBuffer::SimdBuffer() {
 
 SimdBuffer::~SimdBuffer() {
 
+}
+
+void* SimdBuffer::operator new(size_t num) {
+	return aligned_alloc(32, num);
 }
 
 __m256i SimdBuffer::serve(__m256i input, int* outputSize) {

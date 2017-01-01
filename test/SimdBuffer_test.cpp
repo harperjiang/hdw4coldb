@@ -50,7 +50,7 @@ TEST(SimdBuffer, Serve) {
 	output = sbuf->serve(input, &outputSize);
 	ASSERT_EQ(0, outputSize);
 
-	free (space);
+	delete sbuf;
 }
 
 TEST(SimdBuffer, Purge) {
@@ -82,6 +82,8 @@ TEST(SimdBuffer, Purge) {
 	ASSERT_EQ(2, outputSize);
 	ASSERT_EQ(241, _mm256_extract_epi32(output, 0));
 	ASSERT_EQ(2324, _mm256_extract_epi32(output, 1));
+
+	delete sbuf;
 }
 
 TEST(SimdBuffer, Align) {
