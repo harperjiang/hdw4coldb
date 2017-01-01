@@ -8,8 +8,6 @@
 #include "SimdBuffer.h"
 #include "SimdHelper.h"
 
-__m256i SimdBuffer::EMPTY = _mm256_setzero_si256();
-
 namespace SimdBufferConstants {
 __m256i FLAG_SHIFT = _mm256_setr_epi32(3, 2, 1, 0, 3, 2, 1, 0);
 __m256i FLAG_PERMUTE = _mm256_setr_epi32(0, 4, 1, 5, 2, 3, 6, 7);
@@ -84,6 +82,8 @@ __m256i (*BLEND[8])(__m256i, __m256i
 }
 
 using namespace SimdBufferConstants;
+
+__m256i SimdBuffer::EMPTY = _mm256_setzero_si256();
 
 SimdBuffer::SimdBuffer() {
 	buffer = EMPTY;
@@ -169,7 +169,8 @@ __m256i SimdBuffer::align(__m256i input, int *size) {
 	__m256i p3p4 = _mm256_blend_epi32(p3, p4, 0x88);
 	__m256i allblend = _mm256_blend_epi32(p1p2, p3p4, 0xcc);
 	__m256i add4 = _mm256_add_epi32(allblend, ADD_FOUR);
-
+	if (size1 >= 5)
+		abort();
 	__m256i permute = _mm256_permutevar8x32_epi32(add4, SHL128_POS[size1]);
 
 	return _mm256_permutevar8x32_epi32(input, permute);
