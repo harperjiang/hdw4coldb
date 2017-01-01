@@ -12,7 +12,7 @@
 
 class SimdBuffer {
 protected:
-	__m256i buffer;
+	__m256i alignas(32) buffer;
 	int bufferSize;
 public:
 	static __m256i EMPTY;
