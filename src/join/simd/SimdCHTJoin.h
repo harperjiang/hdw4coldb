@@ -16,8 +16,15 @@
 
 class SimdCHTJoin: public Join {
 protected:
+	static __m256i HASH_FACTOR;
+	static __m256i PERMUTE;
+	static __m256i SHIFT_MASK_LOW;
+	static __m256i SHIFT_MASK_HIGH;
+protected:
 	SimdBuffer* buffer;
 	SimdBuffer* buffer2;
+	__m256i bitsize;
+	__m256i bktsize;
 
 	ulong* alignedBitmap = NULL;
 	uint* alignedChtload = NULL;
@@ -33,12 +40,6 @@ protected:
 	const char* name();
 
 protected:
-	static __m256i HASH_FACTOR;
-	static __m256i PERMUTE;
-	static __m256i SHIFT_MASK_LOW;
-	static __m256i SHIFT_MASK_HIGH;
-	__m256i bitsize;
-	__m256i bktsize;
 	// Functions for internal use
 	void process(__m256i input);
 	void processDone();
@@ -54,6 +55,8 @@ public:
 	virtual ~SimdCHTJoin();
 
 	void join(kvlist* outer, kvlist* inner);
+
+	void* operator new(size_t num);
 };
 
 #endif /* SRC_JOIN_SIMDCHTJOIN_H_ */

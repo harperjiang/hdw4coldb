@@ -63,6 +63,10 @@ const char* SimdCHTJoin::name() {
 	return "SimdCHTJoin";
 }
 
+void* SimdCHTJoin::operator new(size_t num) {
+	return aligned_alloc(32, num);
+}
+
 void SimdCHTJoin::buildLookup(kvlist* outer) {
 	Join::buildLookup(outer);
 
