@@ -11,10 +11,19 @@
 
 class SimdCHTJoinTester: public SimdCHTJoin {
 public:
+	void testBuildLookup(kvlist* outer) {
+		buildLookup(outer);
+	}
+
 	void set(ulong* bitmap, uint* chtload, uint* hashbkt) {
 		alignedBitmap = bitmap;
 		alignedChtload = chtload;
 		alignedHashbkt = hashbkt;
+	}
+
+	void set2(__m256i bitsize, __m256i bktsize) {
+		this->bitsize = bitsize;
+		this->bktsize = bktsize;
 	}
 
 	void testLoadBitmap(__m256i input, __m256i* base, __m256i* byte) {
@@ -44,6 +53,10 @@ public:
 	void testProcessDone() {
 		processDone();
 	}
+
+	Matched* getMatched() {
+		return _matched;
+	}
 };
 
 TEST(SimdCHTJoin, LoadBitmap) {
@@ -55,7 +68,7 @@ TEST(SimdCHTJoin, LoadBitmap) {
 		long bottom = 3 * i + 5;
 		bitmap[i] = (top << 32) + bottom;
 	}
-	join->setBitmap(bitmap);
+	join->set(bitmap, NULL, NULL);
 
 	__m256i input = _mm256_setr_epi32(3, 7, 6, 2, 11, 29, 8, 34);
 	__m256i base;
@@ -74,11 +87,43 @@ TEST(SimdCHTJoin, LoadBitmap) {
 }
 
 TEST(SimdCHTJoin, Count) {
-	FAIL()<< "Not implemented";
+	SimdCHTJoinTest* join = new SimdCHTJoinTest();
+
+	join->testCount(_mm256_setr_epi32(0, 4, 1, 5, 0, 0, 2, 7));
+
+	Matched* m = join->getMatched();
+
+	ASSERT_EQ(6, m->getCounter());
+	delete join;
 }
 
 TEST(SimdCHTJoin, Filter) {
-	FAIL()<< "Not implemented";
+	kv* records = new kv[200];
+	kvlist* outer = new kvlist();
+
+	for (int i = 0; i < 200; i++) {
+		records[i].key = 5i * 6;
+	}
+	outer->entries = records;
+	outer->size = 200;
+
+	SimdCHTJoinTest *join = new SimdCHTJoinTest();
+
+	join->testBuildLookup(outer);
+
+	__m256i result = join->testFilter(
+			_mm256_setr_epi32(1, 2, 3, 11, 5, 16, 7, 21));
+
+	ASSERT_EQ(0, _mm256_extract_epi32(result,0));
+	ASSERT_EQ(0, _mm256_extract_epi32(result,1));
+	ASSERT_EQ(0, _mm256_extract_epi32(result,2));
+	ASSERT_EQ(0, _mm256_extract_epi32(result,3));
+	ASSERT_EQ(0, _mm256_extract_epi32(result,4));
+	ASSERT_EQ(0, _mm256_extract_epi32(result,5));
+	ASSERT_EQ(0, _mm256_extract_epi32(result,6));
+	ASSERT_EQ(0, _mm256_extract_epi32(result,7));
+
+	delete join;
 }
 
 TEST(SimdCHTJoin, CheckCht) {
