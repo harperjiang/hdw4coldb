@@ -117,17 +117,45 @@ TEST(SimdCHTJoin, Filter) {
 	EXPECT_EQ(0, _mm256_extract_epi32(result,0));
 	EXPECT_EQ(0, _mm256_extract_epi32(result,1));
 	EXPECT_EQ(0, _mm256_extract_epi32(result,2));
-	EXPECT_EQ(0, _mm256_extract_epi32(result,3));
+	EXPECT_EQ(67, _mm256_extract_epi32(result,3));
 	EXPECT_EQ(0, _mm256_extract_epi32(result,4));
-	EXPECT_EQ(0, _mm256_extract_epi32(result,5));
+	EXPECT_EQ(79, _mm256_extract_epi32(result,5));
 	EXPECT_EQ(0, _mm256_extract_epi32(result,6));
-	EXPECT_EQ(0, _mm256_extract_epi32(result,7));
+	EXPECT_EQ(91, _mm256_extract_epi32(result,7));
 
 	delete join;
 }
 
 TEST(SimdCHTJoin, CheckCht) {
-	FAIL()<< "Not implemented";
+
+	kv* records = new kv[200];
+	kvlist* outer = new kvlist();
+
+	for (int i = 0; i < 200; i++) {
+		records[i].key = 5 * i + 6;
+	}
+	outer->entries = records;
+	outer->size = 200;
+
+	SimdCHTJoinTester *join = new SimdCHTJoinTester();
+
+	join->testBuildLookup(outer);
+
+	__m256i location = _mm256_setr_epi32(103, 172, 85, 67, 38, 79, 5, 91);
+	__m256i key = _mm256_setr_epi32(26, 56, 106, 11, 86, 16, 506, 21);
+
+	__m256i result = join->testCheckCht(location, key);
+
+	EXPECT_EQ(0, _mm256_extract_epi32(result,0));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,1));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,2));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,3));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,4));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,5));
+	EXPECT_EQ(506, _mm256_extract_epi32(result,6));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,7));
+
+	delete join;
 }
 
 TEST(SimdCHTJoin, CheckHash) {

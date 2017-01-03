@@ -51,8 +51,8 @@ TEST( Hash, Get) {
 	delete[] entries;
 
 	ASSERT_TRUE(ht != NULL);
-	ASSERT_EQ(ht->size(), 32);
-	ASSERT_EQ(64, 32 * RATIO);
+	ASSERT_EQ(32, ht->size());
+	ASSERT_EQ(64, ht->bucketSize());
 
 	for (int i = 0; i < 32; i++) {
 		uint8_t* plds = ht->get(i + 1);
