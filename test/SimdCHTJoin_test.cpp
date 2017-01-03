@@ -93,7 +93,7 @@ TEST(SimdCHTJoin, Count) {
 
 	Matched* m = join->getMatched();
 
-	ASSERT_EQ(6, m->getCounter());
+	ASSERT_EQ(5, m->getCounter());
 	delete join;
 }
 
