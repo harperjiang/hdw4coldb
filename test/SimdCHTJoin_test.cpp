@@ -102,7 +102,7 @@ TEST(SimdCHTJoin, Filter) {
 	kvlist* outer = new kvlist();
 
 	for (int i = 0; i < 200; i++) {
-		records[i].key = 5i * 6;
+		records[i].key = 5 * i + 6;
 	}
 	outer->entries = records;
 	outer->size = 200;
