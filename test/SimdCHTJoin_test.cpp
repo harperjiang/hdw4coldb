@@ -87,7 +87,7 @@ TEST(SimdCHTJoin, LoadBitmap) {
 }
 
 TEST(SimdCHTJoin, Count) {
-	SimdCHTJoinTest* join = new SimdCHTJoinTest();
+	SimdCHTJoinTester* join = new SimdCHTJoinTester();
 
 	join->testCount(_mm256_setr_epi32(0, 4, 1, 5, 0, 0, 2, 7));
 
@@ -107,7 +107,7 @@ TEST(SimdCHTJoin, Filter) {
 	outer->entries = records;
 	outer->size = 200;
 
-	SimdCHTJoinTest *join = new SimdCHTJoinTest();
+	SimdCHTJoinTester *join = new SimdCHTJoinTester();
 
 	join->testBuildLookup(outer);
 
