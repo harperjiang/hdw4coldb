@@ -114,14 +114,14 @@ TEST(SimdCHTJoin, Filter) {
 	__m256i result = join->testFilter(
 			_mm256_setr_epi32(1, 2, 3, 11, 5, 16, 7, 21));
 
-	ASSERT_EQ(0, _mm256_extract_epi32(result,0));
-	ASSERT_EQ(0, _mm256_extract_epi32(result,1));
-	ASSERT_EQ(0, _mm256_extract_epi32(result,2));
-	ASSERT_EQ(0, _mm256_extract_epi32(result,3));
-	ASSERT_EQ(0, _mm256_extract_epi32(result,4));
-	ASSERT_EQ(0, _mm256_extract_epi32(result,5));
-	ASSERT_EQ(0, _mm256_extract_epi32(result,6));
-	ASSERT_EQ(0, _mm256_extract_epi32(result,7));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,0));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,1));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,2));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,3));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,4));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,5));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,6));
+	EXPECT_EQ(0, _mm256_extract_epi32(result,7));
 
 	delete join;
 }

@@ -20,18 +20,18 @@ TEST( Hash, Build) {
 	Hash* ht = new Hash();
 	ht->build(entries, 32);
 
-	delete [] entries;
+	delete[] entries;
 
 	ASSERT_TRUE(ht != NULL);
 	ASSERT_EQ(32, ht->size());
-	ASSERT_EQ(32 * RATIO, ht->bucketSize());
+	ASSERT_EQ(64, ht->bucketSize());
 	delete ht;
 }
 
 TEST( Hash, Empty) {
 	Hash* ht = new Hash(10);
 	ASSERT_EQ(0, ht->size());
-	ASSERT_EQ(10, ht->bucketSize());
+	ASSERT_EQ(16, ht->bucketSize());
 	ASSERT_EQ(NULL, ht->get(65));
 
 }
@@ -48,11 +48,11 @@ TEST( Hash, Get) {
 	Hash* ht = new Hash();
 	ht->build(entries, 32);
 
-	delete [] entries;
+	delete[] entries;
 
 	ASSERT_TRUE(ht != NULL);
 	ASSERT_EQ(ht->size(), 32);
-	ASSERT_EQ(ht->bucketSize(), 32 * RATIO);
+	ASSERT_EQ(64, 32 * RATIO);
 
 	for (int i = 0; i < 32; i++) {
 		uint8_t* plds = ht->get(i + 1);
@@ -76,7 +76,7 @@ TEST( Hash, Put) {
 	Hash* ht = new Hash();
 	ht->build(entries, 32);
 
-	delete [] entries;
+	delete[] entries;
 
 	for (int i = 0; i < 32; i++) {
 		uint8_t value[PAYLOAD_SIZE];
@@ -108,9 +108,9 @@ TEST( Hash, Scan) {
 	Hash* ht = new Hash();
 	ht->build(entries, 40);
 
-	delete [] entries;
+	delete[] entries;
 
-	ScanContext context(scan,NULL);
+	ScanContext context(scan, NULL);
 
 	for (int i = 0; i < 40; i++) {
 		scan_counter = 0;
@@ -132,7 +132,7 @@ TEST( Hash, Organize) {
 	Hash* ht = new Hash();
 	ht->build(entries, 32);
 
-	delete [] entries;
+	delete[] entries;
 
 	for (int i = 0; i < 100; i++) {
 		uint8_t value[PAYLOAD_SIZE];
