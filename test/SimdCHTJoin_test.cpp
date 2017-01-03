@@ -11,12 +11,38 @@
 
 class SimdCHTJoinTester: public SimdCHTJoin {
 public:
-	void setBitmap(ulong* bitmap) {
+	void set(ulong* bitmap, uint* chtload, uint* hashbkt) {
 		alignedBitmap = bitmap;
+		alignedChtload = chtload;
+		alignedHashbkt = hashbkt;
 	}
 
 	void testLoadBitmap(__m256i input, __m256i* base, __m256i* byte) {
 		load_bitmap(input, base,byte);
+	}
+
+	void testCount(__m256i input) {
+		count(input);
+	}
+
+	__m256i testFilter(__m256i input) {
+		return filter(input);
+	}
+
+	__m256i testCheckCht(__m256i location, __m256i key) {
+		return check_cht(location, key);
+	}
+
+	void testCheckHash(__m256i input) {
+		check_hash(input);
+	}
+
+	void testProcess(__m256i input) {
+		process(input);
+	}
+
+	void testProcessDone() {
+		processDone();
 	}
 };
 
@@ -45,5 +71,29 @@ TEST(SimdCHTJoin, LoadBitmap) {
 		ASSERT_EQ(inputview[i] * 2 + 3, baseview[i]);
 		ASSERT_EQ(inputview[i] * 3 + 5, byteview[i]);
 	}
-
 }
+
+TEST(SimdCHTJoin, Count) {
+	FAIL()<< "Not implemented";
+}
+
+TEST(SimdCHTJoin, Filter) {
+	FAIL()<< "Not implemented";
+}
+
+TEST(SimdCHTJoin, CheckCht) {
+	FAIL()<< "Not implemented";
+}
+
+TEST(SimdCHTJoin, CheckHash) {
+	FAIL()<< "Not implemented";
+}
+
+TEST(SimdCHTJoin, Process) {
+	FAIL()<< "Not implemented";
+}
+
+TEST(SimdCHTJoin, ProcessDone) {
+	FAIL()<< "Not implemented";
+}
+

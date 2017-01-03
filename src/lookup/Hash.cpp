@@ -11,7 +11,8 @@
 
 #include "LookupHelper.h"
 
-#define DEFAULT_SIZE 10
+#define DEFAULT_SIZE 1024
+
 
 Hash::Hash() :
 		Lookup("Hash") {
@@ -23,7 +24,7 @@ Hash::Hash() :
 
 Hash::Hash(uint32_t size) :
 		Hash() {
-	this->bucket_size = size;
+	this->bucket_size = num_roundup(size);
 	this->buckets = new uint32_t[this->bucket_size]();
 	this->payloads = new uint8_t[this->bucket_size * PAYLOAD_SIZE];
 	this->_size = 0;
@@ -36,7 +37,7 @@ Hash::~Hash() {
 
 void Hash::build(kv* entries, uint32_t size) {
 	this->_size = 0;
-	this->bucket_size = size * RATIO;
+	this->bucket_size = num_roundup(size * RATIO);
 	this->buckets = new uint32_t[this->bucket_size]();
 	this->payloads = new uint8_t[this->bucket_size * PAYLOAD_SIZE];
 

@@ -55,6 +55,17 @@ inline uint32_t mut_hash2(uint32_t v) {
 	return v * UINT32_C(3729515385);
 }
 
+inline uint32_t num_roundup(uint32_t n);
+
+inline uint32_t num_roundup(uint32_t n) {
+	n |= (n >> 1);
+	n |= (n >> 2);
+	n |= (n >> 4);
+	n |= (n >> 8);
+	n |= (n >> 16);
+	return (n == 0xffffffff) ? n : n + 1;
+}
+
 /**
  * Load key from files
  */

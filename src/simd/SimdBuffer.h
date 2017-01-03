@@ -12,28 +12,41 @@
 
 class SimdBuffer {
 protected:
-	__m256i alignas(32) buffer;
+	// Buffer for primary input
+	__m256i buffer;
+	// Buffer for secondary input
+	__m256i extraData;
+	__m256i extraBuffer;
 	int bufferSize;
 public:
 	static __m256i EMPTY;
 
+	void* operator new(size_t num);
+
 	SimdBuffer();
 	virtual ~SimdBuffer();
 
-	void* operator new(size_t num);
-
 	// Serve new data, and get compressed data (if any)
-	__m256i serve(__m256i input, int* outputSize);
+	__m256i serve(__m256i input, __m256i extra, int* outputSize);
 	// Read out all remaining data
 	__m256i purge(int* outputSize);
+	__m256i getExtra();
 protected:
-	// Align the vector to left
-	static __m256i align(__m256i input, int* size);
-	// Shift 32-bit data to left 32-bit lane
+	/*
+	 * Align the vector to left
+	 */
+	static __m256i align(__m256i input, int* size, __m256i* pattern);
+	/**
+	 * Shift left
+	 */
 	static __m256i shl(__m256i input, int offset);
-	// Shift 32-bit data to right 32-bit lane
+	/**
+	 * Shift right
+	 */
 	static __m256i shr(__m256i input, int offset);
-	// Merge two vectors
+	/**
+	 * Merge two vectors
+	 */
 	static __m256i merge(__m256i a, __m256i b, int sizea);
 };
 

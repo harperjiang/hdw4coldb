@@ -88,6 +88,8 @@ __m256i SimdBuffer::EMPTY = _mm256_setzero_si256();
 
 SimdBuffer::SimdBuffer() {
 	buffer = EMPTY;
+	extraData = EMPTY;
+	extraBuffer = EMPTY;
 	bufferSize = 0;
 }
 
@@ -95,40 +97,46 @@ SimdBuffer::~SimdBuffer() {
 
 }
 
+__m256i SimdBuffer::getExtra() {
+	return extraData;
+}
+
 void* SimdBuffer::operator new(size_t num) {
 	return aligned_alloc(32, num);
 }
 
-__m256i SimdBuffer::serve(__m256i input, int* outputSize) {
+__m256i SimdBuffer::serve(__m256i input, __m256i extra, int* outputSize) {
 	int inputSize;
-	__m256i aligned = align(input, &inputSize);
-	if (inputSize == 8) {
-		*outputSize = 8;
-		return input;
-	}
+	__m256i pattern;
+	__m256i aligned = align(input, &inputSize, &pattern);
+	__m256i alignedExtra = _mm256_permutevar8x32_epi32(extra, pattern);
 	if (inputSize == 0) {
 		*outputSize = 0;
 		return EMPTY;
 	}
 	__m256i oldBuffer = buffer;
+	__m256i oldExtra = extraBuffer;
 	int oldBufferSize = bufferSize;
 
 	// update old buffer
 	if (inputSize + oldBufferSize > 8) {
 		bufferSize = inputSize + oldBufferSize - 8;
 		buffer = shl(aligned, inputSize - bufferSize);
+		extraBuffer = shl(alignedExtra, inputSize - bufferSize);
 
 		*outputSize = 8;
+		extraData = merge(oldExtra, alignedExtra, oldBufferSize);
 		return merge(oldBuffer, aligned, oldBufferSize);
 	} else if (inputSize + oldBufferSize == 8) {
 		bufferSize = 0;
-		buffer = _mm256_setzero_si256();
 
 		*outputSize = 8;
+		extraData = merge(oldExtra, alignedExtra, oldBufferSize);
 		return merge(oldBuffer, aligned, oldBufferSize);
 	} else {
 		bufferSize = inputSize + oldBufferSize;
 		buffer = merge(oldBuffer, aligned, oldBufferSize);
+		extraBuffer = merge(oldExtra, alignedExtra, oldBufferSize);
 
 		*outputSize = 0;
 		return EMPTY;
@@ -140,15 +148,16 @@ __m256i SimdBuffer::serve(__m256i input, int* outputSize) {
 __m256i SimdBuffer::purge(int* outputSize) {
 	*outputSize = bufferSize;
 	bufferSize = 0;
+	extraData = extraBuffer;
 	return buffer;
 }
 
 /**
  * The first two 32-bit integers in input contain the 4-bit block of flag
  */
-__m256i SimdBuffer::align(__m256i input, int *size) {
+__m256i SimdBuffer::align(__m256i input, int *size, __m256i* pattern) {
 	__m256i flag = _mm256_add_epi32(_mm256_cmpeq_epi32(input, SimdHelper::ZERO),
-			SimdHelper::ONE);
+	SimdHelper::ONE);
 	__m256i sflag = _mm256_sllv_epi32(flag, FLAG_SHIFT);
 	flag = _mm256_hadd_epi32(sflag, flag);
 	flag = _mm256_hadd_epi32(flag, SimdHelper::ZERO);
@@ -159,43 +168,39 @@ __m256i SimdBuffer::align(__m256i input, int *size) {
 	int size1 = _mm256_extract_epi32(sizev, 0);
 	int size2 = _mm256_extract_epi32(sizev, 1);
 	*size = size1 + size2;
-	if (*size == 8)
+	if (*size == 8) {
 		return input;
+	}
 
 	__m256i p1 = _mm256_permutevar8x32_epi32(
-			_mm256_shuffle_epi8(LOOKUP_POS1, flag), PERMU_POS1);
+	_mm256_shuffle_epi8(LOOKUP_POS1, flag), PERMU_POS1);
 	__m256i p2 = _mm256_permutevar8x32_epi32(
-			_mm256_shuffle_epi8(LOOKUP_POS2, flag), PERMU_POS2);
+	_mm256_shuffle_epi8(LOOKUP_POS2, flag), PERMU_POS2);
 	__m256i p3 = _mm256_permutevar8x32_epi32(
-			_mm256_shuffle_epi8(LOOKUP_POS3, flag), PERMU_POS3);
+	_mm256_shuffle_epi8(LOOKUP_POS3, flag), PERMU_POS3);
 	__m256i p4 = _mm256_permutevar8x32_epi32(
-			_mm256_shuffle_epi8(LOOKUP_POS4, flag), PERMU_POS4);
+	_mm256_shuffle_epi8(LOOKUP_POS4, flag), PERMU_POS4);
 	__m256i p1p2 = _mm256_blend_epi32(p1, p2, 0x22);
 	__m256i p3p4 = _mm256_blend_epi32(p3, p4, 0x88);
 	__m256i allblend = _mm256_blend_epi32(p1p2, p3p4, 0xcc);
 	__m256i add4 = _mm256_add_epi32(allblend, ADD_FOUR);
-	if (size1 >= 5)
-		abort();
+
 	__m256i permute = _mm256_permutevar8x32_epi32(add4, SHL128_POS[size1]);
+
+	*pattern = permute;
 
 	return _mm256_permutevar8x32_epi32(input, permute);
 }
 
 __m256i SimdBuffer::shl(__m256i input, int offset) {
-	if (offset >= 8)
-		abort();
 	return _mm256_permutevar8x32_epi32(input, SHL_POS[offset]);
 }
 
 __m256i SimdBuffer::shr(__m256i input, int offset) {
-	if (offset >= 8)
-		abort();
 	return _mm256_permutevar8x32_epi32(input, SHR_POS[offset]);
 }
 
 __m256i SimdBuffer::merge(__m256i a, __m256i b, int sizea) {
-	if (sizea >= 8)
-		abort();
 	return BLEND[sizea](a, shr(b, sizea));
 }
 

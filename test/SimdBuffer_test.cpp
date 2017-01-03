@@ -11,8 +11,8 @@
 
 class SimdBufferTest: public SimdBuffer {
 public:
-	static __m256i testAlign(__m256i input, int* size) {
-		return align(input, size);
+	static __m256i testAlign(__m256i input, int* size, __m256i* pattern) {
+		return align(input, size, pattern);
 	}
 	static __m256i testShl(__m256i input, int offset) {
 		return shl(input, offset);
@@ -31,11 +31,11 @@ TEST(SimdBuffer, Serve) {
 	int outputSize;
 	__m256i input = _mm256_setr_epi32(3, 0, 0, 2, 7, 1, 4, 8);
 
-	__m256i output = sbuf->serve(input, &outputSize);
+	__m256i output = sbuf->serve(input, input, &outputSize);
 	ASSERT_EQ(0, outputSize);
 
 	input = _mm256_setr_epi32(0, 2, 0, 99, 0, 0, 241, 0);
-	output = sbuf->serve(input, &outputSize);
+	output = sbuf->serve(input, input, &outputSize);
 	ASSERT_EQ(8, outputSize);
 	ASSERT_EQ(3, _mm256_extract_epi32(output, 0));
 	ASSERT_EQ(2, _mm256_extract_epi32(output, 1));
@@ -47,7 +47,7 @@ TEST(SimdBuffer, Serve) {
 	ASSERT_EQ(99, _mm256_extract_epi32(output, 7));
 
 	input = _mm256_setr_epi32(0, 0, 0, 2324, 0, 0, 0, 0);
-	output = sbuf->serve(input, &outputSize);
+	output = sbuf->serve(input, input, &outputSize);
 	ASSERT_EQ(0, outputSize);
 
 	delete sbuf;
@@ -59,11 +59,11 @@ TEST(SimdBuffer, Purge) {
 	int outputSize;
 	__m256i input = _mm256_setr_epi32(3, 0, 0, 2, 7, 1, 4, 8);
 
-	__m256i output = sbuf->serve(input, &outputSize);
+	__m256i output = sbuf->serve(input, input, &outputSize);
 	ASSERT_EQ(0, outputSize);
 
 	input = _mm256_setr_epi32(0, 2, 0, 99, 0, 0, 241, 0);
-	output = sbuf->serve(input, &outputSize);
+	output = sbuf->serve(input, input, &outputSize);
 	ASSERT_EQ(8, outputSize);
 	ASSERT_EQ(3, _mm256_extract_epi32(output, 0));
 	ASSERT_EQ(2, _mm256_extract_epi32(output, 1));
@@ -75,7 +75,7 @@ TEST(SimdBuffer, Purge) {
 	ASSERT_EQ(99, _mm256_extract_epi32(output, 7));
 
 	input = _mm256_setr_epi32(0, 0, 0, 2324, 0, 0, 0, 0);
-	output = sbuf->serve(input, &outputSize);
+	output = sbuf->serve(input, input, &outputSize);
 	ASSERT_EQ(0, outputSize);
 
 	output = sbuf->purge(&outputSize);
@@ -86,11 +86,61 @@ TEST(SimdBuffer, Purge) {
 	delete sbuf;
 }
 
+TEST(SimdBuffer, Extra) {
+	SimdBuffer* sbuf = new SimdBuffer();
+
+	int outputSize;
+	__m256i input = _mm256_setr_epi32(3, 0, 0, 2, 7, 1, 4, 8);
+	__m256i extra = _mm256_setr_epi32(4, 23, 524, 242, 32, 52, 31, 566);
+	__m256i output = sbuf->serve(input, extra, &outputSize);
+	ASSERT_EQ(0, outputSize);
+
+	input = _mm256_setr_epi32(0, 2, 0, 99, 0, 0, 241, 0);
+	extra = _mm256_setr_epi32(4232, 42, 2542, 2452, 24, 64, 52, 3);
+	output = sbuf->serve(input, extra, &outputSize);
+	ASSERT_EQ(8, outputSize);
+	ASSERT_EQ(3, _mm256_extract_epi32(output, 0));
+	ASSERT_EQ(2, _mm256_extract_epi32(output, 1));
+	ASSERT_EQ(7, _mm256_extract_epi32(output, 2));
+	ASSERT_EQ(1, _mm256_extract_epi32(output, 3));
+	ASSERT_EQ(4, _mm256_extract_epi32(output, 4));
+	ASSERT_EQ(8, _mm256_extract_epi32(output, 5));
+	ASSERT_EQ(2, _mm256_extract_epi32(output, 6));
+	ASSERT_EQ(99, _mm256_extract_epi32(output, 7));
+
+	__m256i extraOutput = sbuf->getExtra();
+
+	ASSERT_EQ(4, _mm256_extract_epi32(extraOutput, 0));
+	ASSERT_EQ(242, _mm256_extract_epi32(extraOutput, 1));
+	ASSERT_EQ(32, _mm256_extract_epi32(extraOutput, 2));
+	ASSERT_EQ(52, _mm256_extract_epi32(extraOutput, 3));
+	ASSERT_EQ(31, _mm256_extract_epi32(extraOutput, 4));
+	ASSERT_EQ(566, _mm256_extract_epi32(extraOutput, 5));
+	ASSERT_EQ(42, _mm256_extract_epi32(extraOutput, 6));
+	ASSERT_EQ(2452, _mm256_extract_epi32(extraOutput, 7));
+
+	input = _mm256_setr_epi32(0, 0, 0, 2324, 0, 0, 0, 0);
+	extra = _mm256_setr_epi32(6, 125, 54, 84, 8952, 42558, 5212, 446);
+	output = sbuf->serve(input, extra, &outputSize);
+	ASSERT_EQ(0, outputSize);
+
+	output = sbuf->purge(&outputSize);
+	ASSERT_EQ(2, outputSize);
+	ASSERT_EQ(241, _mm256_extract_epi32(output, 0));
+	ASSERT_EQ(2324, _mm256_extract_epi32(output, 1));
+	extraOutput = sbuf->getExtra();
+	ASSERT_EQ(52, _mm256_extract_epi32(extraOutput, 0));
+	ASSERT_EQ(84, _mm256_extract_epi32(extraOutput, 1));
+
+	delete sbuf;
+}
+
 TEST(SimdBuffer, Align) {
 	// 10100110
 	__m256i input = _mm256_setr_epi32(31331, 0, 22013, 0, 0, 124141, 551, 0);
 	int size;
-	__m256i result = SimdBufferTest::testAlign(input, &size);
+	__m256i pattern;
+	__m256i result = SimdBufferTest::testAlign(input, &size, &pattern);
 
 	ASSERT_EQ(31331, _mm256_extract_epi32(result,0));
 	ASSERT_EQ(22013, _mm256_extract_epi32(result,1));
@@ -98,17 +148,26 @@ TEST(SimdBuffer, Align) {
 	ASSERT_EQ(551, _mm256_extract_epi32(result,3));
 	ASSERT_EQ(4, size);
 
+	ASSERT_EQ(0, _mm256_extract_epi32(pattern,0));
+	ASSERT_EQ(2, _mm256_extract_epi32(pattern,1));
+	ASSERT_EQ(5, _mm256_extract_epi32(pattern,2));
+	ASSERT_EQ(6, _mm256_extract_epi32(pattern,3));
+
 	// 0000 1110
 	input = _mm256_setr_epi32(0, 0, 0, 0, 5242152, 124141, 551, 0);
-	result = SimdBufferTest::testAlign(input, &size);
+	result = SimdBufferTest::testAlign(input, &size, &pattern);
 
 	ASSERT_EQ(5242152, _mm256_extract_epi32(result,0));
 	ASSERT_EQ(124141, _mm256_extract_epi32(result,1));
 	ASSERT_EQ(551, _mm256_extract_epi32(result,2));
 	ASSERT_EQ(3, size);
 
+	ASSERT_EQ(4, _mm256_extract_epi32(pattern,0));
+	ASSERT_EQ(5, _mm256_extract_epi32(pattern,1));
+	ASSERT_EQ(6, _mm256_extract_epi32(pattern,2));
+
 	input = _mm256_setr_epi32(0, 0, 2719558, 0, 5242152, 124141, 551, 9895678);
-	result = SimdBufferTest::testAlign(input, &size);
+	result = SimdBufferTest::testAlign(input, &size, &pattern);
 
 	ASSERT_EQ(2719558, _mm256_extract_epi32(result,0));
 	ASSERT_EQ(5242152, _mm256_extract_epi32(result,1));
@@ -117,8 +176,14 @@ TEST(SimdBuffer, Align) {
 	ASSERT_EQ(9895678, _mm256_extract_epi32(result,4));
 	ASSERT_EQ(5, size);
 
+	ASSERT_EQ(2, _mm256_extract_epi32(pattern,0));
+	ASSERT_EQ(4, _mm256_extract_epi32(pattern,1));
+	ASSERT_EQ(5, _mm256_extract_epi32(pattern,2));
+	ASSERT_EQ(6, _mm256_extract_epi32(pattern,3));
+	ASSERT_EQ(7, _mm256_extract_epi32(pattern,4));
+
 	input = _mm256_setr_epi32(3, 0, 0, 2, 7, 1, 4, 8);
-	result = SimdBufferTest::testAlign(input, &size);
+	result = SimdBufferTest::testAlign(input, &size, &pattern);
 
 	ASSERT_EQ(3, _mm256_extract_epi32(result,0));
 	ASSERT_EQ(2, _mm256_extract_epi32(result,1));
@@ -128,13 +193,24 @@ TEST(SimdBuffer, Align) {
 	ASSERT_EQ(8, _mm256_extract_epi32(result,5));
 	ASSERT_EQ(6, size);
 
+	ASSERT_EQ(0, _mm256_extract_epi32(pattern,0));
+	ASSERT_EQ(3, _mm256_extract_epi32(pattern,1));
+	ASSERT_EQ(4, _mm256_extract_epi32(pattern,2));
+	ASSERT_EQ(5, _mm256_extract_epi32(pattern,3));
+	ASSERT_EQ(6, _mm256_extract_epi32(pattern,4));
+	ASSERT_EQ(7, _mm256_extract_epi32(pattern,5));
+
 	input = _mm256_setr_epi32(0, 2, 0, 99, 0, 0, 241, 0);
-	result = SimdBufferTest::testAlign(input, &size);
+	result = SimdBufferTest::testAlign(input, &size, &pattern);
 
 	ASSERT_EQ(2, _mm256_extract_epi32(result,0));
 	ASSERT_EQ(99, _mm256_extract_epi32(result,1));
 	ASSERT_EQ(241, _mm256_extract_epi32(result,2));
 	ASSERT_EQ(3, size);
+
+	ASSERT_EQ(1, _mm256_extract_epi32(pattern,0));
+	ASSERT_EQ(3, _mm256_extract_epi32(pattern,1));
+	ASSERT_EQ(6, _mm256_extract_epi32(pattern,2));
 }
 
 TEST(SimdBuffer, Shl) {
