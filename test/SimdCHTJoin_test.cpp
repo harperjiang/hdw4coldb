@@ -155,7 +155,7 @@ TEST(SimdCHTJoin, CheckCht) {
 	EXPECT_EQ(506, _mm256_extract_epi32(result,6));
 	EXPECT_EQ(0, _mm256_extract_epi32(result,7));
 
-	ASSERT_EQ(7, join->getMatched().getCounter());
+	ASSERT_EQ(7, join->getMatched()->getCounter());
 
 	delete join;
 }
@@ -177,7 +177,7 @@ TEST(SimdCHTJoin, CheckHash) {
 //	memcpy(alignedbkts, hash->buckets, sizeof(uint)*hash->bucket_size);
 //
 	SimdCHTJoinTester* join = new SimdCHTJoinTester();
-	join->set(NULL, NULL, hahs->buckets);
+	join->set(NULL, NULL, hash->buckets);
 
 	__m256i key = _mm256_setr_epi32(26, 56, 27, 11, 33, 16, 506, 21);
 
@@ -209,7 +209,7 @@ TEST(SimdCHTJoin, Process) {
 	join->testProcess(key);
 	join->testProcess(key2);
 
-	ASSERT_EQ(8, join->getMatched().getCounter());
+	ASSERT_EQ(8, join->getMatched()->getCounter());
 
 	delete join;
 }
@@ -235,7 +235,7 @@ TEST(SimdCHTJoin, ProcessDone) {
 	join->testProcess(key2);
 	join->testProcessDone();
 
-	ASSERT_EQ(10, join->getMatched().getCounter());
+	ASSERT_EQ(10, join->getMatched()->getCounter());
 
 	delete join;
 }
