@@ -6,20 +6,23 @@
  */
 
 #include <sys/types.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <random>
+#include <getopt.h>
 #include <time.h>
 #include "../util/Logger.h"
 #include "../util/Timer.h"
 #include "../vecbuffer/VecBuffer.h"
 
 uint* gendata(double portion, uint size) {
-	srand (time());uint* data = (uint*) aligned_alloc(32, size * sizeof(uint));
-	uint thres = (uint) UINT32_C(0xFFFFFFFF)*portion;
-	for (int i = 0; i < size; i++) {
-		uint val = (uint)rand();
-		data[i] = val < thres? val:0;
+	srand(time(NULL));
+	uint* data = (uint*) aligned_alloc(32, size * sizeof(uint));
+	uint thres = (uint) UINT32_C(0xFFFFFFFF) * portion;
+	for (uint i = 0; i < size; i++) {
+		uint val = (uint) rand();
+		data[i] = val < thres ? val : 0;
 	}
 	return data;
 }
@@ -37,7 +40,7 @@ void run(uint* data, uint size, VecBuffer* buffer) {
 		__m256i input = _mm256_load_si256((__m256i *) (data + i * 8));
 		buffer->serve(input, &outputSize);
 	}
-	buffer->purge();
+	buffer->purge(&outputSize);
 
 	timer.stop();
 
@@ -98,18 +101,18 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	VecBuffer* alg = NULL;
+	VecBuffer* vbf = NULL;
 	if (!strcmp("simd", alg)) {
-		alg = new SimdVecBuffer();
+		vbf = new SimdVecBuffer();
 	} else if (!strcmp("simple", alg)) {
-		alg = new SimpleVecBuffer();
+		vbf = new SimpleVecBuffer();
 	} else {
-		alg = NULL;
+		vbf = NULL;
 	}
-	if (alg != NULL) {
+	if (vbf != NULL) {
 		uint* allocate = gendata(portion, size);
-		run(allocate, size, alg);
+		run(allocate, size, vbf);
 		free(allocate);
-		delete alg;
+		delete vbf;
 	}
 }
