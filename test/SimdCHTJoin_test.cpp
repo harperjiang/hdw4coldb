@@ -155,11 +155,38 @@ TEST(SimdCHTJoin, CheckCht) {
 	EXPECT_EQ(506, _mm256_extract_epi32(result,6));
 	EXPECT_EQ(0, _mm256_extract_epi32(result,7));
 
+	ASSERT_EQ(7, join->getMatched().getCounter());
+
 	delete join;
 }
 
 TEST(SimdCHTJoin, CheckHash) {
-	FAIL()<< "Not implemented";
+	kv* records = new kv[200];
+	kvlist* outer = new kvlist();
+
+	for (int i = 0; i < 200; i++) {
+		records[i].key = 5 * i + 6;
+	}
+	outer->entries = records;
+	outer->size = 200;
+	Hash* hash = new Hash();
+
+	hash->build(records, size);
+
+//	uint* alignedbkts = (uint*)aligned_alloc(32, sizeof(uint)*hash->bucket_size);
+//	memcpy(alignedbkts, hash->buckets, sizeof(uint)*hash->bucket_size);
+//
+	SimdCHTJoinTester* join = new SimdCHTJoinTester();
+	join->set(NULL, NULL, hahs->buckets);
+
+	__m256i key = _mm256_setr_epi32(26, 56, 27, 11, 33, 16, 506, 21);
+
+	join->testCheckHash(key);
+
+	ASSERT_EQ(5, join->getMatched()->getCounter());
+
+	delete join;
+	delete hash;
 }
 
 TEST(SimdCHTJoin, Process) {
