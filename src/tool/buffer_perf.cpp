@@ -15,6 +15,8 @@
 #include "../util/Logger.h"
 #include "../util/Timer.h"
 #include "../vecbuffer/VecBuffer.h"
+#include "../vecbuffer/SimdVecBuffer.h"
+#include "../vecbuffer/SimpleVecBuffer.h"
 
 uint* gendata(double portion, uint size) {
 	srand(time(NULL));
