@@ -236,7 +236,7 @@ TEST(SimdCHTJoin, ProcessDone) {
 
 	join->testBuildLookup(outer);
 
-	__m256i key = _mm256_setr_epi32(26, 56, 106, 11, 86, 16, 506, 21);
+	__m256i key = _mm256_setr_epi32(26, 56, 106, 3211, 86, 16, 506, 21);
 	__m256i key2 = _mm256_setr_epi32(32, 1231, 41, 4535, 76, 334, 51, 5);
 
 	join->testProcess(key);
