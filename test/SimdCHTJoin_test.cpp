@@ -11,6 +11,11 @@
 
 class SimdCHTJoinTester: public SimdCHTJoin {
 public:
+	SimdCHTJoinTester() :
+			SimdCHTJoin() {
+		checkHash = true;
+	}
+
 	void testBuildLookup(kvlist* outer) {
 		buildLookup(outer);
 	}

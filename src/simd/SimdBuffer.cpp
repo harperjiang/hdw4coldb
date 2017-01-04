@@ -169,6 +169,7 @@ __m256i SimdBuffer::align(__m256i input, int *size, __m256i* pattern) {
 	int size2 = _mm256_extract_epi32(sizev, 1);
 	*size = size1 + size2;
 	if (*size == 8) {
+		*pattern = SHL_POS[0];
 		return input;
 	}
 
