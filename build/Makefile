@@ -133,6 +133,7 @@ mkfolder:
 	mkdir -p src/join/cstep
 	mkdir -p src/join/ocl
 	mkdir -p src/join/simple
+	mkdir -p src/vecbuffer
 
 mktestfolder: mkfolder
 	mkdir -p test
