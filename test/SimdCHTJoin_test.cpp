@@ -173,11 +173,12 @@ TEST(SimdCHTJoin, CheckHash) {
 
 	hash->build(records, 200);
 
-//	uint* alignedbkts = (uint*)aligned_alloc(32, sizeof(uint)*hash->bucket_size);
-//	memcpy(alignedbkts, hash->buckets, sizeof(uint)*hash->bucket_size);
+	uint* alignedbkts = (uint*) aligned_alloc(32,
+			sizeof(uint) * hash->bucket_size);
+	memcpy(alignedbkts, hash->buckets, sizeof(uint) * hash->bucket_size);
 //
 	SimdCHTJoinTester* join = new SimdCHTJoinTester();
-	join->set(NULL, NULL, hash->buckets);
+	join->set(NULL, NULL, alignedbkts);
 	join->set2(_mm256_setzero_si256(),
 			_mm256_set1_epi32(hash->bucket_size - 1));
 	// 11010101
