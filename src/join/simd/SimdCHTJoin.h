@@ -32,6 +32,7 @@ protected:
 
 	bool collectBitmap;
 	bool collectCht;
+	bool checkHash;
 protected:
 	Lookup* createLookup();
 	void buildLookup(kvlist* outer);

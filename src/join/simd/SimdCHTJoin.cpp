@@ -86,6 +86,7 @@ void SimdCHTJoin::buildLookup(kvlist* outer) {
 
 	bitsize = _mm256_set1_epi32(cht->bitmap_size * BITMAP_UNIT - 1);
 	bktsize = _mm256_set1_epi32(cht->overflow->bucket_size - 1);
+	checkHash = cht->overflow->bucket_size != 0;
 }
 
 void SimdCHTJoin::buildProbe(kvlist* inner) {
@@ -164,6 +165,8 @@ __m256i SimdCHTJoin::check_cht(__m256i location, __m256i key) {
 
 // Check Hash
 void SimdCHTJoin::check_hash(__m256i key) {
+	if (!checkHash)
+		return;
 	__m256i hashed = _mm256_and_si256(_mm256_mullo_epi32(key, HASH_FACTOR),
 			bktsize);
 	__m256i flag = key;
