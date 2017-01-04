@@ -86,6 +86,7 @@ TOOL = \
 gendata \
 mergedata \
 space_analysis \
+buffer_perf \
 
 
 default: $(MAIN) $(TOOL)

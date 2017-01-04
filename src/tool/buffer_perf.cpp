@@ -6,12 +6,49 @@
  */
 
 #include <sys/types.h>
+#include <stdlib.h>
+#include <string.h>
+#include <random>
+#include <time.h>
 #include "../util/Logger.h"
+#include "../util/Timer.h"
+#include "../vecbuffer/VecBuffer.h"
+
+uint* gendata(double portion, uint size) {
+	srand (time());uint* data = (uint*) aligned_alloc(32, size * sizeof(uint));
+	uint thres = (uint) UINT32_C(0xFFFFFFFF)*portion;
+	for (int i = 0; i < size; i++) {
+		uint val = (uint)rand();
+		data[i] = val < thres? val:0;
+	}
+	return data;
+}
+
+void run(uint* data, uint size, VecBuffer* buffer) {
+	int round = size / 8;
+	int outputSize;
+
+	Logger* logger = Logger::getLogger("perf_buffer");
+	Timer timer;
+
+	timer.start();
+
+	for (int i = 0; i < round; i++) {
+		__m256i input = _mm256_load_si256((__m256i *) (data + i * 8));
+		buffer->serve(input, &outputSize);
+	}
+	buffer->purge();
+
+	timer.stop();
+
+	logger->info("Running size %u, time consumption %lu\n", size,
+			timer.wallclockms());
+}
 
 void print_help() {
 	fprintf(stdout, "Usage: buffer_perf [options]\n");
 	fprintf(stdout, "Available options:\n");
-	fprintf(stdout, " -b --usebuffer	\tuse SimdBuffer\n");
+	fprintf(stdout, " -a --alg alg_name \tAlgorithm to use\n");
 	fprintf(stdout, " -p --portion \tportion of non-zeros\n");
 	fprintf(stdout, " -s --size \tsize of test\n");
 	fprintf(stdout, " -h --help \tdisplay this information\n");
@@ -24,6 +61,7 @@ int main(int argc, char** argv) {
 	bool useBuffer = false;
 	double portion = 0.5;
 	uint size = 1000000;
+	char* alg;
 
 	if (argc == 1) {
 		print_help();
@@ -32,24 +70,26 @@ int main(int argc, char** argv) {
 
 	int option_index = 0;
 	static struct option long_options[] = {
-			{ "usebuffer", no_argument, 0, 'b' }, { "portion",
+			{ "alg", required_argument, 0, 'a' }, { "portion",
 					required_argument, 0, 'p' },
 			{ "help", no_argument, 0, 'h' },
 			{ "size", required_argument, 0, 's' } };
 
 	int c;
-	while ((c = getopt_long(argc, argv, "bp:hs:", long_options, &option_index))
+	while ((c = getopt_long(argc, argv, "ap:hs:", long_options, &option_index))
 			!= -1) {
 		switch (c) {
-		case 'b':
-			useBuffer = true;
+		case 'a':
+			alg = optarg;
 			break;
 		case 'p':
+			portion = atof(optarg);
 			break;
 		case 'h':
 			print_help();
 			break;
 		case 's':
+			size = atoi(optarg);
 			break;
 		default:
 			fprintf(stderr, "unrecognized option or missing argument\n");
@@ -58,4 +98,18 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	VecBuffer* alg = NULL;
+	if (!strcmp("simd", alg)) {
+		alg = new SimdVecBuffer();
+	} else if (!strcmp("simple", alg)) {
+		alg = new SimpleVecBuffer();
+	} else {
+		alg = NULL;
+	}
+	if (alg != NULL) {
+		uint* allocate = gendata(portion, size);
+		run(allocate, size, alg);
+		free(allocate);
+		delete alg;
+	}
 }

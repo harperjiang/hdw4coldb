@@ -243,7 +243,7 @@ TEST(SimdCHTJoin, ProcessDone) {
 	join->testProcess(key2);
 	join->testProcessDone();
 
-	ASSERT_EQ(10, join->getMatched()->getCounter());
+	ASSERT_EQ(11, join->getMatched()->getCounter());
 
 	delete join;
 }
