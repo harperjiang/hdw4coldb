@@ -55,6 +55,11 @@ COMMON_OBJS = \
 ./src/join/simple/HashJoin.o \
 ./src/join/simple/LookupJoin.o \
 ./src/join/simple/LookupThread.o \
+./src/vecbuffer/SimdVecBuffer.o \
+./src/vecbuffer/SimpleVecBuffer.o \
+./src/vecbuffer/Simd64VecBuffer.o \
+./src/vecbuffer/Simple64VecBuffer.o \
+./src/vecbuffer/VecBuffer.o \
 
 
 TEST_OBJS = \
@@ -71,6 +76,8 @@ TEST_OBJS = \
 ./test/CounterThread_test.o \
 ./test/CollectThread_test.o \
 ./test/BloomFilter_test.o \
+./test/SimdVecBuffer_test.o \
+./test/SimpleVecBuffer_test.o \
 
 MAIN = join
 
