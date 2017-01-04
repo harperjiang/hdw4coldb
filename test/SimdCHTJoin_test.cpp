@@ -178,8 +178,10 @@ TEST(SimdCHTJoin, CheckHash) {
 //
 	SimdCHTJoinTester* join = new SimdCHTJoinTester();
 	join->set(NULL, NULL, hash->buckets);
-
-	__m256i key = _mm256_setr_epi32(26, 56, 27, 11, 33, 16, 506, 21);
+	join->set2(_mm256_setzero_si256(),
+			_mm256_set1_epi32(hash->bucket_size - 1));
+	// 11010101
+	__m256i key = _mm256_setr_epi32(26, 56, 27, 11, 33, 16, 9906, 21);
 
 	join->testCheckHash(key);
 

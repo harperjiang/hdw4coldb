@@ -174,7 +174,7 @@ void SimdCHTJoin::check_hash(__m256i key) {
 		__m256i foundmask = _mm256_cmpeq_epi32(load, key);
 		__m256i zeromask = _mm256_cmpeq_epi32(load, SimdHelper::ZERO);
 		__m256i notfoundmask = _mm256_xor_si256(
-				_mm256_and_si256(foundmask, zeromask), SimdHelper::MAX);
+				_mm256_or_si256(foundmask, zeromask), SimdHelper::MAX);
 
 		__m256i hashed1 = _mm256_add_epi32(hashed, SimdHelper::ONE);
 		result = _mm256_or_si256(result, _mm256_and_si256(foundmask, hashed1));
