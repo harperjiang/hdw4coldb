@@ -178,18 +178,18 @@ __m256i Simd64VecBuffer::serve(__m256i input, int *outputSize) {
 	int totalSize = inputSize + oldBufferSize;
 	if (totalSize > 4) {
 		bufferSize = totalSize - 4;
-		buffer = shl(input, inputSize - bufferSize);
+		buffer = shl(aligned, inputSize - bufferSize);
 
 		*outputSize = 4;
-		return merge(oldBuffer, shr(input, oldBufferSize), oldBufferSize);
+		return merge(oldBuffer, shr(aligned, oldBufferSize), oldBufferSize);
 	} else if (inputSize + oldBufferSize == 4) {
 		bufferSize = 0;
 
 		*outputSize = 4;
-		return merge(oldBuffer, shr(input, oldBufferSize), oldBufferSize);
+		return merge(oldBuffer, shr(aligned, oldBufferSize), oldBufferSize);
 	} else {
 		bufferSize = totalSize;
-		buffer = merge(oldBuffer, shr(input, oldBufferSize), oldBufferSize);
+		buffer = merge(oldBuffer, shr(aligned, oldBufferSize), oldBufferSize);
 
 		*outputSize = 0;
 		return EMPTY;

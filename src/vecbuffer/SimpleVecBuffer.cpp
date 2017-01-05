@@ -18,7 +18,7 @@ SimpleVecBuffer::~SimpleVecBuffer() {
 
 __m256i SimpleVecBuffer::serve(__m256i input, int* outputSize) {
 	int data[8];
-	int osize;
+	int osize = 0;
 	data[0] = _mm256_extract_epi32(input, 0);
 	osize += data[0] ? 1 : 0;
 	data[1] = _mm256_extract_epi32(input, 1);
