@@ -18,6 +18,8 @@
 #include "../vecbuffer/VecBuffer.h"
 #include "../vecbuffer/SimdVecBuffer.h"
 #include "../vecbuffer/SimpleVecBuffer.h"
+#include "../vecbuffer/Simd64VecBuffer.h"
+#include "../vecbuffer/Simple64VecBuffer.h"
 
 uint* gendata(double portion, uint size) {
 	srand(time(NULL));
@@ -123,6 +125,10 @@ int main(int argc, char** argv) {
 		vbf = new SimdVecBuffer();
 	} else if (!strcmp("simple", alg)) {
 		vbf = new SimpleVecBuffer();
+	} else if (!strcmp("simd64", alg)) {
+		vbf = new Simd64VecBuffer();
+	} else if (!strcmp("simple64", alg)) {
+		vbf = new Simple64VecBuffer();
 	} else {
 		vbf = NULL;
 	}
