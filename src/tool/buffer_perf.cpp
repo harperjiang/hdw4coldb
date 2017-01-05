@@ -29,8 +29,19 @@ uint* gendata(double portion, uint size) {
 	return data;
 }
 
+__m256i genrand() {
+	uint thres = (uint) (UINT32_C(0xFFFFFFFF) * portion);
+	int data[8];
+	for (uint i = 0; i < 8; i++) {
+		uint val = (uint) rand();
+		data[i] = val < thres ? val : 0;
+	}
+	return _mm256_setr_epi32(data[0], data[1], data[2], data[3], data[4],
+			data[5], data[6], data[7]);
+}
+
 void run(uint* data, uint size, VecBuffer* buffer) {
-	int round = size / 8;
+	srand(time(NULL));
 	int outputSize;
 
 	Logger* logger = Logger::getLogger("perf_buffer");
@@ -38,8 +49,8 @@ void run(uint* data, uint size, VecBuffer* buffer) {
 
 	timer.start();
 
-	for (int i = 0; i < round; i++) {
-		__m256i input = _mm256_load_si256((__m256i *) (data + i * 8));
+	for (int i = 0; i < size; i++) {
+		__m256i input = genrand();
 		buffer->serve(input, &outputSize);
 	}
 	buffer->purge(&outputSize);
@@ -76,12 +87,11 @@ int main(int argc, char** argv) {
 	int option_index = 0;
 	static struct option long_options[] = {
 			{ "alg", required_argument, 0, 'a' }, { "portion",
-					required_argument, 0, 'p' },
-			{ "help", no_argument, 0, 'h' },
-			{ "size", required_argument, 0, 's' } };
+			required_argument, 0, 'p' }, { "help", no_argument, 0, 'h' }, {
+					"size", required_argument, 0, 's' } };
 
 	int c;
-	while ((c = getopt_long(argc, argv, "ap:hs:", long_options, &option_index))
+	while ((c = getopt_long(argc, argv, "a:p:hs:", long_options, &option_index))
 			!= -1) {
 		switch (c) {
 		case 'a':
