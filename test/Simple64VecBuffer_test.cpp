@@ -8,9 +8,9 @@
 #include <gtest/gtest.h>
 #include <immintrin.h>
 #include "../src/vecbuffer/VecBuffer.h"
-#include "../src/vecbuffer/Simd64VecBuffer.h"
+#include "../src/vecbuffer/Simple64VecBuffer.h"
 
-TEST(Simd64VecBuffer, Serve) {
+TEST(Simple64VecBuffer, Serve) {
 	Simple64VecBuffer* sbuf = new Simple64VecBuffer();
 
 	int outputSize;
@@ -34,7 +34,7 @@ TEST(Simd64VecBuffer, Serve) {
 	delete sbuf;
 }
 
-TEST(Simd64VecBuffer, Purge) {
+TEST(Simple64VecBuffer, Purge) {
 	Simple64VecBuffer* sbuf = new Simple64VecBuffer();
 
 	int outputSize;

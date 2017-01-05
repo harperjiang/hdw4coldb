@@ -129,6 +129,8 @@ int main(int argc, char** argv) {
 		vbf = new Simd64VecBuffer();
 	} else if (!strcmp("simple64", alg)) {
 		vbf = new Simple64VecBuffer();
+	} else if (!strcmp("none", alg)) {
+		vbf = new VecBuffer();
 	} else {
 		vbf = NULL;
 	}

@@ -15,8 +15,8 @@ public:
 	VecBuffer();
 	virtual ~VecBuffer();
 
-	virtual __m256i serve(__m256i input, int* outputSize) = 0;
-	virtual __m256i purge(int* outputSize) = 0;
+	virtual __m256i serve(__m256i input, int* outputSize);
+	virtual __m256i purge(int* outputSize);
 };
 
 #endif /* SRC_VECBUFFER_VECBUFFER_H_ */
