@@ -77,6 +77,7 @@ TEST_OBJS = \
 ./test/CollectThread_test.o \
 ./test/BloomFilter_test.o \
 ./test/SimdVecBuffer_test.o \
+./test/Simd64VecBuffer_test.o \
 ./test/SimpleVecBuffer_test.o \
 
 MAIN = join
