@@ -14,6 +14,7 @@
 #include <time.h>
 #include "../util/Logger.h"
 #include "../util/Timer.h"
+#include "../simd/SimdHelper.h"
 #include "../vecbuffer/VecBuffer.h"
 #include "../vecbuffer/SimdVecBuffer.h"
 #include "../vecbuffer/SimpleVecBuffer.h"
@@ -48,17 +49,21 @@ void run(uint* data, uint size, VecBuffer* buffer) {
 	Timer timer;
 
 	timer.start();
-
+	__m256i logging = _mm256_setzero_si256();
 	for (int i = 0; i < size; i++) {
 		__m256i input = genrand();
-		buffer->serve(input, &outputSize);
+		__m256i result = buffer->serve(input, &outputSize);
+		logging = _mm256_and_si256(logging, result);
 	}
-	buffer->purge(&outputSize);
+	__m256i final = buffer->purge(&outputSize);
+
+	logging = _mm256_and_si256(logging, final);
 
 	timer.stop();
 
 	logger->info("Running size %u, time consumption %lu\n", size,
 			timer.wallclockms());
+	SimdHelper::print_epu32(logging);
 }
 
 void print_help() {
