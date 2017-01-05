@@ -23,31 +23,31 @@ __m256i permute_64_0(__m256i a) {
 }
 // 0001
 __m256i permute_64_1(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0xc6);
+	return _mm256_permute4x64_epi64(a, 0x93);
 }
 // 0010
 __m256i permute_64_2(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0x87);
+	return _mm256_permute4x64_epi64(a, 0x72);
 }
 // 0011
 __m256i permute_64_3(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0xb1);
+	return _mm256_permute4x64_epi64(a, 0x4e);
 }
 // 0100
 __m256i permute_64_4(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0x4e);
+	return _mm256_permute4x64_epi64(a, 0xe1);
 }
 // 0101
 __m256i permute_64_5(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0x72);
+	return _mm256_permute4x64_epi64(a, 0x2d);
 }
 // 0110
 __m256i permute_64_6(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0x63);
+	return _mm256_permute4x64_epi64(a, 0x39);
 }
 // 0111
 __m256i permute_64_7(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0x6c);
+	return _mm256_permute4x64_epi64(a, 0x39);
 }
 
 // 1000
@@ -56,15 +56,15 @@ __m256i permute_64_8(__m256i a) {
 }
 // 1001
 __m256i permute_64_9(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0x36);
+	return _mm256_permute4x64_epi64(a, 0x6c);
 }
 // 1010
 __m256i permute_64_10(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0x27);
+	return _mm256_permute4x64_epi64(a, 0x78);
 }
 // 1011
 __m256i permute_64_11(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0x2d);
+	return _mm256_permute4x64_epi64(a, 0x78);
 }
 // 1100
 __m256i permute_64_12(__m256i a) {
@@ -72,7 +72,7 @@ __m256i permute_64_12(__m256i a) {
 }
 // 1101
 __m256i permute_64_13(__m256i a) {
-	return _mm256_permute4x64_epi64(a, 0x1e);
+	return _mm256_permute4x64_epi64(a, 0xb4);
 }
 // 1110
 __m256i permute_64_14(__m256i a) {
@@ -90,13 +90,13 @@ __m256i blend_64_0(__m256i a, __m256i b) {
 	return b;
 }
 __m256i blend_64_1(__m256i a, __m256i b) {
-	return _mm256_blend_epi32(a, b, 0x80);
+	return _mm256_blend_epi32(a, b, 0xfc);
 }
 __m256i blend_64_2(__m256i a, __m256i b) {
 	return _mm256_blend_epi32(a, b, 0xf0);
 }
 __m256i blend_64_3(__m256i a, __m256i b) {
-	return _mm256_blend_epi32(a, b, 0xfc);
+	return _mm256_blend_epi32(a, b, 0xc0);
 }
 
 __m256i (*BLEND64[4])(__m256i, __m256i)
@@ -108,17 +108,17 @@ __m256i shift_64_0(__m256i a) {
 
 __m256i shift_64_1(__m256i a) {
 	// 01101100
-	return _mm256_permute4x64_epi64(a, 0x6c);
+	return _mm256_permute4x64_epi64(a, 0x39);
 }
 
 __m256i shift_64_2(__m256i a) {
 	// 10110001
-	return _mm256_permute4x64_epi64(a, 0xb1);
+	return _mm256_permute4x64_epi64(a, 0x4e);
 }
 
 __m256i shift_64_3(__m256i a) {
 	// 11000110
-	return _mm256_permute4x64_epi64(a, 0xc6);
+	return _mm256_permute4x64_epi64(a, 0x93);
 }
 
 __m256i (*SHR64[4])(__m256i) = {shift_64_0, shift_64_3, shift_64_2,shift_64_1};
@@ -132,12 +132,12 @@ __m256i Simd64VecBuffer::align(__m256i input, int *inputSize) {
 	__m256i flag = _mm256_add_epi64(_mm256_cmpeq_epi64(input, SimdHelper::ZERO),
 			SimdHelper::ONE_64);
 	__m256i sflag = _mm256_sllv_epi64(flag, FLAG_SHIFT_64);
-	__m256i pflag = _mm256_permute4x64_epi64(flag, 0x6c);
+	__m256i pflag = _mm256_permute4x64_epi64(sflag, 0x39);
 	__m256i mflag = _mm256_add_epi64(sflag, pflag);
-	__m256i m2flag = _mm256_permute4x64_epi64(mflag, 0xb1);
+	__m256i m2flag = _mm256_permute4x64_epi64(mflag, 0x4e);
 	mflag = _mm256_add_epi64(mflag, m2flag);
 	// Each 64-bit in mflag contains flag
-
+	int type = _mm256_extract_epi64(mflag, 0);
 	// Little-Endian, lookup 8 bit
 	__m256i sizev = _mm256_shuffle_epi8(LOOKUP_SIZE, mflag);
 	int size = _mm256_extract_epi32(sizev, 0);
@@ -145,7 +145,7 @@ __m256i Simd64VecBuffer::align(__m256i input, int *inputSize) {
 	if (size == 4)
 		return input;
 
-	return PERMU64[size](input);
+	return PERMU64[type](input);
 }
 
 __m256i Simd64VecBuffer::merge(__m256i a, __m256i b, int asize) {
