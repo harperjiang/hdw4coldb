@@ -30,7 +30,7 @@ uint* gendata(double portion, uint size) {
 	return data;
 }
 
-__m256i genrand() {
+__m256i genrand(double portion) {
 	uint thres = (uint) (UINT32_C(0xFFFFFFFF) * portion);
 	int data[8];
 	for (uint i = 0; i < 8; i++) {
@@ -41,7 +41,7 @@ __m256i genrand() {
 			data[5], data[6], data[7]);
 }
 
-void run(uint* data, uint size, VecBuffer* buffer) {
+void run(uint size, double portion, VecBuffer* buffer) {
 	srand(time(NULL));
 	int outputSize;
 
@@ -51,7 +51,7 @@ void run(uint* data, uint size, VecBuffer* buffer) {
 	timer.start();
 	__m256i logging = _mm256_setzero_si256();
 	for (int i = 0; i < size; i++) {
-		__m256i input = genrand();
+		__m256i input = genrand(portion);
 		__m256i result = buffer->serve(input, &outputSize);
 		logging = _mm256_and_si256(logging, result);
 	}
@@ -127,9 +127,9 @@ int main(int argc, char** argv) {
 		vbf = NULL;
 	}
 	if (vbf != NULL) {
-		uint* allocate = gendata(portion, size);
-		run(allocate, size, vbf);
-		free(allocate);
+//		uint* allocate = gendata(portion, size);
+		run(size, portion, vbf);
+		free (allocate);
 		delete vbf;
 	}
 }
