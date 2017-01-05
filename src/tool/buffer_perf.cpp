@@ -129,7 +129,6 @@ int main(int argc, char** argv) {
 	if (vbf != NULL) {
 //		uint* allocate = gendata(portion, size);
 		run(size, portion, vbf);
-		free (allocate);
 		delete vbf;
 	}
 }
