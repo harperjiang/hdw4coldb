@@ -146,20 +146,19 @@ __m256i SimdVecBuffer::purge(int* outputSize) {
 __m256i SimdVecBuffer::align(__m256i input, int *size, __m256i* pattern) {
 	__m256i flag = _mm256_add_epi32(_mm256_cmpeq_epi32(input, SimdHelper::ZERO),
 	SimdHelper::ONE);
-	__m256i sflag = _mm256_sllv_epi32(flag, FLAG_SHIFT);
-	flag = _mm256_hadd_epi32(sflag, flag);
-	flag = _mm256_hadd_epi32(flag, SimdHelper::ZERO);
-	// flag[0] has first 4 bit flag, flag[1] has second 4 bit flag
-	flag = _mm256_permutevar8x32_epi32(flag, FLAG_PERMUTE);
-
-	__m256i sizev = _mm256_shuffle_epi8(LOOKUP_SIZE, flag);
-	int size1 = _mm256_extract_epi32(sizev, 0);
-	int size2 = _mm256_extract_epi32(sizev, 1);
-	*size = size1 + size2;
-	if (*size == 8) {
+	if(_mm256_testz_si256(flag, SimdHelper::MAX)) {
 		*pattern = SHL_POS[0];
 		return input;
 	}
+	flag = _mm256_sllv_epi32(flag, FLAG_SHIFT);
+	flag = _mm256_hadd_epi32(flag, flag);
+	flag = _mm256_hadd_epi32(flag, flag);
+	// flag[0-3] has first 4 bit flag, flag[4-7] has second 4 bit flag
+
+	__m256i sizev = _mm256_shuffle_epi8(LOOKUP_SIZE, flag);
+	int size1 = _mm256_extract_epi32(sizev, 0);
+	int size2 = _mm256_extract_epi32(sizev, 4);
+	*size = size1 + size2;
 
 	__m256i p1 = _mm256_permutevar8x32_epi32(
 	_mm256_shuffle_epi8(LOOKUP_POS1, flag), PERMU_POS1);
