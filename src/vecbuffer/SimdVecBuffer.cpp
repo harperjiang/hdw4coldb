@@ -160,14 +160,10 @@ __m256i SimdVecBuffer::align(__m256i input, int *size, __m256i* pattern) {
 	int size2 = _mm256_extract_epi32(sizev, 4);
 	*size = size1 + size2;
 
-	__m256i p1 = _mm256_permutevar8x32_epi32(
-	_mm256_shuffle_epi8(LOOKUP_POS1, flag), PERMU_POS1);
-	__m256i p2 = _mm256_permutevar8x32_epi32(
-	_mm256_shuffle_epi8(LOOKUP_POS2, flag), PERMU_POS2);
-	__m256i p3 = _mm256_permutevar8x32_epi32(
-	_mm256_shuffle_epi8(LOOKUP_POS3, flag), PERMU_POS3);
-	__m256i p4 = _mm256_permutevar8x32_epi32(
-	_mm256_shuffle_epi8(LOOKUP_POS4, flag), PERMU_POS4);
+	__m256i p1 = _mm256_shuffle_epi8(LOOKUP_POS1, flag);
+	__m256i p2 = _mm256_shuffle_epi8(LOOKUP_POS2, flag);
+	__m256i p3 = _mm256_shuffle_epi8(LOOKUP_POS3, flag);
+	__m256i p4 = _mm256_shuffle_epi8(LOOKUP_POS4, flag);
 	__m256i p1p2 = _mm256_blend_epi32(p1, p2, 0x22);
 	__m256i p3p4 = _mm256_blend_epi32(p3, p4, 0x88);
 	__m256i allblend = _mm256_blend_epi32(p1p2, p3p4, 0xcc);
