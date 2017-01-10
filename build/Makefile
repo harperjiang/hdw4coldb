@@ -34,6 +34,10 @@ COMMON_OBJS = \
 ./src/util/Logger.o \
 ./src/util/Timer.o \
 ./src/util/Thread.o \
+./src/filter/Filter.o \
+./src/filter/Pred.o \
+./src/filter/ScalarFilter.o \
+./src/filter/SIMDFilter.o \
 ./src/simd/SimdHelper.o \
 ./src/simd/SimdBuffer.o \
 ./src/simd/SimdBuffer64.o \
