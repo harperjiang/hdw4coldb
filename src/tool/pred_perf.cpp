@@ -21,8 +21,8 @@
 void run(uint size, Filter* filter) {
 	srand(time(NULL));
 
-	uint* input = aligned_alloc(32, size * sizeof(uint));
-	uint* output = aligned_alloc(32, size * sizeof(uint));
+	uint* input = (uint*) aligned_alloc(32, size * sizeof(uint));
+	uint* output = (uint*) aligned_alloc(32, size * sizeof(uint));
 
 	for (uint i = 0; i < size; i++) {
 		input[i] = rand() % 10;
@@ -46,7 +46,6 @@ void print_help() {
 	fprintf(stdout, "Usage: buffer_perf [options]\n");
 	fprintf(stdout, "Available options:\n");
 	fprintf(stdout, " -a --alg alg_name \tAlgorithm to use\n");
-	fprintf(stdout, " -p --portion \tportion of non-zeros\n");
 	fprintf(stdout, " -s --size \tsize of test\n");
 	fprintf(stdout, " -h --help \tdisplay this information\n");
 	exit(0);

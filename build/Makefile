@@ -141,6 +141,7 @@ mkfolder:
 	mkdir -p src/join/ocl
 	mkdir -p src/join/simple
 	mkdir -p src/vecbuffer
+	mkdir -p src/filter
 
 mktestfolder: mkfolder
 	mkdir -p test

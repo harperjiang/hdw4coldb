@@ -23,7 +23,7 @@ void SimdFilter::filter(uint* input, uint inputSize, uint* output) {
 
 	uint round = inputSize / 8;
 	int ressize;
-	uint outputLoc;
+	uint outputLoc = 0;
 	for (uint i = 0; i < round; i++) {
 		__m256i loaded = _mm256_stream_load_si256((__m256i *) (input + 8 * i));
 		__m256i filtered = pred->testInteger(loaded);
