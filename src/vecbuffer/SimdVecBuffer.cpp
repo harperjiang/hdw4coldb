@@ -148,6 +148,7 @@ __m256i SimdVecBuffer::align(__m256i input, int *size, __m256i* pattern) {
 	SimdHelper::ONE);
 	if(_mm256_testz_si256(flag, SimdHelper::MAX)) {
 		*pattern = SHL_POS[0];
+		*size = 0;
 		return input;
 	}
 	flag = _mm256_sllv_epi32(flag, FLAG_SHIFT);
