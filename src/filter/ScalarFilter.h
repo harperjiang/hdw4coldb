@@ -15,7 +15,7 @@ class ScalarFilter: public Filter {
 protected:
 	ScalarPred* pred;
 public:
-	ScalarFilter(OP, uint);
+	ScalarFilter(OP, number);
 	virtual ~ScalarFilter();
 
 	void filter(uint* input, uint inputSize, uint* output);

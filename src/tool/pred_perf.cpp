@@ -14,58 +14,32 @@
 #include <time.h>
 #include "../util/Logger.h"
 #include "../util/Timer.h"
-#include "../simd/SimdHelper.h"
-#include "../vecbuffer/VecBuffer.h"
-#include "../vecbuffer/SimdVecBuffer.h"
-#include "../vecbuffer/SimpleVecBuffer.h"
-#include "../vecbuffer/Simd64VecBuffer.h"
-#include "../vecbuffer/Simple64VecBuffer.h"
+#include "../filter/Filter.h"
+#include "../filter/ScalarFilter.h"
+#include "../filter/SimdFilter.h"
 
-uint* gendata(double portion, uint size) {
+void run(uint size, Filter* filter) {
 	srand(time(NULL));
-	uint* data = (uint*) aligned_alloc(32, size * sizeof(uint));
-	uint thres = (uint) UINT32_C(0xFFFFFFFF) * portion;
+
+	uint* input = aligned_alloc(32, size * sizeof(uint));
+	uint* output = aligned_alloc(32, size * sizeof(uint));
+
 	for (uint i = 0; i < size; i++) {
-		uint val = (uint) rand();
-		data[i] = val < thres ? val : 0;
+		input[i] = rand() % 10;
 	}
-	return data;
-}
-
-__m256i genrand(double portion) {
-	uint thres = (uint) (UINT32_C(0xFFFFFFFF) * portion);
-	int data[8];
-	for (uint i = 0; i < 8; i++) {
-		uint val = (uint) rand();
-		data[i] = val < thres ? val : 0;
-	}
-	return _mm256_setr_epi32(data[0], data[1], data[2], data[3], data[4],
-			data[5], data[6], data[7]);
-}
-
-void run(uint size, double portion, VecBuffer* buffer) {
-	srand(time(NULL));
-	int outputSize;
 
 	Logger* logger = Logger::getLogger("perf_buffer");
 	Timer timer;
 
 	timer.start();
-	__m256i logging = _mm256_setzero_si256();
-	for (int i = 0; i < size; i++) {
-		__m256i input = genrand(portion);
-		__m256i result = buffer->serve(input, &outputSize);
-		logging = _mm256_and_si256(logging, result);
-	}
-	__m256i final = buffer->purge(&outputSize);
 
-	logging = _mm256_and_si256(logging, final);
+	filter->filter(input, size, output);
 
 	timer.stop();
 
 	logger->info("Running size %u, time consumption %lu\n", size,
 			timer.wallclockms());
-	SimdHelper::print_epu32(logging);
+
 }
 
 void print_help() {
@@ -79,10 +53,8 @@ void print_help() {
 }
 
 int main(int argc, char** argv) {
-	Logger* logger = Logger::getLogger("buffer_perf");
+	Logger* logger = Logger::getLogger("pred_perf");
 
-	bool useBuffer = false;
-	double portion = 0.5;
 	uint size = 1000000;
 	char* alg;
 
@@ -93,19 +65,16 @@ int main(int argc, char** argv) {
 
 	int option_index = 0;
 	static struct option long_options[] = {
-			{ "alg", required_argument, 0, 'a' }, { "portion",
-			required_argument, 0, 'p' }, { "help", no_argument, 0, 'h' }, {
-					"size", required_argument, 0, 's' } };
+			{ "alg", required_argument, 0, 'a' },
+			{ "help", no_argument, 0, 'h' },
+			{ "size", required_argument, 0, 's' } };
 
 	int c;
-	while ((c = getopt_long(argc, argv, "a:p:hs:", long_options, &option_index))
+	while ((c = getopt_long(argc, argv, "a:hs:", long_options, &option_index))
 			!= -1) {
 		switch (c) {
 		case 'a':
 			alg = optarg;
-			break;
-		case 'p':
-			portion = atof(optarg);
 			break;
 		case 'h':
 			print_help();
@@ -120,23 +89,18 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	VecBuffer* vbf = NULL;
+	number num;
+	num.integer = 5;
+	Filter* filter = NULL;
 	if (!strcmp("simd", alg)) {
-		vbf = new SimdVecBuffer();
-	} else if (!strcmp("simple", alg)) {
-		vbf = new SimpleVecBuffer();
-	} else if (!strcmp("simd64", alg)) {
-		vbf = new Simd64VecBuffer();
-	} else if (!strcmp("simple64", alg)) {
-		vbf = new Simple64VecBuffer();
-	} else if (!strcmp("none", alg)) {
-		vbf = new VecBuffer();
+		filter = new SimdFilter(EQ, num);
+	} else if (!strcmp("scalar", alg)) {
+		filter = new ScalarFilter(EQ, num);
 	} else {
-		vbf = NULL;
+		filter = NULL;
 	}
-	if (vbf != NULL) {
-//		uint* allocate = gendata(portion, size);
-		run(size, portion, vbf);
-		delete vbf;
+	if (filter != NULL) {
+		run(size, filter);
+		delete filter;
 	}
 }

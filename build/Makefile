@@ -37,7 +37,7 @@ COMMON_OBJS = \
 ./src/filter/Filter.o \
 ./src/filter/Pred.o \
 ./src/filter/ScalarFilter.o \
-./src/filter/SIMDFilter.o \
+./src/filter/SimdFilter.o \
 ./src/simd/SimdHelper.o \
 ./src/simd/SimdBuffer.o \
 ./src/simd/SimdBuffer64.o \
@@ -92,6 +92,7 @@ gendata \
 mergedata \
 space_analysis \
 buffer_perf \
+pred_perf \
 
 
 default: $(MAIN) $(TOOL)

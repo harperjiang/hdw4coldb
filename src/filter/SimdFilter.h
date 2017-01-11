@@ -1,5 +1,5 @@
 /*
- * SIMDFilter.h
+ * SimdFilter.h
  *
  *  Created on: Jan 10, 2017
  *      Author: harper
@@ -9,11 +9,14 @@
 #define SRC_FILTER_SIMDFILTER_H_
 
 #include "Filter.h"
+#include "Pred.h"
 
-class SIMDFilter: public Filter {
+class SimdFilter: public Filter {
+protected:
+	SimdPred* pred;
 public:
-	SIMDFilter(OP, uint);
-	virtual ~SIMDFilter();
+	SimdFilter(OP, number);
+	virtual ~SimdFilter();
 
 	void filter(uint*, uint, uint*);
 };

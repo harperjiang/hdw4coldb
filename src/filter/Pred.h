@@ -15,45 +15,53 @@ enum OP {
 	EQ, NEQ, GT, LT, GE, LE
 };
 
+union number {
+	uint integer;
+	float floatnum;
+};
+
 class ScalarPred {
 protected:
-	uint target;
+	number target;
 public:
-	ScalarPred(uint target);
+	ScalarPred(number target);
 	virtual ~ScalarPred();
 
 	virtual bool testInteger(uint input) = 0;
 	virtual bool testFloat(float input) = 0;
 
-	static ScalarPred create(OP, uint);
+	static ScalarPred* create(OP, number);
 };
 
-class ScalarEqual : public ScalarPred {
+class ScalarEqual: public ScalarPred {
 public:
-	ScalarEqual(uint target);
+	ScalarEqual(number target);
 	virtual ~ScalarEqual();
 
 	bool testInteger(uint input);
 	bool testFloat(float input);
 };
 
-class SIMDPred {
+class SimdPred {
 protected:
-	uint target;
+	__m256i targetint;
+	__m256 targetfloat;
 public:
-	SIMDPred(uint target);
-	virtual ~SIMDPred();
+	SimdPred(number target);
+	virtual ~SimdPred();
+
+	void* operator new(size_t sz);
 
 	virtual __m256i testInteger(__m256i input) = 0;
 	virtual __m256 testFloat(__m256 input) = 0;
 
-	static SIMDPred create(OP,uint);
+	static SimdPred* create(OP, number);
 };
 
-class SIMDEqual: public SIMDPred {
+class SimdEqual: public SimdPred {
 public:
-	SIMDEqual(uint target);
-	virtual ~SIMDEqual();
+	SimdEqual(number target);
+	virtual ~SimdEqual();
 
 	__m256i testInteger(__m256i input);
 	__m256 testFloat(__m256 input);
