@@ -9,10 +9,13 @@
 #define SRC_FILTER_SCALARFILTER_H_
 
 #include "Filter.h"
+#include "Pred.h"
 
 class ScalarFilter: public Filter {
+protected:
+	ScalarPred* pred;
 public:
-	ScalarFilter(Pred*);
+	ScalarFilter(OP, uint);
 	virtual ~ScalarFilter();
 
 	void filter(uint* input, uint inputSize, uint* output);

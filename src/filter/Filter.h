@@ -13,10 +13,8 @@
 #include "Pred.h"
 
 class Filter {
-protected:
-	Pred *pred;
 public:
-	Filter(Pred*);
+	Filter();
 	virtual ~Filter();
 
 	virtual void filter(uint* input, uint inputSize, uint* output) = 0;

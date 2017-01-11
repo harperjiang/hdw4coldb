@@ -16,3 +16,6 @@ ScalarFilter::~ScalarFilter() {
 
 }
 
+void ScalarFilter::filter(uint* input, uint inputSize, uint* output) {
+
+}

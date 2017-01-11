@@ -12,7 +12,7 @@
 
 class SIMDFilter: public Filter {
 public:
-	SIMDFilter(Pred*);
+	SIMDFilter(OP, uint);
 	virtual ~SIMDFilter();
 
 	void filter(uint*, uint, uint*);

@@ -7,11 +7,9 @@
 
 #include "Filter.h"
 
-Filter::Filter(Pred* p) {
-	this->pred = p;
+Filter::Filter() {
 }
 
 Filter::~Filter() {
-
 }
 
