@@ -17,7 +17,8 @@ public:
 	Filter();
 	virtual ~Filter();
 
-	virtual void filter(uint* input, uint inputSize, uint* output) = 0;
+	virtual void filter(uint* input, uint inputSize, uint* output,
+			uint* outputSize) = 0;
 };
 
 #endif /* SRC_FILTER_FILTER_H_ */

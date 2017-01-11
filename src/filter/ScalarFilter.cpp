@@ -16,11 +16,13 @@ ScalarFilter::~ScalarFilter() {
 	delete this->pred;
 }
 
-void ScalarFilter::filter(uint* input, uint inputSize, uint* output) {
+void ScalarFilter::filter(uint* input, uint inputSize, uint* output,
+		uint* outputSize) {
 	uint counter = 0;
 	for (uint i = 0; i < inputSize; i++) {
 		if (pred->testInteger(input[i])) {
 			output[counter] = input[i];
 		}
 	}
+	*outputSize = counter;
 }

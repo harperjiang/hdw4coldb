@@ -31,14 +31,16 @@ void run(uint size, Filter* filter) {
 	Logger* logger = Logger::getLogger("perf_buffer");
 	Timer timer;
 
+	uint outputSize;
+
 	timer.start();
 
-	filter->filter(input, size, output);
+	filter->filter(input, size, output, &outputSize);
 
 	timer.stop();
 
-	logger->info("Running size %u, time consumption %lu\n", size,
-			timer.wallclockms());
+	logger->info("Running size %u, output size %u, time consumption %lu\n",
+			size, outputSize, timer.wallclockms());
 
 }
 

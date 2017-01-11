@@ -18,7 +18,7 @@ public:
 	SimdFilter(OP, number);
 	virtual ~SimdFilter();
 
-	void filter(uint*, uint, uint*);
+	void filter(uint*, uint, uint*, uint*);
 };
 
 #endif /* SRC_FILTER_SIMDFILTER_H_ */

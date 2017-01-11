@@ -18,7 +18,8 @@ SimdFilter::~SimdFilter() {
 	delete this->pred;
 }
 
-void SimdFilter::filter(uint* input, uint inputSize, uint* output) {
+void SimdFilter::filter(uint* input, uint inputSize, uint* output,
+		uint*outputSize) {
 	SimdVecBuffer* vecbuf = new SimdVecBuffer();
 
 	uint round = inputSize / 8;
@@ -33,5 +34,6 @@ void SimdFilter::filter(uint* input, uint inputSize, uint* output) {
 					buffered);
 		}
 	}
+	*outputSize = (outputLoc - 1) * 8;
 	delete vecbuf;
 }

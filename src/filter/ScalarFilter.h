@@ -18,7 +18,7 @@ public:
 	ScalarFilter(OP, number);
 	virtual ~ScalarFilter();
 
-	void filter(uint* input, uint inputSize, uint* output);
+	void filter(uint* input, uint inputSize, uint* output, uint* outputSize);
 };
 
 #endif /* SRC_FILTER_SCALARFILTER_H_ */
