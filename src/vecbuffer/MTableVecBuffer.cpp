@@ -144,7 +144,7 @@ __m256i MTableVecBuffer::purge(int* outputSize) {
  * The first two 32-bit integers in input contain the 4-bit block of flag
  */
 __m256i MTableVecBuffer::align(__m256i input, int *size, __m256i* pattern) {
-	__m256i flag = _mm256_cmpeq_epi32(input, SimdHelper::ZERO);
+	__m256i flag = _mm256_xor_si256(_mm256_cmpeq_epi32(input, SimdHelper::ZERO),SimdHelper::MAX);
 
 	if(_mm256_testz_si256(flag, SimdHelper::MAX)) {
 		*pattern = SHL_POS[0];
