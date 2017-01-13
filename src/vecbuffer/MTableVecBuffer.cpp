@@ -9,8 +9,11 @@
 
 #include <stdlib.h>
 #include "../simd/SimdHelper.h"
+#include "../lookup/LookupHelper.h"
 
 namespace MTableVecBufferConstants {
+
+int SIZE[256];
 
 __m256i* createPermuTable() {
 
@@ -27,7 +30,7 @@ __m256i* createPermuTable() {
 		for(;bfcnt < 8; bfcnt++) {
 			buffer[bfcnt] = -1;
 		}
-
+		SIZE[i] = popcount(i);
 		memory[i] = _mm256_setr_epi32(buffer[0], buffer[1],buffer[2],buffer[3],buffer[4],buffer[5],buffer[6], buffer[7]);
 	}
 
