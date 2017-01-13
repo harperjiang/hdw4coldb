@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
 		vbf = new Simple64VecBuffer();
 	} else if (!strcmp("none", alg)) {
 		vbf = new VecBuffer();
-	} else if (!strcmp("mtable", arg)) {
+	} else if (!strcmp("mtable", alg)) {
 		vbf = new MTableVecBuffer();
 	} else {
 		vbf = NULL;

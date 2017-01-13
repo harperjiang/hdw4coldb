@@ -5,8 +5,8 @@
  *      Author: harper
  */
 
-#ifndef SRC_VECBUFFER_SIMDBUFFER_H_
-#define SRC_VECBUFFER_SIMDBUFFER_H_
+#ifndef SRC_VECBUFFER_MTABLEVECBUFFER_H_
+#define SRC_VECBUFFER_MTABLEVECBUFFER_H_
 
 #include "VecBuffer.h"
 
@@ -46,4 +46,4 @@ protected:
 	static __m256i merge(__m256i a, __m256i b, int sizea);
 };
 
-#endif /* SRC_VECBUFFER_SIMDBUFFER_H_ */
+#endif /* SRC_VECBUFFER_MTABLEVECBUFFER_H_ */
