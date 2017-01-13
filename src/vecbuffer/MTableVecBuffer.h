@@ -1,5 +1,5 @@
 /*
- * SimdBuffer.h
+ * MTableBuffer.h
  *
  *  Created on: Dec 28, 2016
  *      Author: harper
@@ -10,7 +10,7 @@
 
 #include "VecBuffer.h"
 
-class SimdVecBuffer: public VecBuffer {
+class MTableVecBuffer: public VecBuffer {
 protected:
 	// Buffer for primary input
 	__m256i buffer;
@@ -20,8 +20,8 @@ public:
 
 	void* operator new(size_t num);
 
-	SimdVecBuffer();
-	virtual ~SimdVecBuffer();
+	MTableVecBuffer();
+	virtual ~MTableVecBuffer();
 
 	// Serve new data, and get compressed data (if any)
 	virtual __m256i serve(__m256i input, int* outputSize);

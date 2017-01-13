@@ -17,6 +17,7 @@
 #include "../simd/SimdHelper.h"
 #include "../vecbuffer/VecBuffer.h"
 #include "../vecbuffer/SimdVecBuffer.h"
+#include "../vecbuffer/MTableVecBuffer.h"
 #include "../vecbuffer/SimpleVecBuffer.h"
 #include "../vecbuffer/Simd64VecBuffer.h"
 #include "../vecbuffer/Simple64VecBuffer.h"
@@ -131,6 +132,8 @@ int main(int argc, char** argv) {
 		vbf = new Simple64VecBuffer();
 	} else if (!strcmp("none", alg)) {
 		vbf = new VecBuffer();
+	} else if (!strcmp("mtable", arg)) {
+		vbf = new MTableVecBuffer();
 	} else {
 		vbf = NULL;
 	}

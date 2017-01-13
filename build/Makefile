@@ -60,6 +60,7 @@ COMMON_OBJS = \
 ./src/join/simple/LookupJoin.o \
 ./src/join/simple/LookupThread.o \
 ./src/vecbuffer/SimdVecBuffer.o \
+./src/vecbuffer/MTableVecBuffer.o \
 ./src/vecbuffer/SimpleVecBuffer.o \
 ./src/vecbuffer/Simd64VecBuffer.o \
 ./src/vecbuffer/Simple64VecBuffer.o \
@@ -81,6 +82,7 @@ TEST_OBJS = \
 ./test/CollectThread_test.o \
 ./test/BloomFilter_test.o \
 ./test/SimdVecBuffer_test.o \
+./test/MTableVecBuffer_test.o \
 ./test/Simd64VecBuffer_test.o \
 ./test/SimpleVecBuffer_test.o \
 
