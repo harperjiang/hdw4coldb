@@ -154,7 +154,8 @@ __m256i MTableVecBuffer::align(__m256i input, int *size, __m256i* pattern) {
 
 	int index = _mm256_movemask_ps(_mm256_castsi256_ps(flag));
 	__m256i permute = PERMU[index];
-
+	*size = SIZE[index];
+	*pattern = permute;
 	return _mm256_permutevar8x32_epi32(input, permute);
 }
 
